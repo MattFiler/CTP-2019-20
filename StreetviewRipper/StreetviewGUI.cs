@@ -22,8 +22,8 @@ namespace StreetviewRipper
             //Setup UI
             downloadStreetview.Enabled = false;
             Cursor.Current = Cursors.WaitCursor;
-            downloadProgress.Step = 100 / streetviewURL.Lines.Length;
             downloadProgress.Value = 0;
+            downloadProgress.Maximum = streetviewURL.Lines.Length;
 
             //Work out what zoom to use
             thisQuality = new StreetviewQualityDef();

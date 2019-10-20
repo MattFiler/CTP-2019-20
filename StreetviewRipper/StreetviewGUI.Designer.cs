@@ -93,6 +93,7 @@
             this.downloadProgress.Location = new System.Drawing.Point(15, 330);
             this.downloadProgress.Name = "downloadProgress";
             this.downloadProgress.Size = new System.Drawing.Size(484, 23);
+            this.downloadProgress.Step = 1;
             this.downloadProgress.TabIndex = 5;
             // 
             // StreetviewGUI
