@@ -32,15 +32,17 @@
             this.label1 = new System.Windows.Forms.Label();
             this.streetviewURL = new System.Windows.Forms.TextBox();
             this.streetviewZoom = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.downloadProgress = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // downloadStreetview
             // 
-            this.downloadStreetview.Location = new System.Drawing.Point(381, 51);
+            this.downloadStreetview.Location = new System.Drawing.Point(381, 300);
             this.downloadStreetview.Name = "downloadStreetview";
             this.downloadStreetview.Size = new System.Drawing.Size(118, 23);
             this.downloadStreetview.TabIndex = 3;
-            this.downloadStreetview.Text = "Download";
+            this.downloadStreetview.Text = "Download All";
             this.downloadStreetview.UseVisualStyleBackColor = true;
             this.downloadStreetview.Click += new System.EventHandler(this.downloadStreetview_Click);
             // 
@@ -49,15 +51,16 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 9);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(82, 13);
+            this.label1.Size = new System.Drawing.Size(151, 13);
             this.label1.TabIndex = 1;
-            this.label1.Text = "Streetview URL";
+            this.label1.Text = "Streetview URLs (one per line)";
             // 
             // streetviewURL
             // 
             this.streetviewURL.Location = new System.Drawing.Point(15, 25);
+            this.streetviewURL.Multiline = true;
             this.streetviewURL.Name = "streetviewURL";
-            this.streetviewURL.Size = new System.Drawing.Size(484, 20);
+            this.streetviewURL.Size = new System.Drawing.Size(484, 267);
             this.streetviewURL.TabIndex = 1;
             // 
             // streetviewZoom
@@ -71,16 +74,34 @@
             "Low",
             "Lower",
             "Lowest"});
-            this.streetviewZoom.Location = new System.Drawing.Point(15, 51);
+            this.streetviewZoom.Location = new System.Drawing.Point(90, 300);
             this.streetviewZoom.Name = "streetviewZoom";
             this.streetviewZoom.Size = new System.Drawing.Size(181, 21);
             this.streetviewZoom.TabIndex = 2;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(12, 303);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(72, 13);
+            this.label2.TabIndex = 4;
+            this.label2.Text = "Image quality:";
+            // 
+            // downloadProgress
+            // 
+            this.downloadProgress.Location = new System.Drawing.Point(15, 330);
+            this.downloadProgress.Name = "downloadProgress";
+            this.downloadProgress.Size = new System.Drawing.Size(484, 23);
+            this.downloadProgress.TabIndex = 5;
             // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(515, 86);
+            this.ClientSize = new System.Drawing.Size(515, 362);
+            this.Controls.Add(this.downloadProgress);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.streetviewZoom);
             this.Controls.Add(this.streetviewURL);
             this.Controls.Add(this.label1);
@@ -102,6 +123,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox streetviewURL;
         private System.Windows.Forms.ComboBox streetviewZoom;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ProgressBar downloadProgress;
     }
 }
 
