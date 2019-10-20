@@ -69,7 +69,7 @@ namespace StreetviewRipper
             downloadStreetview.Enabled = true;
             Cursor.Current = Cursors.Default;
             downloadProgress.Value = downloadProgress.Maximum;
-            MessageBox.Show("Downloaded " + downloadCount + " Streetview sphere(s) from " + streetviewURL.Lines.Length + " URL(s)!", "Complete!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Downloaded " + downloadCount + " Streetview sphere(s) from " + downloadProgress.Maximum + " URL(s)!", "Complete!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         /* Download a complete sphere from Streetview at a globally defined quality */
