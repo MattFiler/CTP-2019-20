@@ -11,6 +11,7 @@ namespace StreetviewRipper
     {
         StreetviewQualityDef thisQuality;
         int downloadCount = 0;
+        List<string> downloadedIDs = new List<string>();
 
         public StreetviewGUI()
         {
@@ -50,8 +51,13 @@ namespace StreetviewRipper
                     break;
             }
 
+            //Check the user means to recurse!
+            if (recurseNeighbours.Checked)
+                if (MessageBox.Show("You have selected recursion - this will download neighbouring spheres from the provided URLs until no unique neighbours can be found (unlikely).\nFor that reason, manual termination of the program is required to stop download.\nAre you sure you wish to proceed?", "Are you sure?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+
             //Download all in list
             downloadCount = 0;
+            downloadedIDs.Clear();
             string streetviewID = "";
             foreach (string thisURL in streetviewURL.Lines)
             {
@@ -86,7 +92,11 @@ namespace StreetviewRipper
             {
                 foreach (string newStreetviewID in reader.ReadToEnd().Split('\n'))
                 {
-                    DownloadStreetview(newStreetviewID);
+                    if (!downloadedIDs.Contains(newStreetviewID))
+                    {
+                        DownloadStreetview(newStreetviewID);
+                        if (recurseNeighbours.Checked) DownloadNeighbours(newStreetviewID);
+                    }
                 }
             }
         }
@@ -130,6 +140,14 @@ namespace StreetviewRipper
             streetviewRenderer.Dispose();
             streetviewImage.Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
             downloadCount++;
+            downloadedIDs.Add(id);
+        }
+
+        /* Update UI for recursion when neighbours option is enabled/disabled */
+        private void followNeighbours_CheckedChanged(object sender, EventArgs e)
+        {
+            recurseNeighbours.Enabled = followNeighbours.Checked;
+            recurseNeighbours.Checked = false;
         }
     }
 }

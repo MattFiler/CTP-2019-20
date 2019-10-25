@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.downloadStreetview = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.streetviewURL = new System.Windows.Forms.TextBox();
@@ -35,15 +36,18 @@
             this.label2 = new System.Windows.Forms.Label();
             this.downloadProgress = new System.Windows.Forms.ProgressBar();
             this.followNeighbours = new System.Windows.Forms.CheckBox();
+            this.recurseNeighbours = new System.Windows.Forms.CheckBox();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.SuspendLayout();
             // 
             // downloadStreetview
             // 
             this.downloadStreetview.Location = new System.Drawing.Point(348, 300);
             this.downloadStreetview.Name = "downloadStreetview";
-            this.downloadStreetview.Size = new System.Drawing.Size(151, 48);
+            this.downloadStreetview.Size = new System.Drawing.Size(151, 67);
             this.downloadStreetview.TabIndex = 3;
             this.downloadStreetview.Text = "Download";
+            this.toolTip1.SetToolTip(this.downloadStreetview, "Download the provided URLs with given settings.");
             this.downloadStreetview.UseVisualStyleBackColor = true;
             this.downloadStreetview.Click += new System.EventHandler(this.downloadStreetview_Click);
             // 
@@ -63,6 +67,7 @@
             this.streetviewURL.Name = "streetviewURL";
             this.streetviewURL.Size = new System.Drawing.Size(484, 267);
             this.streetviewURL.TabIndex = 1;
+            this.toolTip1.SetToolTip(this.streetviewURL, "URLs to download - copy this from Streetview on Google Maps.");
             // 
             // streetviewZoom
             // 
@@ -79,11 +84,12 @@
             this.streetviewZoom.Name = "streetviewZoom";
             this.streetviewZoom.Size = new System.Drawing.Size(153, 21);
             this.streetviewZoom.TabIndex = 2;
+            this.toolTip1.SetToolTip(this.streetviewZoom, "The quality of the spheres to download.");
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(14, 303);
+            this.label2.Location = new System.Drawing.Point(14, 304);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(72, 13);
             this.label2.TabIndex = 4;
@@ -91,7 +97,7 @@
             // 
             // downloadProgress
             // 
-            this.downloadProgress.Location = new System.Drawing.Point(15, 354);
+            this.downloadProgress.Location = new System.Drawing.Point(15, 373);
             this.downloadProgress.Name = "downloadProgress";
             this.downloadProgress.Size = new System.Drawing.Size(484, 23);
             this.downloadProgress.Step = 1;
@@ -106,13 +112,29 @@
             this.followNeighbours.Size = new System.Drawing.Size(83, 17);
             this.followNeighbours.TabIndex = 6;
             this.followNeighbours.Text = "Neighbours:";
+            this.toolTip1.SetToolTip(this.followNeighbours, "If checked, neighbouring spheres will be downloaded for all provided URLs.");
             this.followNeighbours.UseVisualStyleBackColor = true;
+            this.followNeighbours.CheckedChanged += new System.EventHandler(this.followNeighbours_CheckedChanged);
+            // 
+            // recurseNeighbours
+            // 
+            this.recurseNeighbours.AutoSize = true;
+            this.recurseNeighbours.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.recurseNeighbours.Enabled = false;
+            this.recurseNeighbours.Location = new System.Drawing.Point(36, 350);
+            this.recurseNeighbours.Name = "recurseNeighbours";
+            this.recurseNeighbours.Size = new System.Drawing.Size(69, 17);
+            this.recurseNeighbours.TabIndex = 7;
+            this.recurseNeighbours.Text = "Recurse:";
+            this.toolTip1.SetToolTip(this.recurseNeighbours, "If checked neighbours will recurse infinitely, for bulk image gathering!");
+            this.recurseNeighbours.UseVisualStyleBackColor = true;
             // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(515, 385);
+            this.ClientSize = new System.Drawing.Size(515, 407);
+            this.Controls.Add(this.recurseNeighbours);
             this.Controls.Add(this.followNeighbours);
             this.Controls.Add(this.downloadProgress);
             this.Controls.Add(this.label2);
@@ -140,6 +162,8 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ProgressBar downloadProgress;
         private System.Windows.Forms.CheckBox followNeighbours;
+        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.CheckBox recurseNeighbours;
     }
 }
 
