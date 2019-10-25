@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Net;
+using System.Text;
 using System.Windows.Forms;
 
 namespace StreetviewRipper
@@ -58,7 +59,11 @@ namespace StreetviewRipper
                 {
                     //Get the streetview ID from string and download sphere if one is found
                     streetviewID = (thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/");
-                    if (streetviewID != "") DownloadStreetview(streetviewID);
+                    if (streetviewID != "")
+                    {
+                        DownloadStreetview(streetviewID);
+                        if (followNeighbours.Checked) DownloadNeighbours(streetviewID);
+                    }
                 }
                 catch { }
                 downloadProgress.PerformStep();
@@ -70,6 +75,20 @@ namespace StreetviewRipper
             Cursor.Current = Cursors.Default;
             downloadProgress.Value = downloadProgress.Maximum;
             MessageBox.Show("Downloaded " + downloadCount + " Streetview sphere(s) from " + downloadProgress.Maximum + " URL(s)!", "Complete!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /* Recurse into neighbours and download them, for a specified count */
+        private void DownloadNeighbours(string id)
+        {
+            var request = WebRequest.Create("http://streetview.mattfiler.co.uk?panoid=" + id);
+            using (var response = request.GetResponse())
+            using (var reader = new System.IO.StreamReader(response.GetResponseStream(), ASCIIEncoding.ASCII))
+            {
+                foreach (string newStreetviewID in reader.ReadToEnd().Split('\n'))
+                {
+                    DownloadStreetview(newStreetviewID);
+                }
+            }
         }
 
         /* Download a complete sphere from Streetview at a globally defined quality */

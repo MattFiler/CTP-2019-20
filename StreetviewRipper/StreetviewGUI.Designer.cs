@@ -34,15 +34,16 @@
             this.streetviewZoom = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.downloadProgress = new System.Windows.Forms.ProgressBar();
+            this.followNeighbours = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // downloadStreetview
             // 
-            this.downloadStreetview.Location = new System.Drawing.Point(381, 300);
+            this.downloadStreetview.Location = new System.Drawing.Point(348, 300);
             this.downloadStreetview.Name = "downloadStreetview";
-            this.downloadStreetview.Size = new System.Drawing.Size(118, 23);
+            this.downloadStreetview.Size = new System.Drawing.Size(151, 48);
             this.downloadStreetview.TabIndex = 3;
-            this.downloadStreetview.Text = "Download All";
+            this.downloadStreetview.Text = "Download";
             this.downloadStreetview.UseVisualStyleBackColor = true;
             this.downloadStreetview.Click += new System.EventHandler(this.downloadStreetview_Click);
             // 
@@ -74,15 +75,15 @@
             "Low",
             "Lower",
             "Lowest"});
-            this.streetviewZoom.Location = new System.Drawing.Point(90, 300);
+            this.streetviewZoom.Location = new System.Drawing.Point(91, 300);
             this.streetviewZoom.Name = "streetviewZoom";
-            this.streetviewZoom.Size = new System.Drawing.Size(181, 21);
+            this.streetviewZoom.Size = new System.Drawing.Size(153, 21);
             this.streetviewZoom.TabIndex = 2;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 303);
+            this.label2.Location = new System.Drawing.Point(14, 303);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(72, 13);
             this.label2.TabIndex = 4;
@@ -90,17 +91,29 @@
             // 
             // downloadProgress
             // 
-            this.downloadProgress.Location = new System.Drawing.Point(15, 330);
+            this.downloadProgress.Location = new System.Drawing.Point(15, 354);
             this.downloadProgress.Name = "downloadProgress";
             this.downloadProgress.Size = new System.Drawing.Size(484, 23);
             this.downloadProgress.Step = 1;
             this.downloadProgress.TabIndex = 5;
             // 
+            // followNeighbours
+            // 
+            this.followNeighbours.AutoSize = true;
+            this.followNeighbours.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.followNeighbours.Location = new System.Drawing.Point(22, 327);
+            this.followNeighbours.Name = "followNeighbours";
+            this.followNeighbours.Size = new System.Drawing.Size(83, 17);
+            this.followNeighbours.TabIndex = 6;
+            this.followNeighbours.Text = "Neighbours:";
+            this.followNeighbours.UseVisualStyleBackColor = true;
+            // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(515, 362);
+            this.ClientSize = new System.Drawing.Size(515, 385);
+            this.Controls.Add(this.followNeighbours);
             this.Controls.Add(this.downloadProgress);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.streetviewZoom);
@@ -126,6 +139,7 @@
         private System.Windows.Forms.ComboBox streetviewZoom;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ProgressBar downloadProgress;
+        private System.Windows.Forms.CheckBox followNeighbours;
     }
 }
 
