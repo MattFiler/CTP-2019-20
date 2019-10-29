@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
@@ -9,6 +11,7 @@ namespace StreetviewRipper
 {
     public partial class StreetviewGUI : Form
     {
+        StreetviewImageProcessor processor = new StreetviewImageProcessor();
         StreetviewQualityDef thisQuality;
         int downloadCount = 0;
         List<string> downloadedIDs = new List<string>();
@@ -138,16 +141,26 @@ namespace StreetviewRipper
                 streetviewRenderer.DrawImage(thisTile.image, thisTile.x, thisTile.y, thisQuality.size, thisQuality.size);
             }
             streetviewRenderer.Dispose();
-            streetviewImage.Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
+            if (!trimGround.Checked) streetviewImage.Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
+            if (trimGround.Checked) processor.CutOutSky(streetviewImage, (int)trimResolution.Value, (int)trimAccuracy.Value).Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
             downloadCount++;
             downloadedIDs.Add(id);
+
+            //If requested to guess sun pos, do that and output it
+            if (!guessSun.Checked) return;
+            File.WriteAllText(id + "_" + streetviewZoom.Text.ToLower() + ".json", "{\n\"sun_pos\": " + processor.GetSunXPos(streetviewImage) + "\n}");
         }
 
-        /* Update UI for recursion when neighbours option is enabled/disabled */
+        /* Update UI when options are enabled/disabled */
         private void followNeighbours_CheckedChanged(object sender, EventArgs e)
         {
             recurseNeighbours.Enabled = followNeighbours.Checked;
             recurseNeighbours.Checked = false;
+        }
+        private void trimGround_CheckedChanged(object sender, EventArgs e)
+        {
+            trimResolution.Enabled = trimGround.Checked;
+            trimAccuracy.Enabled = trimGround.Checked;
         }
     }
 }

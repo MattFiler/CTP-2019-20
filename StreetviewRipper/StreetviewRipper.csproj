@@ -54,8 +54,8 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StreetviewQualityDef.cs" />
     <Compile Include="StreetviewImageProcessor.cs" />
+    <Compile Include="StreetviewQualityDef.cs" />
     <Compile Include="StreetviewTile.cs" />
     <EmbeddedResource Include="StreetviewGUI.resx">
       <DependentUpon>StreetviewGUI.cs</DependentUpon>

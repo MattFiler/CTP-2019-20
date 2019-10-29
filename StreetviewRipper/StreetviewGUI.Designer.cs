@@ -38,14 +38,22 @@
             this.followNeighbours = new System.Windows.Forms.CheckBox();
             this.recurseNeighbours = new System.Windows.Forms.CheckBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.guessSun = new System.Windows.Forms.CheckBox();
+            this.trimGround = new System.Windows.Forms.CheckBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.trimAccuracy = new System.Windows.Forms.NumericUpDown();
+            this.trimResolution = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.trimAccuracy)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trimResolution)).BeginInit();
             this.SuspendLayout();
             // 
             // downloadStreetview
             // 
-            this.downloadStreetview.Location = new System.Drawing.Point(348, 300);
+            this.downloadStreetview.Location = new System.Drawing.Point(423, 300);
             this.downloadStreetview.Name = "downloadStreetview";
-            this.downloadStreetview.Size = new System.Drawing.Size(151, 67);
-            this.downloadStreetview.TabIndex = 3;
+            this.downloadStreetview.Size = new System.Drawing.Size(76, 67);
+            this.downloadStreetview.TabIndex = 9;
             this.downloadStreetview.Text = "Download";
             this.toolTip1.SetToolTip(this.downloadStreetview, "Download the provided URLs with given settings.");
             this.downloadStreetview.UseVisualStyleBackColor = true;
@@ -82,7 +90,7 @@
             "Lowest"});
             this.streetviewZoom.Location = new System.Drawing.Point(91, 300);
             this.streetviewZoom.Name = "streetviewZoom";
-            this.streetviewZoom.Size = new System.Drawing.Size(153, 21);
+            this.streetviewZoom.Size = new System.Drawing.Size(324, 21);
             this.streetviewZoom.TabIndex = 2;
             this.toolTip1.SetToolTip(this.streetviewZoom, "The quality of the spheres to download.");
             // 
@@ -110,7 +118,7 @@
             this.followNeighbours.Location = new System.Drawing.Point(22, 327);
             this.followNeighbours.Name = "followNeighbours";
             this.followNeighbours.Size = new System.Drawing.Size(83, 17);
-            this.followNeighbours.TabIndex = 6;
+            this.followNeighbours.TabIndex = 3;
             this.followNeighbours.Text = "Neighbours:";
             this.toolTip1.SetToolTip(this.followNeighbours, "If checked, neighbouring spheres will be downloaded for all provided URLs.");
             this.followNeighbours.UseVisualStyleBackColor = true;
@@ -124,16 +132,104 @@
             this.recurseNeighbours.Location = new System.Drawing.Point(36, 350);
             this.recurseNeighbours.Name = "recurseNeighbours";
             this.recurseNeighbours.Size = new System.Drawing.Size(69, 17);
-            this.recurseNeighbours.TabIndex = 7;
+            this.recurseNeighbours.TabIndex = 4;
             this.recurseNeighbours.Text = "Recurse:";
             this.toolTip1.SetToolTip(this.recurseNeighbours, "If checked neighbours will recurse infinitely, for bulk image gathering!");
             this.recurseNeighbours.UseVisualStyleBackColor = true;
+            // 
+            // guessSun
+            // 
+            this.guessSun.AutoSize = true;
+            this.guessSun.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.guessSun.Location = new System.Drawing.Point(126, 350);
+            this.guessSun.Name = "guessSun";
+            this.guessSun.Size = new System.Drawing.Size(118, 17);
+            this.guessSun.TabIndex = 6;
+            this.guessSun.Text = "Guess sun position:";
+            this.toolTip1.SetToolTip(this.guessSun, "If checked, a json meta file will be produced with a guess at the sun position.");
+            this.guessSun.UseVisualStyleBackColor = true;
+            // 
+            // trimGround
+            // 
+            this.trimGround.AutoSize = true;
+            this.trimGround.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.trimGround.Location = new System.Drawing.Point(159, 327);
+            this.trimGround.Name = "trimGround";
+            this.trimGround.Size = new System.Drawing.Size(85, 17);
+            this.trimGround.TabIndex = 5;
+            this.trimGround.Text = "Trim ground:";
+            this.toolTip1.SetToolTip(this.trimGround, "If checked, a best guess for the ground will be trimmed from the images.");
+            this.trimGround.UseVisualStyleBackColor = true;
+            this.trimGround.CheckedChanged += new System.EventHandler(this.trimGround_CheckedChanged);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(267, 351);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(78, 13);
+            this.label3.TabIndex = 12;
+            this.label3.Text = "Trim resolution:";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(267, 328);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(77, 13);
+            this.label4.TabIndex = 14;
+            this.label4.Text = "Trim accuracy:";
+            // 
+            // trimAccuracy
+            // 
+            this.trimAccuracy.Enabled = false;
+            this.trimAccuracy.Location = new System.Drawing.Point(351, 325);
+            this.trimAccuracy.Maximum = new decimal(new int[] {
+            200000,
+            0,
+            0,
+            0});
+            this.trimAccuracy.Name = "trimAccuracy";
+            this.trimAccuracy.Size = new System.Drawing.Size(64, 20);
+            this.trimAccuracy.TabIndex = 7;
+            this.toolTip1.SetToolTip(this.trimAccuracy, "If trim ground is selected, this will define the accuracy of the ground guess.");
+            this.trimAccuracy.Value = new decimal(new int[] {
+            250,
+            0,
+            0,
+            0});
+            // 
+            // trimResolution
+            // 
+            this.trimResolution.Enabled = false;
+            this.trimResolution.Location = new System.Drawing.Point(351, 347);
+            this.trimResolution.Maximum = new decimal(new int[] {
+            200000,
+            0,
+            0,
+            0});
+            this.trimResolution.Name = "trimResolution";
+            this.trimResolution.Size = new System.Drawing.Size(64, 20);
+            this.trimResolution.TabIndex = 8;
+            this.toolTip1.SetToolTip(this.trimResolution, "If trim ground is checked, this will define the number of ground checks to perfor" +
+        "m vs the image width.");
+            this.trimResolution.Value = new decimal(new int[] {
+            150,
+            0,
+            0,
+            0});
             // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(515, 407);
+            this.ClientSize = new System.Drawing.Size(511, 405);
+            this.Controls.Add(this.trimResolution);
+            this.Controls.Add(this.trimAccuracy);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.trimGround);
+            this.Controls.Add(this.guessSun);
             this.Controls.Add(this.recurseNeighbours);
             this.Controls.Add(this.followNeighbours);
             this.Controls.Add(this.downloadProgress);
@@ -148,6 +244,8 @@
             this.Name = "StreetviewGUI";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Streetview Ripper";
+            ((System.ComponentModel.ISupportInitialize)(this.trimAccuracy)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trimResolution)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -164,6 +262,12 @@
         private System.Windows.Forms.CheckBox followNeighbours;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.CheckBox recurseNeighbours;
+        private System.Windows.Forms.CheckBox guessSun;
+        private System.Windows.Forms.CheckBox trimGround;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.NumericUpDown trimAccuracy;
+        private System.Windows.Forms.NumericUpDown trimResolution;
     }
 }
 
