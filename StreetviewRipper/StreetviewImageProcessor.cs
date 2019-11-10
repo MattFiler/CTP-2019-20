@@ -177,7 +177,7 @@ namespace StreetviewRipper
 
             //Rebuild sphere
             Bitmap origSphere = (Bitmap)sphere;
-            Bitmap newSphere = new Bitmap(origSphere.Width, (int)finalY);
+            Bitmap newSphere = new Bitmap(origSphere.Width, (int)finalY + 1);
             int thisIndex = 0;
             int nextIndex = 1;
             int xSince = 0;
@@ -185,7 +185,7 @@ namespace StreetviewRipper
             {
                 xSince++;
                 int thisY = (int)positions[thisIndex].position.y - (int)(((positions[thisIndex].position.y - positions[nextIndex].position.y) / positions[thisIndex].block_width) * xSince);
-                if (thisY > origSphere.Height) thisY = origSphere.Height; //worrying
+                if (thisY > finalY + 1) thisY = (int)finalY; //worrying
                 for (int y = 0; y < thisY; y++)
                 {
                     Color thisPixel = origSphere.GetPixel(x, y);
