@@ -40,19 +40,16 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.guessSun = new System.Windows.Forms.CheckBox();
             this.trimGround = new System.Windows.Forms.CheckBox();
+            this.straightTrim = new System.Windows.Forms.CheckBox();
+            this.straightBias = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.trimAccuracy = new System.Windows.Forms.NumericUpDown();
-            this.trimResolution = new System.Windows.Forms.NumericUpDown();
-            ((System.ComponentModel.ISupportInitialize)(this.trimAccuracy)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trimResolution)).BeginInit();
             this.SuspendLayout();
             // 
             // downloadStreetview
             // 
-            this.downloadStreetview.Location = new System.Drawing.Point(423, 300);
+            this.downloadStreetview.Location = new System.Drawing.Point(409, 300);
             this.downloadStreetview.Name = "downloadStreetview";
-            this.downloadStreetview.Size = new System.Drawing.Size(76, 67);
+            this.downloadStreetview.Size = new System.Drawing.Size(90, 67);
             this.downloadStreetview.TabIndex = 9;
             this.downloadStreetview.Text = "Download";
             this.toolTip1.SetToolTip(this.downloadStreetview, "Download the provided URLs with given settings.");
@@ -90,7 +87,7 @@
             "Lowest"});
             this.streetviewZoom.Location = new System.Drawing.Point(91, 300);
             this.streetviewZoom.Name = "streetviewZoom";
-            this.streetviewZoom.Size = new System.Drawing.Size(324, 21);
+            this.streetviewZoom.Size = new System.Drawing.Size(312, 21);
             this.streetviewZoom.TabIndex = 2;
             this.toolTip1.SetToolTip(this.streetviewZoom, "The quality of the spheres to download.");
             // 
@@ -141,7 +138,7 @@
             // 
             this.guessSun.AutoSize = true;
             this.guessSun.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.guessSun.Location = new System.Drawing.Point(126, 350);
+            this.guessSun.Location = new System.Drawing.Point(122, 350);
             this.guessSun.Name = "guessSun";
             this.guessSun.Size = new System.Drawing.Size(118, 17);
             this.guessSun.TabIndex = 6;
@@ -153,7 +150,7 @@
             // 
             this.trimGround.AutoSize = true;
             this.trimGround.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.trimGround.Location = new System.Drawing.Point(159, 327);
+            this.trimGround.Location = new System.Drawing.Point(155, 327);
             this.trimGround.Name = "trimGround";
             this.trimGround.Size = new System.Drawing.Size(85, 17);
             this.trimGround.TabIndex = 5;
@@ -162,72 +159,53 @@
             this.trimGround.UseVisualStyleBackColor = true;
             this.trimGround.CheckedChanged += new System.EventHandler(this.trimGround_CheckedChanged);
             // 
+            // straightTrim
+            // 
+            this.straightTrim.AutoSize = true;
+            this.straightTrim.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.straightTrim.Enabled = false;
+            this.straightTrim.Location = new System.Drawing.Point(272, 327);
+            this.straightTrim.Name = "straightTrim";
+            this.straightTrim.Size = new System.Drawing.Size(65, 17);
+            this.straightTrim.TabIndex = 10;
+            this.straightTrim.Text = "Straight:";
+            this.toolTip1.SetToolTip(this.straightTrim, "If checked, the ground is cut as a straight line rather than a more accurate best" +
+        " guess.");
+            this.straightTrim.UseVisualStyleBackColor = true;
+            this.straightTrim.CheckedChanged += new System.EventHandler(this.straightTrim_CheckedChanged);
+            // 
+            // straightBias
+            // 
+            this.straightBias.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.straightBias.Enabled = false;
+            this.straightBias.FormattingEnabled = true;
+            this.straightBias.Items.AddRange(new object[] {
+            "Top",
+            "Middle",
+            "Bottom"});
+            this.straightBias.Location = new System.Drawing.Point(324, 346);
+            this.straightBias.Name = "straightBias";
+            this.straightBias.Size = new System.Drawing.Size(79, 21);
+            this.straightBias.TabIndex = 11;
+            this.toolTip1.SetToolTip(this.straightBias, "The bias to give to the straight line.");
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(267, 351);
+            this.label3.Location = new System.Drawing.Point(288, 350);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(78, 13);
+            this.label3.Size = new System.Drawing.Size(30, 13);
             this.label3.TabIndex = 12;
-            this.label3.Text = "Trim resolution:";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(267, 328);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(77, 13);
-            this.label4.TabIndex = 14;
-            this.label4.Text = "Trim accuracy:";
-            // 
-            // trimAccuracy
-            // 
-            this.trimAccuracy.Enabled = false;
-            this.trimAccuracy.Location = new System.Drawing.Point(351, 325);
-            this.trimAccuracy.Maximum = new decimal(new int[] {
-            200000,
-            0,
-            0,
-            0});
-            this.trimAccuracy.Name = "trimAccuracy";
-            this.trimAccuracy.Size = new System.Drawing.Size(64, 20);
-            this.trimAccuracy.TabIndex = 7;
-            this.toolTip1.SetToolTip(this.trimAccuracy, "If trim ground is selected, this will define the accuracy of the ground guess.");
-            this.trimAccuracy.Value = new decimal(new int[] {
-            250,
-            0,
-            0,
-            0});
-            // 
-            // trimResolution
-            // 
-            this.trimResolution.Enabled = false;
-            this.trimResolution.Location = new System.Drawing.Point(351, 347);
-            this.trimResolution.Maximum = new decimal(new int[] {
-            200000,
-            0,
-            0,
-            0});
-            this.trimResolution.Name = "trimResolution";
-            this.trimResolution.Size = new System.Drawing.Size(64, 20);
-            this.trimResolution.TabIndex = 8;
-            this.toolTip1.SetToolTip(this.trimResolution, "If trim ground is checked, this will define the number of ground checks to perfor" +
-        "m vs the image width.");
-            this.trimResolution.Value = new decimal(new int[] {
-            150,
-            0,
-            0,
-            0});
+            this.label3.Text = "Bias:";
             // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(511, 405);
-            this.Controls.Add(this.trimResolution);
-            this.Controls.Add(this.trimAccuracy);
-            this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
+            this.Controls.Add(this.straightBias);
+            this.Controls.Add(this.straightTrim);
             this.Controls.Add(this.trimGround);
             this.Controls.Add(this.guessSun);
             this.Controls.Add(this.recurseNeighbours);
@@ -244,8 +222,6 @@
             this.Name = "StreetviewGUI";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Streetview Ripper";
-            ((System.ComponentModel.ISupportInitialize)(this.trimAccuracy)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trimResolution)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -264,10 +240,9 @@
         private System.Windows.Forms.CheckBox recurseNeighbours;
         private System.Windows.Forms.CheckBox guessSun;
         private System.Windows.Forms.CheckBox trimGround;
+        private System.Windows.Forms.CheckBox straightTrim;
+        private System.Windows.Forms.ComboBox straightBias;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.NumericUpDown trimAccuracy;
-        private System.Windows.Forms.NumericUpDown trimResolution;
     }
 }
 

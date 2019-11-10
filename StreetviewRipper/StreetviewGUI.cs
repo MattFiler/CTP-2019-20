@@ -20,6 +20,7 @@ namespace StreetviewRipper
         {
             InitializeComponent();
             streetviewZoom.SelectedIndex = 0;
+            straightBias.SelectedIndex = 1;
         }
 
         private void downloadStreetview_Click(object sender, EventArgs e)
@@ -35,22 +36,22 @@ namespace StreetviewRipper
             switch (streetviewZoom.Text)
             {
                 case "Ultra":
-                    thisQuality.Set(5, 26, 13, 512);
+                    thisQuality.Set(5, 26, 13, 512, 45);
                     break;
                 case "High":
-                    thisQuality.Set(4, 13, 7, 512);
+                    thisQuality.Set(4, 13, 7, 512, 35);
                     break;
                 case "Medium":
-                    thisQuality.Set(3, 7, 4, 512);
+                    thisQuality.Set(3, 7, 4, 512, 25);
                     break;
                 case "Low":
-                    thisQuality.Set(2, 4, 2, 512);
+                    thisQuality.Set(2, 4, 2, 512, 20);
                     break;
                 case "Lower":
-                    thisQuality.Set(1, 2, 1, 512);
+                    thisQuality.Set(1, 2, 1, 512, 15);
                     break;
                 case "Lowest":
-                    thisQuality.Set(0, 1, 1, 512);
+                    thisQuality.Set(0, 1, 1, 512, 10);
                     break;
             }
 
@@ -142,7 +143,7 @@ namespace StreetviewRipper
             }
             streetviewRenderer.Dispose();
             if (!trimGround.Checked) streetviewImage.Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
-            if (trimGround.Checked) processor.CutOutSky(streetviewImage, (int)trimResolution.Value, (int)trimAccuracy.Value).Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
+            if (trimGround.Checked) processor.CutOutSky(streetviewImage, thisQuality.acc, straightTrim.Checked, (StraightLineBias)straightBias.SelectedIndex).Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
             downloadCount++;
             downloadedIDs.Add(id);
 
@@ -159,8 +160,18 @@ namespace StreetviewRipper
         }
         private void trimGround_CheckedChanged(object sender, EventArgs e)
         {
-            trimResolution.Enabled = trimGround.Checked;
-            trimAccuracy.Enabled = trimGround.Checked;
+            straightTrim.Enabled = trimGround.Checked;
+            straightTrim.Checked = false;
+            if (!trimGround.Checked)
+            {
+                straightBias.Enabled = false;
+                straightBias.SelectedIndex = 1;
+            }
+        }
+        private void straightTrim_CheckedChanged(object sender, EventArgs e)
+        {
+            straightBias.Enabled = straightTrim.Checked;
+            straightBias.SelectedIndex = 1;
         }
     }
 }
