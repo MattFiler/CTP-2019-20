@@ -48,7 +48,8 @@ namespace StreetviewRipper
                     streetviewID = (thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/");
                     if (streetviewID != "")
                     {
-                        DownloadStreetview(streetviewID);
+                        JArray neighbours = DownloadStreetview(streetviewID);
+                        if (followNeighbours.Checked) DownloadNeighbours(neighbours);
                     }
                 }
                 catch { }
@@ -75,19 +76,20 @@ namespace StreetviewRipper
         }
 
         /* Recurse into neighbours and download them, for a specified count */
-        private void DownloadNeighbours(string[] neighbourIDs)
+        private void DownloadNeighbours(JArray neighbourIDs)
         {
             foreach (string newStreetviewID in neighbourIDs)
             {
                 if (!downloadedIDs.Contains(newStreetviewID))
                 {
-                    DownloadStreetview(newStreetviewID);
+                    JArray neighbours = DownloadStreetview(newStreetviewID);
+                    if (followNeighbours.Checked) DownloadNeighbours(neighbours);
                 }
             }
         }
 
         /* Download a complete sphere from Streetview at a globally defined quality */
-        private void DownloadStreetview(string id)
+        private JArray DownloadStreetview(string id)
         {
             //Get metadata
             JToken thisMeta = GetMetadata(id);
@@ -152,8 +154,7 @@ namespace StreetviewRipper
             if (guessSun.Checked) localMeta["sun_pos"] = processor.GetSunXPos(streetviewImage);
             File.WriteAllText(id + "_" + streetviewZoom.SelectedIndex + ".json", localMeta.ToString(Formatting.Indented));
 
-            //Continue to download neighbours if selected
-            if (followNeighbours.Checked) DownloadNeighbours(thisMeta["neighbour_ids"].Value<string[]>());
+            return thisMeta["neighbour_ids"].Value<JArray>();
         }
 
         /* Update UI when options are enabled/disabled */
