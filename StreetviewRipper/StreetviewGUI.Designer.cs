@@ -79,12 +79,12 @@
             this.streetviewZoom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.streetviewZoom.FormattingEnabled = true;
             this.streetviewZoom.Items.AddRange(new object[] {
-            "Ultra",
-            "High",
-            "Medium",
-            "Low",
-            "Lower",
-            "Lowest"});
+            "Zoom 0 (Lowest)",
+            "Zoom 1",
+            "Zoom 2",
+            "Zoom 3",
+            "Zoom 4",
+            "Zoom 5 (Highest)"});
             this.streetviewZoom.Location = new System.Drawing.Point(91, 300);
             this.streetviewZoom.Name = "streetviewZoom";
             this.streetviewZoom.Size = new System.Drawing.Size(312, 21);

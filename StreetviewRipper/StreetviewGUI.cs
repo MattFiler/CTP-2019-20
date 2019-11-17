@@ -14,7 +14,6 @@ namespace StreetviewRipper
     public partial class StreetviewGUI : Form
     {
         StreetviewImageProcessor processor = new StreetviewImageProcessor();
-        StreetviewQualityDef thisQuality;
         int downloadCount = 0;
         List<string> downloadedIDs = new List<string>();
 
@@ -33,30 +32,6 @@ namespace StreetviewRipper
             downloadProgress.Value = 0;
             downloadProgress.Maximum = streetviewURL.Lines.Length;
 
-            //Work out what zoom to use
-            thisQuality = new StreetviewQualityDef();
-            switch (streetviewZoom.Text)
-            {
-                case "Ultra":
-                    thisQuality.Set(5, 45);
-                    break;
-                case "High":
-                    thisQuality.Set(4, 35);
-                    break;
-                case "Medium":
-                    thisQuality.Set(3, 25);
-                    break;
-                case "Low":
-                    thisQuality.Set(2, 20);
-                    break;
-                case "Lower":
-                    thisQuality.Set(1, 15);
-                    break;
-                case "Lowest":
-                    thisQuality.Set(0, 10);
-                    break;
-            }
-
             //Check the user means to recurse!
             if (recurseNeighbours.Checked)
                 if (MessageBox.Show("You have selected recursion - this will download neighbouring spheres from the provided URLs until no unique neighbours can be found (unlikely).\nFor that reason, manual termination of the program is required to stop download.\nAre you sure you wish to proceed?", "Are you sure?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
@@ -67,16 +42,16 @@ namespace StreetviewRipper
             string streetviewID = "";
             foreach (string thisURL in streetviewURL.Lines)
             {
-                //try
-                //{
+                try
+                {
                     //Get the streetview ID from string and download sphere if one is found
                     streetviewID = (thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/");
                     if (streetviewID != "")
                     {
                         DownloadStreetview(streetviewID);
                     }
-                //}
-                //catch { }
+                }
+                catch { }
                 downloadProgress.PerformStep();
             }
             
@@ -130,7 +105,7 @@ namespace StreetviewRipper
                 {
                     StreetviewTile newTile = new StreetviewTile();
 
-                    WebRequest request = WebRequest.Create("https://geo1.ggpht.com/cbk?cb_client=maps_sv.tactile&authuser=0&hl=en&gl=uk&panoid=" + id + "&output=tile&x=" + x + "&y=" + y + "&zoom=" + thisQuality.zoom);
+                    WebRequest request = WebRequest.Create("https://geo1.ggpht.com/cbk?cb_client=maps_sv.tactile&authuser=0&hl=en&gl=uk&panoid=" + id + "&output=tile&x=" + x + "&y=" + y + "&zoom=" + streetviewZoom.SelectedIndex);
                     try
                     {
                         using (WebResponse response = request.GetResponse())
@@ -156,15 +131,15 @@ namespace StreetviewRipper
             }
 
             //Compile all image tiles to one whole image
-            Bitmap streetviewImage = new Bitmap(thisMeta["compiled_sizes"][thisQuality.zoom][0].Value<int>(), thisMeta["compiled_sizes"][thisQuality.zoom][1].Value<int>());
+            Bitmap streetviewImage = new Bitmap(thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][0].Value<int>(), thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][1].Value<int>());
             Graphics streetviewRenderer = Graphics.FromImage(streetviewImage);
             foreach (StreetviewTile thisTile in streetviewTiles)
             {
                 streetviewRenderer.DrawImage(thisTile.image, thisTile.x, thisTile.y, tileWidth, tileHeight);
             }
             streetviewRenderer.Dispose();
-            if (!trimGround.Checked) streetviewImage.Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
-            if (trimGround.Checked) processor.CutOutSky(streetviewImage, thisQuality.acc, straightTrim.Checked, (StraightLineBias)straightBias.SelectedIndex).Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
+            if (!trimGround.Checked) streetviewImage.Save(id + "_" + streetviewZoom.SelectedIndex + ".png");
+            if (trimGround.Checked) processor.CutOutSky(streetviewImage, (streetviewZoom.SelectedIndex * 5) + 15, straightTrim.Checked, (StraightLineBias)straightBias.SelectedIndex).Save(id + "_" + streetviewZoom.SelectedIndex + ".png");
             downloadCount++;
             downloadedIDs.Add(id);
 
@@ -173,9 +148,9 @@ namespace StreetviewRipper
             localMeta["location"] = thisMeta["road"].Value<string>() + ", " + thisMeta["region"].Value<string>();
             localMeta["coordinates"] = thisMeta["coordinates"][0].Value<double>() + ", " + thisMeta["coordinates"][1].Value<double>();
             localMeta["date"] = thisMeta["this_date"][1].Value<int>() + "/" + thisMeta["this_date"][0].Value<int>();
-            localMeta["resolution"] = thisMeta["compiled_sizes"][thisQuality.zoom][0].Value<int>() + " x " + thisMeta["compiled_sizes"][thisQuality.zoom][1].Value<int>();
+            localMeta["resolution"] = thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][0].Value<int>() + " x " + thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][1].Value<int>();
             if (guessSun.Checked) localMeta["sun_pos"] = processor.GetSunXPos(streetviewImage);
-            File.WriteAllText(id + "_" + streetviewZoom.Text.ToLower() + ".json", localMeta.ToString(Formatting.Indented));
+            File.WriteAllText(id + "_" + streetviewZoom.SelectedIndex + ".json", localMeta.ToString(Formatting.Indented));
 
             //Continue to download neighbours if selected
             if (followNeighbours.Checked) DownloadNeighbours(thisMeta["neighbour_ids"].Value<string[]>());
