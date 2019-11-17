@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -36,22 +38,22 @@ namespace StreetviewRipper
             switch (streetviewZoom.Text)
             {
                 case "Ultra":
-                    thisQuality.Set(5, 26, 13, 512, 45);
+                    thisQuality.Set(5, 45);
                     break;
                 case "High":
-                    thisQuality.Set(4, 13, 7, 512, 35);
+                    thisQuality.Set(4, 35);
                     break;
                 case "Medium":
-                    thisQuality.Set(3, 7, 4, 512, 25);
+                    thisQuality.Set(3, 25);
                     break;
                 case "Low":
-                    thisQuality.Set(2, 4, 2, 512, 20);
+                    thisQuality.Set(2, 20);
                     break;
                 case "Lower":
-                    thisQuality.Set(1, 2, 1, 512, 15);
+                    thisQuality.Set(1, 15);
                     break;
                 case "Lowest":
-                    thisQuality.Set(0, 1, 1, 512, 10);
+                    thisQuality.Set(0, 10);
                     break;
             }
 
@@ -65,17 +67,16 @@ namespace StreetviewRipper
             string streetviewID = "";
             foreach (string thisURL in streetviewURL.Lines)
             {
-                try
-                {
+                //try
+                //{
                     //Get the streetview ID from string and download sphere if one is found
                     streetviewID = (thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/");
                     if (streetviewID != "")
                     {
                         DownloadStreetview(streetviewID);
-                        if (followNeighbours.Checked) DownloadNeighbours(streetviewID);
                     }
-                }
-                catch { }
+                //}
+                //catch { }
                 downloadProgress.PerformStep();
             }
             
@@ -87,20 +88,25 @@ namespace StreetviewRipper
             MessageBox.Show("Downloaded " + downloadCount + " Streetview sphere(s) from " + downloadProgress.Maximum + " URL(s)!", "Complete!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        /* Recurse into neighbours and download them, for a specified count */
-        private void DownloadNeighbours(string id)
+        /* Get metadata for a Streetview ID */
+        private JToken GetMetadata(string id)
         {
             var request = WebRequest.Create("http://streetview.mattfiler.co.uk?panoid=" + id);
             using (var response = request.GetResponse())
             using (var reader = new System.IO.StreamReader(response.GetResponseStream(), ASCIIEncoding.ASCII))
             {
-                foreach (string newStreetviewID in reader.ReadToEnd().Split('\n'))
+                return JToken.Parse(reader.ReadToEnd());
+            }
+        }
+
+        /* Recurse into neighbours and download them, for a specified count */
+        private void DownloadNeighbours(string[] neighbourIDs)
+        {
+            foreach (string newStreetviewID in neighbourIDs)
+            {
+                if (!downloadedIDs.Contains(newStreetviewID))
                 {
-                    if (!downloadedIDs.Contains(newStreetviewID))
-                    {
-                        DownloadStreetview(newStreetviewID);
-                        if (recurseNeighbours.Checked) DownloadNeighbours(newStreetviewID);
-                    }
+                    DownloadStreetview(newStreetviewID);
                 }
             }
         }
@@ -108,38 +114,53 @@ namespace StreetviewRipper
         /* Download a complete sphere from Streetview at a globally defined quality */
         private void DownloadStreetview(string id)
         {
+            //Get metadata
+            JToken thisMeta = GetMetadata(id);
+            int tileWidth = thisMeta["tile_size"][0].Value<int>();
+            int tileHeight = thisMeta["tile_size"][1].Value<int>();
+
             //Load every tile
             int xOffset = 0;
             int yOffset = 0;
+            bool stop = false;
             List<StreetviewTile> streetviewTiles = new List<StreetviewTile>();
-            for (int y = 0; y < thisQuality.y; y++)
+            for (int y = 0; y < int.MaxValue; y++)
             {
-                for (int x = 0; x < thisQuality.x; x++)
+                for (int x = 0; x < int.MaxValue; x++)
                 {
                     StreetviewTile newTile = new StreetviewTile();
 
-                    var request = WebRequest.Create("https://geo1.ggpht.com/cbk?cb_client=maps_sv.tactile&authuser=0&hl=en&gl=uk&panoid=" + id + "&output=tile&x=" + x + "&y=" + y + "&zoom=" + thisQuality.zoom);
-                    using (var response = request.GetResponse())
-                    using (var stream = response.GetResponseStream())
+                    WebRequest request = WebRequest.Create("https://geo1.ggpht.com/cbk?cb_client=maps_sv.tactile&authuser=0&hl=en&gl=uk&panoid=" + id + "&output=tile&x=" + x + "&y=" + y + "&zoom=" + thisQuality.zoom);
+                    try
                     {
-                        newTile.image = Bitmap.FromStream(stream);
+                        using (WebResponse response = request.GetResponse())
+                        using (Stream stream = response.GetResponseStream())
+                        {
+                            newTile.image = Bitmap.FromStream(stream);
+                        }
+                    }
+                    catch
+                    {
+                        if (x == 0) stop = true;
+                        break;
                     }
                     newTile.x = xOffset;
                     newTile.y = yOffset;
 
                     streetviewTiles.Add(newTile);
-                    xOffset += thisQuality.size;
+                    xOffset += tileWidth;
                 }
-                yOffset += thisQuality.size;
+                if (stop) break;
+                yOffset += tileWidth;
                 xOffset = 0;
             }
 
             //Compile all image tiles to one whole image
-            Bitmap streetviewImage = new Bitmap(thisQuality.size * thisQuality.x, thisQuality.size * thisQuality.y);
+            Bitmap streetviewImage = new Bitmap(thisMeta["compiled_sizes"][thisQuality.zoom][0].Value<int>(), thisMeta["compiled_sizes"][thisQuality.zoom][1].Value<int>());
             Graphics streetviewRenderer = Graphics.FromImage(streetviewImage);
             foreach (StreetviewTile thisTile in streetviewTiles)
             {
-                streetviewRenderer.DrawImage(thisTile.image, thisTile.x, thisTile.y, thisQuality.size, thisQuality.size);
+                streetviewRenderer.DrawImage(thisTile.image, thisTile.x, thisTile.y, tileWidth, tileHeight);
             }
             streetviewRenderer.Dispose();
             if (!trimGround.Checked) streetviewImage.Save(id + "_" + streetviewZoom.Text.ToLower() + ".png");
@@ -147,9 +168,17 @@ namespace StreetviewRipper
             downloadCount++;
             downloadedIDs.Add(id);
 
-            //If requested to guess sun pos, do that and output it
-            if (!guessSun.Checked) return;
-            File.WriteAllText(id + "_" + streetviewZoom.Text.ToLower() + ".json", "{\n\"sun_pos\": " + processor.GetSunXPos(streetviewImage) + "\n}");
+            //Write some of the metadata locally
+            JToken localMeta = JToken.Parse("{}");
+            localMeta["location"] = thisMeta["road"].Value<string>() + ", " + thisMeta["region"].Value<string>();
+            localMeta["coordinates"] = thisMeta["coordinates"][0].Value<double>() + ", " + thisMeta["coordinates"][1].Value<double>();
+            localMeta["date"] = thisMeta["this_date"][1].Value<int>() + "/" + thisMeta["this_date"][0].Value<int>();
+            localMeta["resolution"] = thisMeta["compiled_sizes"][thisQuality.zoom][0].Value<int>() + " x " + thisMeta["compiled_sizes"][thisQuality.zoom][1].Value<int>();
+            if (guessSun.Checked) localMeta["sun_pos"] = processor.GetSunXPos(streetviewImage);
+            File.WriteAllText(id + "_" + streetviewZoom.Text.ToLower() + ".json", localMeta.ToString(Formatting.Indented));
+
+            //Continue to download neighbours if selected
+            if (followNeighbours.Checked) DownloadNeighbours(thisMeta["neighbour_ids"].Value<string[]>());
         }
 
         /* Update UI when options are enabled/disabled */
