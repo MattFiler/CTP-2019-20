@@ -20,7 +20,7 @@ namespace StreetviewRipper
         public StreetviewGUI()
         {
             InitializeComponent();
-            streetviewZoom.SelectedIndex = 0;
+            streetviewZoom.SelectedIndex = 3;
             straightBias.SelectedIndex = 1;
         }
 
@@ -42,8 +42,8 @@ namespace StreetviewRipper
             string streetviewID = "";
             foreach (string thisURL in streetviewURL.Lines)
             {
-                try
-                {
+                //try
+                //{
                     //Get the streetview ID from string and download sphere if one is found
                     streetviewID = (thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/");
                     if (streetviewID != "")
@@ -51,8 +51,8 @@ namespace StreetviewRipper
                         JArray neighbours = DownloadStreetview(streetviewID);
                         if (followNeighbours.Checked) DownloadNeighbours(neighbours);
                     }
-                }
-                catch { }
+                //}
+                //catch { }
                 downloadProgress.PerformStep();
             }
             
@@ -76,13 +76,14 @@ namespace StreetviewRipper
         }
 
         /* Recurse into neighbours and download them, for a specified count */
-        private void DownloadNeighbours(JArray neighbourIDs)
+        private void DownloadNeighbours(JArray neighbourInfos)
         {
-            foreach (string newStreetviewID in neighbourIDs)
+            foreach (JObject thisNeighbour in neighbourInfos)
             {
-                if (!downloadedIDs.Contains(newStreetviewID))
+                string thisID = thisNeighbour["id"].Value<string>();
+                if (!downloadedIDs.Contains(thisID))
                 {
-                    JArray neighbours = DownloadStreetview(newStreetviewID);
+                    JArray neighbours = DownloadStreetview(thisID);
                     if (followNeighbours.Checked) DownloadNeighbours(neighbours);
                 }
             }
@@ -149,12 +150,13 @@ namespace StreetviewRipper
             JToken localMeta = JToken.Parse("{}");
             localMeta["location"] = thisMeta["road"].Value<string>() + ", " + thisMeta["region"].Value<string>();
             localMeta["coordinates"] = thisMeta["coordinates"][0].Value<double>() + ", " + thisMeta["coordinates"][1].Value<double>();
-            localMeta["date"] = thisMeta["this_date"][1].Value<int>() + "/" + thisMeta["this_date"][0].Value<int>();
-            localMeta["resolution"] = thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][0].Value<int>() + " x " + thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][1].Value<int>();
+            localMeta["date"] = thisMeta["date"][1].Value<int>() + "/" + thisMeta["date"][0].Value<int>();
+            localMeta["resolution"] = thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][0].Value<int>() + "px, " + thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][1].Value<int>() + "px";
+            localMeta["history"] = thisMeta["history"];
             if (guessSun.Checked) localMeta["sun_pos"] = processor.GetSunXPos(streetviewImage);
             File.WriteAllText(id + "_" + streetviewZoom.SelectedIndex + ".json", localMeta.ToString(Formatting.Indented));
 
-            return thisMeta["neighbour_ids"].Value<JArray>();
+            return thisMeta["neighbours"].Value<JArray>();
         }
 
         /* Update UI when options are enabled/disabled */
