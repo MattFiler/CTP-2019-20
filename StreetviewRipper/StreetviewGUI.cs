@@ -43,8 +43,8 @@ namespace StreetviewRipper
             string streetviewID = "";
             foreach (string thisURL in streetviewURL.Lines)
             {
-                //try
-                //{
+                try
+                {
                     //Get the streetview ID from string and download sphere if one is found
                     streetviewID = (thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/");
                     if (streetviewID != "")
@@ -52,8 +52,8 @@ namespace StreetviewRipper
                         JArray neighbours = DownloadStreetview(streetviewID);
                         if (followNeighbours.Checked) DownloadNeighbours(neighbours);
                     }
-                //}
-                //catch { }
+                }
+                catch { }
                 downloadProgress.PerformStep();
             }
             
@@ -95,6 +95,7 @@ namespace StreetviewRipper
         {
             //Get metadata
             JToken thisMeta = GetMetadata(id);
+            if (thisMeta["error"].Value<string>() != "") return null;
             int tileWidth = thisMeta["tile_size"][0].Value<int>();
             int tileHeight = thisMeta["tile_size"][1].Value<int>();
 

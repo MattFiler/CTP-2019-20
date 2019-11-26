@@ -1,7 +1,7 @@
 <?php
 	//Requires "panoid" param
 	if (!$_GET['panoid']) {
-		echo "This API requires a Streetview ID.";
+		echo "{\"error\":\"This API requires a Streetview ID.\"}";
 		exit;
 	}
 	$meta_final->id = $_GET['panoid'];
@@ -21,9 +21,10 @@
 	
 	//If the date is still null, the panoid is invalid
 	if (empty($metafile[1][0][6][7][0])) {
-		echo "Invalid panoid supplied!";
+		echo "{\"error\":\"Invalid panoid supplied!\"}";
 		exit;
 	}
+	$meta_final->error = "";
 	
 	//Pull date
 	$date_block = $metafile[1][0][6][7];
