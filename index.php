@@ -8,15 +8,39 @@
 	
 	//Get metafile for panoid and format it
 	$metafile = json_decode(substr(file_get_contents("https://www.google.co.uk/maps/photometa/v1?authuser=0&hl=en&gl=uk&pb=!1m4!1smaps_sv.tactile!11m2!2m1!1b1!2m2!1sen!2suk!3m3!1m2!1e2!2s".$_GET['panoid']."!4m57!1e1!1e2!1e3!1e4!1e5!1e6!1e8!1e12!2m1!1e1!4m1!1i48!5m1!1e1!5m1!1e2!6m1!1e1!6m1!1e2!9m36!1m3!1e2!2b1!3e2!1m3!1e2!2b0!3e3!1m3!1e3!2b1!3e2!1m3!1e3!2b0!3e3!1m3!1e8!2b0!3e3!1m3!1e1!2b0!3e3!1m3!1e4!2b0!3e3!1m3!1e10!2b1!3e2!1m3!1e10!2b0!3e3"), 4));
+	$meta_final->tile_url = "https://geo1.ggpht.com/cbk?cb_client=maps_sv.tactile&authuser=0&hl=en&gl=uk&panoid=".$_GET['panoid']."&output=tile&x=*X*&y=*Y*&zoom=*Z*";
+	
+	//If the date is null, we can assume this panoid is UGC
+	$meta_final->is_ugc = false;
+	if (empty($metafile[1][0][6][7][0])) {
+		$metafile = json_decode(substr(file_get_contents("https://www.google.com/maps/photometa/v1?authuser=0&hl=en&gl=uk&pb=!1m4!1smaps_sv.tactile!11m2!2m1!1b1!2m2!1sen!2suk!3m3!1m2!1e10!2s".$_GET['panoid']."!4m57!1e1!1e2!1e3!1e4!1e5!1e6!1e8!1e12!2m1!1e1!4m1!1i48!5m1!1e1!5m1!1e2!6m1!1e1!6m1!1e2!9m36!1m3!1e2!2b1!3e2!1m3!1e2!2b0!3e3!1m3!1e3!2b1!3e2!1m3!1e3!2b0!3e3!1m3!1e8!2b0!3e3!1m3!1e1!2b0!3e3!1m3!1e4!2b0!3e3!1m3!1e10!2b1!3e2!1m3!1e10!2b0!3e3"), 4));
+		$meta_final->tile_url = "https://lh3.ggpht.com/p/".$_GET['panoid']."=x*X*-y*Y*-z*Z*";
+		$meta_final->is_ugc = true;
+		$meta_final->creator = $metafile[1][0][4][1][0][0][0];
+	}
+	
+	//If the date is still null, the panoid is invalid
+	if (empty($metafile[1][0][6][7][0])) {
+		echo "Invalid panoid supplied!";
+		exit;
+	}
 	
 	//Pull date
 	$date_block = $metafile[1][0][6][7];
 	$meta_final->date = array($date_block[0], $date_block[1]);
 
 	//Pull this sphere's geo info
-	$area_text_block = $metafile[1][0][3][2];
-	$meta_final->road = $area_text_block[0][0];
-	$meta_final->region = $area_text_block[1][0];
+	if ($meta_final->is_ugc) {
+		//Some UGC doesn't have this, but try anyway
+		$area_text_block = $metafile[1][0][5][0][9][0];
+		$meta_final->road = $area_text_block[2][0];
+		$meta_final->region = $area_text_block[3][0];
+	} else {
+		//Non-UGC should always have this
+		$area_text_block = $metafile[1][0][3][2];
+		$meta_final->road = $area_text_block[0][0];
+		$meta_final->region = $area_text_block[1][0];
+	}
 	$latlon_block = $metafile[1][0][5][0][1][0];
 	$meta_final->coordinates = array($latlon_block[2], $latlon_block[3]);
 

@@ -15,6 +15,7 @@ namespace StreetviewRipper
     {
         StreetviewImageProcessor processor = new StreetviewImageProcessor();
         int downloadCount = 0;
+        bool isUGC = false; //User Generated Content uses a different URL
         List<string> downloadedIDs = new List<string>();
 
         public StreetviewGUI()
@@ -101,14 +102,15 @@ namespace StreetviewRipper
             int xOffset = 0;
             int yOffset = 0;
             bool stop = false;
+            isUGC = false;
             List<StreetviewTile> streetviewTiles = new List<StreetviewTile>();
             for (int y = 0; y < int.MaxValue; y++)
             {
                 for (int x = 0; x < int.MaxValue; x++)
                 {
                     StreetviewTile newTile = new StreetviewTile();
-
-                    WebRequest request = WebRequest.Create("https://geo1.ggpht.com/cbk?cb_client=maps_sv.tactile&authuser=0&hl=en&gl=uk&panoid=" + id + "&output=tile&x=" + x + "&y=" + y + "&zoom=" + streetviewZoom.SelectedIndex);
+                    
+                    WebRequest request = WebRequest.Create(thisMeta["tile_url"].Value<string>().Replace("*X*", x.ToString()).Replace("*Y*", y.ToString()).Replace("*Z*", streetviewZoom.SelectedIndex.ToString()));
                     try
                     {
                         using (WebResponse response = request.GetResponse())
@@ -148,11 +150,12 @@ namespace StreetviewRipper
 
             //Write some of the metadata locally
             JToken localMeta = JToken.Parse("{}");
-            localMeta["location"] = thisMeta["road"].Value<string>() + ", " + thisMeta["region"].Value<string>();
+            localMeta["location"] = (thisMeta["road"].Value<string>() == null) ? "Unknown" : thisMeta["road"].Value<string>() + ", " + thisMeta["region"].Value<string>();
             localMeta["coordinates"] = thisMeta["coordinates"][0].Value<double>() + ", " + thisMeta["coordinates"][1].Value<double>();
             localMeta["date"] = thisMeta["date"][1].Value<int>() + "/" + thisMeta["date"][0].Value<int>();
             localMeta["resolution"] = thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][0].Value<int>() + "px, " + thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][1].Value<int>() + "px";
             localMeta["history"] = thisMeta["history"];
+            if (thisMeta["is_ugc"].Value<bool>()) localMeta["ugc_creator"] = thisMeta["creator"];
             if (guessSun.Checked) localMeta["sun_pos"] = processor.GetSunXPos(streetviewImage);
             File.WriteAllText(id + "_" + streetviewZoom.SelectedIndex + ".json", localMeta.ToString(Formatting.Indented));
 
