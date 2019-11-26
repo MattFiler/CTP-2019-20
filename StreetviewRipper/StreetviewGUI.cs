@@ -135,6 +135,9 @@ namespace StreetviewRipper
                 xOffset = 0;
             }
 
+            //Cap zoom to the max available for this sphere (UGC varies)
+            if (streetviewZoom.SelectedIndex >= thisMeta["compiled_sizes"].Value<JArray>().Count) streetviewZoom.SelectedIndex = thisMeta["compiled_sizes"].Value<JArray>().Count-1;
+
             //Compile all image tiles to one whole image
             Bitmap streetviewImage = new Bitmap(thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][0].Value<int>(), thisMeta["compiled_sizes"][streetviewZoom.SelectedIndex][1].Value<int>());
             Graphics streetviewRenderer = Graphics.FromImage(streetviewImage);
