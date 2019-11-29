@@ -50,10 +50,48 @@ namespace StreetviewRipper
         BOTTOM
     }
 
+    //TODO: Implement BackgroundWorker to multithread this process.
     class StreetviewImageProcessor
     {
-        /* Try and remove the ground from the image */
-        public Image CutOutSky(Image sphere, int acc, bool straight, StraightLineBias bias)
+        /* Trim the image by the given ground positions */
+        public Image CutOutSky(Image sphere, List<GroundInfo> positions)
+        {
+            //Work out the height of the final image 
+            float finalY = 0;
+            for (int i = 0; i < positions.Count; i++)
+            {
+                if (positions[i].position.y >= finalY) finalY = positions[i].position.y;
+            }
+
+            //Rebuild sphere
+            Bitmap origSphere = (Bitmap)sphere;
+            Bitmap newSphere = new Bitmap(origSphere.Width, (int)finalY + 1);
+            int thisIndex = 0;
+            int nextIndex = 1;
+            int xSince = 0;
+            for (int x = 0; x < sphere.Width; x++)
+            {
+                xSince++;
+                int thisY = (int)positions[thisIndex].position.y - (int)(((positions[thisIndex].position.y - positions[nextIndex].position.y) / positions[thisIndex].block_width) * xSince);
+                if (thisY > finalY + 1) thisY = (int)finalY; //worrying
+                for (int y = 0; y < thisY; y++)
+                {
+                    Color thisPixel = origSphere.GetPixel(x, y);
+                    newSphere.SetPixel(x, y, thisPixel);
+                }
+                if (thisIndex + 1 < positions.Count && x > positions[thisIndex + 1].position.x)
+                {
+                    thisIndex++;
+                    nextIndex++;
+                    xSince = 0;
+                    if (nextIndex >= positions.Count) nextIndex--;
+                }
+            }
+            return newSphere;
+        }
+
+        /* Try and guess ground positions across an image */
+        public List<GroundInfo> GuessGroundPositions(Image sphere, int acc, bool straight, StraightLineBias bias)
         {
             //Work out the classifier between ground and sky
             float skyClassifier = TakeAverageBrightness(sphere.Height / 6, (Bitmap)sphere);
@@ -66,7 +104,7 @@ namespace StreetviewRipper
             for (int i = 0; i < sphere.Width; i++)
             {
                 GroundInfo thisGround = new GroundInfo();
-                thisGround.position = GuessGroundPos(posOffset, (Bitmap)sphere, diffClassifier);
+                thisGround.position = GuessGroundPositionForX(posOffset, (Bitmap)sphere, diffClassifier);
                 thisGround.block_width = 1;
                 positions.Add(thisGround);
                 posOffset += thisGround.block_width;
@@ -167,55 +205,12 @@ namespace StreetviewRipper
                 avgPos.position = new Vector2(sphere.Width / 2, avgY);
                 positions.Add(avgPos);
             }
-
-            //Work out the height of the final image 
-            float finalY = 0;
-            for (int i = 0; i < positions.Count; i++)
-            {
-                if (positions[i].position.y >= finalY) finalY = positions[i].position.y;
-            }
-
-            //Rebuild sphere
-            Bitmap origSphere = (Bitmap)sphere;
-            Bitmap newSphere = new Bitmap(origSphere.Width, (int)finalY + 1);
-            int thisIndex = 0;
-            int nextIndex = 1;
-            int xSince = 0;
-            for (int x = 0; x < sphere.Width; x++)
-            {
-                xSince++;
-                int thisY = (int)positions[thisIndex].position.y - (int)(((positions[thisIndex].position.y - positions[nextIndex].position.y) / positions[thisIndex].block_width) * xSince);
-                if (thisY > finalY + 1) thisY = (int)finalY; //worrying
-                for (int y = 0; y < thisY; y++)
-                {
-                    Color thisPixel = origSphere.GetPixel(x, y);
-                    newSphere.SetPixel(x, y, thisPixel);
-                }
-                if (thisIndex + 1 < positions.Count && x > positions[thisIndex + 1].position.x)
-                {
-                    thisIndex++;
-                    nextIndex++;
-                    xSince = 0;
-                    if (nextIndex >= positions.Count) nextIndex--;
-                }
-            }
-            return newSphere;
-        }
-
-        /* Take the average brightness across each X pixel on a given Y */
-        private float TakeAverageBrightness(int y, Bitmap sphere)
-        {
-            float avg = 0.0f;
-            for (int x = 0; x < sphere.Width; x++)
-            {
-                avg += sphere.GetPixel(x, y).GetBrightness();
-            }
-            return avg / sphere.Width;
+            return positions;
         }
 
         /* Guess the ground position on the Y for a given X */
         int firstY = -1;
-        private Vector2 GuessGroundPos(int x, Bitmap sphere, float classifier)
+        private Vector2 GuessGroundPositionForX(int x, Bitmap sphere, float classifier)
         {
             List<float> pDiff = new List<float>();
             for (int y = 1; y < sphere.Height - sphere.Height / 5; y++)
@@ -277,6 +272,17 @@ namespace StreetviewRipper
                 firstY = prevBest[bestI].pos;
                 return new Vector2(x, prevBest[bestI].pos);
             }
+        }
+
+        /* Take the average brightness across each X pixel on a given Y */
+        private float TakeAverageBrightness(int y, Bitmap sphere)
+        {
+            float avg = 0.0f;
+            for (int x = 0; x < sphere.Width; x++)
+            {
+                avg += sphere.GetPixel(x, y).GetBrightness();
+            }
+            return avg / sphere.Width;
         }
 
         /* Guess the X position of the sun in the image */
