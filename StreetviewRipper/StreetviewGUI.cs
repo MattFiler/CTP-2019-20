@@ -7,62 +7,87 @@ using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace StreetviewRipper
 {
     public partial class StreetviewGUI : Form
     {
-        StreetviewImageProcessor processor = new StreetviewImageProcessor();
-        bool isUGC = false; //User Generated Content uses a different URL
         int downloadCount = 0;
+        int selectedQuality = 4;
+        bool shouldStop = false;
+        StraightLineBias selectedBias = StraightLineBias.MIDDLE;
         List<string> downloadedIDs = new List<string>();
 
         public StreetviewGUI()
         {
             InitializeComponent();
-            imageQuality.SelectedIndex = 4;
-            straightBias.SelectedIndex = 1;
+            imageQuality.SelectedIndex = selectedQuality;
+            straightBias.SelectedIndex = (int)selectedBias;
         }
 
+        /* Start downloading */
         private void downloadStreetview_Click(object sender, EventArgs e)
         {
             //Setup UI
+            stopThreadedDownload.Enabled = true;
             downloadStreetview.Enabled = false;
-            Cursor.Current = Cursors.WaitCursor;
-            downloadProgress.Value = 0;
-            downloadProgress.Maximum = streetviewURL.Lines.Length;
-
-            //Check the user means to recurse!
-            if (recurseNeighbours.Checked)
-                if (MessageBox.Show("Recursion selected! Are you sure?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+            straightBias.Enabled = false;
+            imageQuality.Enabled = false;
 
             //Download all in list
             downloadCount = 0;
+            UpdateDownloadCountText(downloadCount);
+            selectedQuality = imageQuality.SelectedIndex;
+            shouldStop = false;
+            selectedBias = (StraightLineBias)straightBias.SelectedIndex;
             downloadedIDs.Clear();
-            string streetviewID = "";
+            List<string> streetviewIDs = new List<string>();
             foreach (string thisURL in streetviewURL.Lines)
             {
                 try
                 {
                     //Get the streetview ID from string and download sphere if one is found
-                    streetviewID = (thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/");
-                    if (streetviewID != "")
-                    {
-                        JArray neighbours = DownloadStreetview(streetviewID);
-                        if (recurseNeighbours.Checked) DownloadNeighbours(neighbours);
-                    }
+                    streetviewIDs.Add((thisURL.Split(new string[] { "!1s" }, StringSplitOptions.None)[1].Split(new string[] { "!2e" }, StringSplitOptions.None)[0]).Replace("%2F", "/"));
                 }
                 catch { }
-                downloadProgress.PerformStep();
             }
-            
-            //Finished
-            streetviewURL.Text = "";
+            Thread t = new Thread(() => StartDownloading(streetviewIDs));
+            t.Start();
+        }
+        private void StartDownloading(List<string> ids)
+        {
+            foreach (string id in ids)
+            {
+                if (id != "")
+                {
+                    JArray neighbours = DownloadStreetview(id);
+                    DownloadNeighbours(neighbours);
+                }
+            }
+        }
+
+        /* Stop downloading */
+        private void stopThreadedDownload_Click(object sender, EventArgs e)
+        {
+            stopThreadedDownload.Enabled = false;
             downloadStreetview.Enabled = true;
-            Cursor.Current = Cursors.Default;
-            downloadProgress.Value = downloadProgress.Maximum;
-            MessageBox.Show("Downloaded " + downloadCount + " Streetview sphere(s) from " + downloadProgress.Maximum + " URL(s)!", "Complete!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            straightBias.Enabled = true;
+            imageQuality.Enabled = true;
+            streetviewURL.Text = "";
+            shouldStop = true;
+        }
+
+        /* Update download text (multithread support) */
+        public void UpdateDownloadCountText(int value)
+        {
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<int>(UpdateDownloadCountText), new object[] { value });
+                return;
+            }
+            downloadTracker.Text = "Downloaded and processed: " + value;
         }
 
         /* Get metadata for a Streetview ID */
@@ -79,12 +104,14 @@ namespace StreetviewRipper
         /* Recurse into neighbours and download them, for a specified count */
         private void DownloadNeighbours(JArray neighbourInfos)
         {
+            if (shouldStop) return;
             foreach (JObject thisNeighbour in neighbourInfos)
             {
                 string thisID = thisNeighbour["id"].Value<string>();
                 if (!downloadedIDs.Contains(thisID))
                 {
                     JArray neighbours = DownloadStreetview(thisID);
+                    if (neighbours == null) continue;
                     DownloadNeighbours(neighbours);
                 }
             }
@@ -93,7 +120,10 @@ namespace StreetviewRipper
         /* Download a complete sphere from Streetview at a globally defined quality */
         private JArray DownloadStreetview(string id)
         {
+            if (shouldStop) return null;
+
             //Get metadata
+            downloadedIDs.Add(id);
             JToken thisMeta = GetMetadata(id);
             if (thisMeta["error"].Value<string>() != "") return null;
             int tileWidth = thisMeta["tile_size"][0].Value<int>();
@@ -103,7 +133,6 @@ namespace StreetviewRipper
             int xOffset = 0;
             int yOffset = 0;
             bool stop = false;
-            isUGC = false;
             List<StreetviewTile> streetviewTiles = new List<StreetviewTile>();
             for (int y = 0; y < int.MaxValue; y++)
             {
@@ -111,7 +140,7 @@ namespace StreetviewRipper
                 {
                     StreetviewTile newTile = new StreetviewTile();
 
-                    WebRequest request = WebRequest.Create(thisMeta["tile_url"].Value<string>().Replace("*X*", x.ToString()).Replace("*Y*", y.ToString()).Replace("*Z*", imageQuality.SelectedIndex.ToString()));
+                    WebRequest request = WebRequest.Create(thisMeta["tile_url"].Value<string>().Replace("*X*", x.ToString()).Replace("*Y*", y.ToString()).Replace("*Z*", selectedQuality.ToString()));
                     try
                     {
                         using (WebResponse response = request.GetResponse())
@@ -137,10 +166,10 @@ namespace StreetviewRipper
             }
 
             //Cap zoom to the max available for this sphere (UGC varies)
-            if (imageQuality.SelectedIndex >= thisMeta["compiled_sizes"].Value<JArray>().Count) imageQuality.SelectedIndex = thisMeta["compiled_sizes"].Value<JArray>().Count - 1;
+            if (selectedQuality >= thisMeta["compiled_sizes"].Value<JArray>().Count) selectedQuality = thisMeta["compiled_sizes"].Value<JArray>().Count - 1;
 
             //Compile all image tiles to one whole image
-            Bitmap streetviewImage = new Bitmap(thisMeta["compiled_sizes"][imageQuality.SelectedIndex][0].Value<int>(), thisMeta["compiled_sizes"][imageQuality.SelectedIndex][1].Value<int>());
+            Bitmap streetviewImage = new Bitmap(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), thisMeta["compiled_sizes"][selectedQuality][1].Value<int>());
             Graphics streetviewRenderer = Graphics.FromImage(streetviewImage);
             foreach (StreetviewTile thisTile in streetviewTiles)
             {
@@ -155,18 +184,19 @@ namespace StreetviewRipper
             else localMeta["location"] = new JArray { thisMeta["road"].Value<string>(), thisMeta["region"].Value<string>() };
             localMeta["coordinates"] = new JArray { thisMeta["coordinates"][0].Value<double>(), thisMeta["coordinates"][1].Value<double>() };
             localMeta["date"] = new JArray { thisMeta["date"][1].Value<int>(), thisMeta["date"][0].Value<int>() };
-            localMeta["resolution"] = new JArray { thisMeta["compiled_sizes"][imageQuality.SelectedIndex][0].Value<int>(), thisMeta["compiled_sizes"][imageQuality.SelectedIndex][1].Value<int>() };
+            localMeta["resolution"] = new JArray { thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), thisMeta["compiled_sizes"][selectedQuality][1].Value<int>() };
             localMeta["history"] = thisMeta["history"];
             if (thisMeta["is_ugc"].Value<bool>()) localMeta["creator"] = thisMeta["creator"];
             else localMeta["creator"] = "Google";
+            StreetviewImageProcessor processor = new StreetviewImageProcessor();
             localMeta["sun_x"] = processor.GetSunXPos(streetviewImage);
-            Vector2 groundPos = processor.GuessGroundPositions(streetviewImage, (imageQuality.SelectedIndex * 5) + 15, true, (StraightLineBias)straightBias.SelectedIndex)[0].position;
+            Vector2 groundPos = processor.GuessGroundPositions(streetviewImage, (selectedQuality * 5) + 15, true, (StraightLineBias)selectedBias)[0].position;
             localMeta["ground_y"] = groundPos.y;
             File.WriteAllText(id + ".json", localMeta.ToString(Formatting.Indented));
 
             //Done!
             downloadCount++;
-            downloadedIDs.Add(id);
+            UpdateDownloadCountText(downloadCount);
             return thisMeta["neighbours"].Value<JArray>();
         }
     }

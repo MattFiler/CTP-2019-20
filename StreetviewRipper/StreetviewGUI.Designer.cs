@@ -32,13 +32,13 @@
             this.downloadStreetview = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.streetviewURL = new System.Windows.Forms.TextBox();
-            this.recurseNeighbours = new System.Windows.Forms.CheckBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.straightBias = new System.Windows.Forms.ComboBox();
             this.imageQuality = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.downloadProgress = new System.Windows.Forms.ProgressBar();
+            this.downloadTracker = new System.Windows.Forms.Label();
+            this.stopThreadedDownload = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // downloadStreetview
@@ -47,7 +47,7 @@
             this.downloadStreetview.Name = "downloadStreetview";
             this.downloadStreetview.Size = new System.Drawing.Size(90, 29);
             this.downloadStreetview.TabIndex = 9;
-            this.downloadStreetview.Text = "Download";
+            this.downloadStreetview.Text = "Start";
             this.toolTip1.SetToolTip(this.downloadStreetview, "Download the provided URLs with given settings.");
             this.downloadStreetview.UseVisualStyleBackColor = true;
             this.downloadStreetview.Click += new System.EventHandler(this.downloadStreetview_Click);
@@ -70,17 +70,6 @@
             this.streetviewURL.TabIndex = 1;
             this.toolTip1.SetToolTip(this.streetviewURL, "URLs to download - copy this from Streetview on Google Maps.");
             // 
-            // recurseNeighbours
-            // 
-            this.recurseNeighbours.AutoSize = true;
-            this.recurseNeighbours.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.recurseNeighbours.Location = new System.Drawing.Point(15, 303);
-            this.recurseNeighbours.Name = "recurseNeighbours";
-            this.recurseNeighbours.Size = new System.Drawing.Size(69, 17);
-            this.recurseNeighbours.TabIndex = 4;
-            this.recurseNeighbours.Text = "Recurse:";
-            this.recurseNeighbours.UseVisualStyleBackColor = true;
-            // 
             // straightBias
             // 
             this.straightBias.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -89,7 +78,7 @@
             "Top",
             "Middle",
             "Bottom"});
-            this.straightBias.Location = new System.Drawing.Point(141, 301);
+            this.straightBias.Location = new System.Drawing.Point(49, 301);
             this.straightBias.Name = "straightBias";
             this.straightBias.Size = new System.Drawing.Size(79, 21);
             this.straightBias.TabIndex = 11;
@@ -105,7 +94,7 @@
             "3",
             "4",
             "5 - High"});
-            this.imageQuality.Location = new System.Drawing.Point(287, 301);
+            this.imageQuality.Location = new System.Drawing.Point(195, 301);
             this.imageQuality.Name = "imageQuality";
             this.imageQuality.Size = new System.Drawing.Size(94, 21);
             this.imageQuality.TabIndex = 13;
@@ -113,7 +102,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(105, 304);
+            this.label3.Location = new System.Drawing.Point(13, 304);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(30, 13);
             this.label3.TabIndex = 12;
@@ -122,31 +111,44 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(239, 304);
+            this.label2.Location = new System.Drawing.Point(147, 304);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(42, 13);
             this.label2.TabIndex = 14;
             this.label2.Text = "Quality:";
             // 
-            // downloadProgress
+            // downloadTracker
             // 
-            this.downloadProgress.Location = new System.Drawing.Point(15, 331);
-            this.downloadProgress.Name = "downloadProgress";
-            this.downloadProgress.Size = new System.Drawing.Size(484, 23);
-            this.downloadProgress.Step = 1;
-            this.downloadProgress.TabIndex = 5;
+            this.downloadTracker.AutoSize = true;
+            this.downloadTracker.Location = new System.Drawing.Point(12, 339);
+            this.downloadTracker.Name = "downloadTracker";
+            this.downloadTracker.Size = new System.Drawing.Size(152, 13);
+            this.downloadTracker.TabIndex = 15;
+            this.downloadTracker.Text = "Downloaded and processed: 0";
+            // 
+            // stopThreadedDownload
+            // 
+            this.stopThreadedDownload.Enabled = false;
+            this.stopThreadedDownload.Location = new System.Drawing.Point(409, 331);
+            this.stopThreadedDownload.Name = "stopThreadedDownload";
+            this.stopThreadedDownload.Size = new System.Drawing.Size(90, 29);
+            this.stopThreadedDownload.TabIndex = 16;
+            this.stopThreadedDownload.Text = "Stop";
+            this.toolTip1.SetToolTip(this.stopThreadedDownload, "Download the provided URLs with given settings.");
+            this.stopThreadedDownload.UseVisualStyleBackColor = true;
+            this.stopThreadedDownload.Click += new System.EventHandler(this.stopThreadedDownload_Click);
             // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(511, 369);
+            this.ClientSize = new System.Drawing.Size(511, 368);
+            this.Controls.Add(this.stopThreadedDownload);
+            this.Controls.Add(this.downloadTracker);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.imageQuality);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.straightBias);
-            this.Controls.Add(this.recurseNeighbours);
-            this.Controls.Add(this.downloadProgress);
             this.Controls.Add(this.streetviewURL);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.downloadStreetview);
@@ -167,12 +169,12 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox streetviewURL;
         private System.Windows.Forms.ToolTip toolTip1;
-        private System.Windows.Forms.CheckBox recurseNeighbours;
         private System.Windows.Forms.ComboBox straightBias;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ComboBox imageQuality;
-        private System.Windows.Forms.ProgressBar downloadProgress;
+        private System.Windows.Forms.Label downloadTracker;
+        private System.Windows.Forms.Button stopThreadedDownload;
     }
 }
 
