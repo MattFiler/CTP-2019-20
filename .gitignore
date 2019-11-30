@@ -328,3 +328,10 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+
+StreetviewRipper.exe.config
+Newtonsoft.Json.xml
+/OutputImages/*
+/LDR2HDR/streetview.jpg
+/LDR2HDR/streetview.hdr

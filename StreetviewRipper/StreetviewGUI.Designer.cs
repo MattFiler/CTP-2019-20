@@ -146,7 +146,7 @@
             this.statusText.Name = "statusText";
             this.statusText.Size = new System.Drawing.Size(93, 13);
             this.statusText.TabIndex = 17;
-            this.statusText.Text = "Currently: Finished";
+            this.statusText.Text = "Currently: finished!";
             // 
             // StreetviewGUI
             // 
