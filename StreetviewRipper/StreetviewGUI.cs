@@ -89,6 +89,15 @@ namespace StreetviewRipper
             }
             downloadTracker.Text = "Downloaded and processed: " + value;
         }
+        public void UpdateDownloadStatusText(string value)
+        {
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<string>(UpdateDownloadStatusText), new object[] { value });
+                return;
+            }
+            statusText.Text = "Currently: " + value;
+        }
 
         /* Get metadata for a Streetview ID */
         private JToken GetMetadata(string id)
@@ -120,7 +129,9 @@ namespace StreetviewRipper
         /* Download a complete sphere from Streetview at a globally defined quality */
         private JArray DownloadStreetview(string id)
         {
+            UpdateDownloadStatusText("Finished");
             if (shouldStop) return null;
+            UpdateDownloadStatusText("Downloading image");
 
             //Get metadata
             downloadedIDs.Add(id);
@@ -176,7 +187,8 @@ namespace StreetviewRipper
                 streetviewRenderer.DrawImage(thisTile.image, thisTile.x, thisTile.y, tileWidth, tileHeight);
             }
             streetviewRenderer.Dispose();
-            streetviewImage.Save(id + ".png");
+            streetviewImage.Save(id + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            UpdateDownloadStatusText("Calculating metadata");
 
             //Write some of the metadata locally
             JToken localMeta = JToken.Parse("{}");
@@ -194,9 +206,31 @@ namespace StreetviewRipper
             localMeta["ground_y"] = groundPos.y;
             File.WriteAllText(id + ".json", localMeta.ToString(Formatting.Indented));
 
+            //Convert to HDR
+            UpdateDownloadStatusText("Converting to HDR");
+            if (Directory.Exists("LDR2HDR"))
+            {
+                if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
+                if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
+                File.Copy(id + ".jpg", "LDR2HDR/streetview.jpg");
+                
+                ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat\"");
+                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/";
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+                processInfo.RedirectStandardError = true;
+                processInfo.RedirectStandardOutput = true;
+                Process process = Process.Start(processInfo);
+                process.WaitForExit();
+                process.Close();
+
+                if (File.Exists("LDR2HDR/streetview.hdr")) File.Copy("LDR2HDR/streetview.hdr", id + ".hdr");
+            }
+
             //Done!
             downloadCount++;
             UpdateDownloadCountText(downloadCount);
+            UpdateDownloadStatusText("Finished");
             return thisMeta["neighbours"].Value<JArray>();
         }
     }

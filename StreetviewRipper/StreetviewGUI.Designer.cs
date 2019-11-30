@@ -39,6 +39,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.downloadTracker = new System.Windows.Forms.Label();
             this.stopThreadedDownload = new System.Windows.Forms.Button();
+            this.statusText = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // downloadStreetview
@@ -120,7 +121,7 @@
             // downloadTracker
             // 
             this.downloadTracker.AutoSize = true;
-            this.downloadTracker.Location = new System.Drawing.Point(12, 339);
+            this.downloadTracker.Location = new System.Drawing.Point(12, 331);
             this.downloadTracker.Name = "downloadTracker";
             this.downloadTracker.Size = new System.Drawing.Size(152, 13);
             this.downloadTracker.TabIndex = 15;
@@ -138,11 +139,21 @@
             this.stopThreadedDownload.UseVisualStyleBackColor = true;
             this.stopThreadedDownload.Click += new System.EventHandler(this.stopThreadedDownload_Click);
             // 
+            // statusText
+            // 
+            this.statusText.AutoSize = true;
+            this.statusText.Location = new System.Drawing.Point(12, 347);
+            this.statusText.Name = "statusText";
+            this.statusText.Size = new System.Drawing.Size(93, 13);
+            this.statusText.TabIndex = 17;
+            this.statusText.Text = "Currently: Finished";
+            // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(511, 368);
+            this.Controls.Add(this.statusText);
             this.Controls.Add(this.stopThreadedDownload);
             this.Controls.Add(this.downloadTracker);
             this.Controls.Add(this.label2);
@@ -175,6 +186,7 @@
         private System.Windows.Forms.ComboBox imageQuality;
         private System.Windows.Forms.Label downloadTracker;
         private System.Windows.Forms.Button stopThreadedDownload;
+        private System.Windows.Forms.Label statusText;
     }
 }
 
