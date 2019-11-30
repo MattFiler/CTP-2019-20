@@ -207,9 +207,31 @@ namespace StreetviewRipper
             localMeta["ground_y"] = groundPos.y;
             File.WriteAllText("OutputImages/" + id + ".json", localMeta.ToString(Formatting.Indented));
 
+            //Create Hosek-Wilkie model
+            UpdateDownloadStatusText("calculating sky model...");
+            if (File.Exists("HosekWilkie/HosekWilkie.exe"))
+            {
+                //TODO
+                /*
+                var processInfo = new ProcessStartInfo("HosekWilkie/HosekWilkie.exe", "");
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+                processInfo.RedirectStandardError = true;
+                processInfo.RedirectStandardOutput = true;
+
+                var process = Process.Start(processInfo);
+                process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => Console.WriteLine("output>>" + e.Data);
+                process.BeginOutputReadLine();
+                process.WaitForExit();
+
+                Console.WriteLine("ExitCode: {0}", process.ExitCode);
+                process.Close();
+                */
+            }
+
             //Convert to HDR
             UpdateDownloadStatusText("converting to HDR...");
-            if (Directory.Exists("LDR2HDR"))
+            if (File.Exists("LDR2HDR/run.bat"))
             {
                 if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
                 if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
@@ -219,8 +241,6 @@ namespace StreetviewRipper
                 processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/";
                 processInfo.CreateNoWindow = true;
                 processInfo.UseShellExecute = false;
-                processInfo.RedirectStandardError = true;
-                processInfo.RedirectStandardOutput = true;
                 Process process = Process.Start(processInfo);
                 process.WaitForExit();
                 process.Close();
