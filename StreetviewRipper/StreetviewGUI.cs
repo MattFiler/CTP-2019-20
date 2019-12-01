@@ -209,29 +209,26 @@ namespace StreetviewRipper
 
             //Create Hosek-Wilkie model
             UpdateDownloadStatusText("calculating sky model...");
-            if (File.Exists("HosekWilkie/HosekWilkie.exe"))
+            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe"))
             {
-                //TODO
-                /*
-                var processInfo = new ProcessStartInfo("HosekWilkie/HosekWilkie.exe", "");
+                if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
+
+                //TODO translate sun_x to --elevation
+                ProcessStartInfo processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe", "makesky --albedo 0.5 --elevation 10 --outfile " + id + ".exr --turbidity 3 --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
+                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/PBRT/";
                 processInfo.CreateNoWindow = true;
                 processInfo.UseShellExecute = false;
-                processInfo.RedirectStandardError = true;
-                processInfo.RedirectStandardOutput = true;
-
-                var process = Process.Start(processInfo);
-                process.OutputDataReceived += (object sender, DataReceivedEventArgs e) => Console.WriteLine("output>>" + e.Data);
-                process.BeginOutputReadLine();
+                Process process = Process.Start(processInfo);
                 process.WaitForExit();
-
-                Console.WriteLine("ExitCode: {0}", process.ExitCode);
                 process.Close();
-                */
+
+                if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + ".exr");
+                if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
             }
 
             //Convert to HDR
             UpdateDownloadStatusText("converting to HDR...");
-            if (File.Exists("LDR2HDR/run.bat"))
+            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat"))
             {
                 if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
                 if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
@@ -245,6 +242,7 @@ namespace StreetviewRipper
                 process.WaitForExit();
                 process.Close();
 
+                if (File.Exists("OutputImages/" + id + ".hdr")) File.Delete("OutputImages/" + id + ".hdr");
                 if (File.Exists("LDR2HDR/streetview.hdr")) File.Copy("LDR2HDR/streetview.hdr", "OutputImages/" + id + ".hdr");
                 if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
                 if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
