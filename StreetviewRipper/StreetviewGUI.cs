@@ -189,7 +189,14 @@ namespace StreetviewRipper
             streetviewRenderer.Dispose();
             if (!Directory.Exists("OutputImages")) Directory.CreateDirectory("OutputImages");
             streetviewImage.Save("OutputImages/" + id + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+
+            //Calculate metadata
             UpdateDownloadStatusText("calculating metadata...");
+            StreetviewImageProcessor processor = new StreetviewImageProcessor();
+            List<GroundInfo> groundPositions = processor.GuessGroundPositions(streetviewImage, (selectedQuality * 5) + 15, true, (StraightLineBias)selectedBias);
+            Vector2 groundPos = groundPositions[0].position; //Only two are returned above when averaging straight line
+            Image streetviewImageNoGround = processor.CutOutSky(streetviewImage, groundPositions);
+            Vector2 sunPos = processor.GuessSunPosition(streetviewImageNoGround);
 
             //Write some of the metadata locally
             JToken localMeta = JToken.Parse("{}");
@@ -201,10 +208,8 @@ namespace StreetviewRipper
             localMeta["history"] = thisMeta["history"];
             if (thisMeta["is_ugc"].Value<bool>()) localMeta["creator"] = thisMeta["creator"];
             else localMeta["creator"] = "Google";
-            StreetviewImageProcessor processor = new StreetviewImageProcessor();
-            localMeta["sun_x"] = processor.GetSunXPos(streetviewImage);
-            Vector2 groundPos = processor.GuessGroundPositions(streetviewImage, (selectedQuality * 5) + 15, true, (StraightLineBias)selectedBias)[0].position;
             localMeta["ground_y"] = groundPos.y;
+            localMeta["sun"] = new JArray { sunPos.x, sunPos.y };
             File.WriteAllText("OutputImages/" + id + ".json", localMeta.ToString(Formatting.Indented));
 
             //Create Hosek-Wilkie model

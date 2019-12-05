@@ -28,6 +28,11 @@ namespace StreetviewRipper
 
     class PixelInfo
     {
+        public PixelInfo(float _b, int _p)
+        {
+            brightness = _b;
+            pos = _p;
+        }
         public float brightness;
         public int pos;
     }
@@ -285,6 +290,42 @@ namespace StreetviewRipper
             return avg / sphere.Width;
         }
 
+        /* Guess the sun's position in the image (pass an image with cropped ground) */
+        public Vector2 GuessSunPosition(Image sphere)
+        {
+            Bitmap sphereBMP = (Bitmap)sphere;
+
+            List<PixelInfo> avgBrightX = new List<PixelInfo>();
+            for (int x = 0; x < sphereBMP.Width; x++)
+            {
+                float thisAvgBrightness = 0.0f;
+                for (int y = 0; y < sphereBMP.Height; y++)
+                {
+                    Color pixel = sphereBMP.GetPixel(x, y);
+                    thisAvgBrightness += pixel.GetBrightness();
+                }
+                thisAvgBrightness /= sphereBMP.Height;
+                avgBrightX.Add(new PixelInfo(thisAvgBrightness, x));
+            }
+            avgBrightX = avgBrightX.OrderByDescending(o => o.brightness).ToList();
+
+            List<PixelInfo> avgBrightY = new List<PixelInfo>();
+            for (int y = 0; y < sphereBMP.Height; y++)
+            {
+                float thisAvgBrightness = 0.0f;
+                for (int x = 0; x < sphereBMP.Width; x++)
+                {
+                    Color pixel = sphereBMP.GetPixel(x, y);
+                    thisAvgBrightness += pixel.GetBrightness();
+                }
+                thisAvgBrightness /= sphereBMP.Height;
+                avgBrightY.Add(new PixelInfo(thisAvgBrightness, y));
+            }
+            avgBrightY = avgBrightY.OrderByDescending(o => o.brightness).ToList();
+
+            return new Vector2(avgBrightX[0].pos, avgBrightY[0].pos);
+        }
+
         /* Guess the X position of the sun in the image */
         public int GetSunXPos(Image sphere)
         {
@@ -298,7 +339,7 @@ namespace StreetviewRipper
             List<PixelInfo> p = new List<PixelInfo>();
             for (int x = 0; x < sphere.Width; x++)
             {
-                PixelInfo pi = new PixelInfo();
+                PixelInfo pi = new PixelInfo(0.0f, 0);
                 Color pixel = sphere.GetPixel(x, y);
                 pi.brightness = pixel.GetBrightness();
                 pi.pos = x;
