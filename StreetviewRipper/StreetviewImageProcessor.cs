@@ -278,6 +278,24 @@ namespace StreetviewRipper
             }
         }
 
+        /* Shift a spherical image by a set number of pixels to the left */
+        public Bitmap ShiftImageLeft(Image sphere, int offset)
+        {
+            Bitmap origSphere = (Bitmap)sphere;
+            Bitmap newSphere = new Bitmap(origSphere.Width, origSphere.Height);
+            
+            for (int x = 0; x < sphere.Width; x++)
+            {
+                int newX = x - offset;
+                if (newX < 0) newX += sphere.Width; //loop back around
+                for (int y = 0; y < sphere.Height; y++)
+                {
+                    newSphere.SetPixel(newX, y, origSphere.GetPixel(x, y));
+                }
+            }
+            return newSphere;
+        }
+
         /* Take the average brightness across each X pixel on a given Y */
         private float TakeAverageBrightness(int y, Bitmap sphere)
         {

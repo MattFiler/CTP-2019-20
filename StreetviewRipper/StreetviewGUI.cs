@@ -211,16 +211,21 @@ namespace StreetviewRipper
             localMeta["sun"] = new JArray { (int)sunPos.x, (int)sunPos.y };
             File.WriteAllText("OutputImages/" + id + ".json", localMeta.ToString(Formatting.Indented));
 
+            //Shift the image to match Hosek-Wilkie sun position
+            UpdateDownloadStatusText("adjusting image...");
+            int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
+            streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
+
             //Create Hosek-Wilkie model
             UpdateDownloadStatusText("calculating sky model...");
             if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe"))
             {
                 if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
 
-                float groundAlbedo = 0.5f; //0-1
-                float sunElevation = (sunPos.y / groundY) * 90; //TODO figure out how to utilise sun x
-                float skyTurbidity = 3.0f;
-                
+                float groundAlbedo = 0.5f; //TODO: set this between 0-1
+                float sunElevation = (sunPos.y / groundY) * 90;
+                float skyTurbidity = 3.0f; //TODO: set this between 1.7-10
+
                 ProcessStartInfo processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe", "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
                 processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/PBRT/";
                 processInfo.CreateNoWindow = true;
