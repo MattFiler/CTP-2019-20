@@ -194,9 +194,8 @@ namespace StreetviewRipper
             UpdateDownloadStatusText("calculating metadata...");
             StreetviewImageProcessor processor = new StreetviewImageProcessor();
             List<GroundInfo> groundPositions = processor.GuessGroundPositions(streetviewImage, (selectedQuality * 5) + 15, true, (StraightLineBias)selectedBias);
-            Vector2 groundPos = groundPositions[0].position; //Only two are returned above when averaging straight line
-            Image streetviewImageNoGround = processor.CutOutSky(streetviewImage, groundPositions);
-            Vector2 sunPos = processor.GuessSunPosition(streetviewImageNoGround);
+            int groundY = (int)groundPositions[0].position.y; //We only have [0] and [1] when using straight line cutting, both have the same Y
+            Vector2 sunPos = processor.GuessSunPosition(streetviewImage, groundY); 
 
             //Write some of the metadata locally
             JToken localMeta = JToken.Parse("{}");
@@ -208,8 +207,8 @@ namespace StreetviewRipper
             localMeta["history"] = thisMeta["history"];
             if (thisMeta["is_ugc"].Value<bool>()) localMeta["creator"] = thisMeta["creator"];
             else localMeta["creator"] = "Google";
-            localMeta["ground_y"] = groundPos.y;
-            localMeta["sun"] = new JArray { sunPos.x, sunPos.y };
+            localMeta["ground_y"] = groundY;
+            localMeta["sun"] = new JArray { (int)sunPos.x, (int)sunPos.y };
             File.WriteAllText("OutputImages/" + id + ".json", localMeta.ToString(Formatting.Indented));
 
             //Create Hosek-Wilkie model
@@ -218,8 +217,11 @@ namespace StreetviewRipper
             {
                 if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
 
-                //TODO translate sun_x to --elevation
-                ProcessStartInfo processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe", "makesky --albedo 0.5 --elevation 10 --outfile " + id + ".exr --turbidity 3 --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
+                float groundAlbedo = 0.5f; //0-1
+                float sunElevation = (sunPos.y / groundY) * 90; //TODO figure out how to utilise sun x
+                float skyTurbidity = 3.0f;
+                
+                ProcessStartInfo processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe", "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
                 processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/PBRT/";
                 processInfo.CreateNoWindow = true;
                 processInfo.UseShellExecute = false;
@@ -227,6 +229,7 @@ namespace StreetviewRipper
                 process.WaitForExit();
                 process.Close();
 
+                if (File.Exists("OutputImages/" + id + ".exr")) File.Delete("OutputImages/" + id + ".exr");
                 if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + ".exr");
                 if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
             }

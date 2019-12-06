@@ -54,8 +54,7 @@ namespace StreetviewRipper
         MIDDLE,
         BOTTOM
     }
-
-    //TODO: Implement BackgroundWorker to multithread this process.
+    
     class StreetviewImageProcessor
     {
         /* Trim the image by the given ground positions */
@@ -290,27 +289,37 @@ namespace StreetviewRipper
             return avg / sphere.Width;
         }
 
-        /* Guess the sun's position in the image (pass an image with cropped ground) */
-        public Vector2 GuessSunPosition(Image sphere)
+        /* Guess the sun's position in the image */
+        public Vector2 GuessSunPosition(Image sphere, int groundY)
         {
             Bitmap sphereBMP = (Bitmap)sphere;
 
+            //Work out the best guess X
             List<PixelInfo> avgBrightX = new List<PixelInfo>();
             for (int x = 0; x < sphereBMP.Width; x++)
             {
                 float thisAvgBrightness = 0.0f;
-                for (int y = 0; y < sphereBMP.Height; y++)
+                for (int y = 0; y < groundY; y++)
                 {
                     Color pixel = sphereBMP.GetPixel(x, y);
                     thisAvgBrightness += pixel.GetBrightness();
                 }
-                thisAvgBrightness /= sphereBMP.Height;
+                thisAvgBrightness /= groundY;
                 avgBrightX.Add(new PixelInfo(thisAvgBrightness, x));
             }
             avgBrightX = avgBrightX.OrderByDescending(o => o.brightness).ToList();
+            float avgXPos = 0.0f;
+            int maxIterations = sphereBMP.Width / 6;
+            if (maxIterations < 1) maxIterations = 1;
+            for (int i = 0; i < maxIterations; i++)
+            {
+                avgXPos += avgBrightX[i].pos;
+            }
+            avgXPos /= maxIterations;
 
+            //Work out the best guess Y
             List<PixelInfo> avgBrightY = new List<PixelInfo>();
-            for (int y = 0; y < sphereBMP.Height; y++)
+            for (int y = 0; y < groundY; y++)
             {
                 float thisAvgBrightness = 0.0f;
                 for (int x = 0; x < sphereBMP.Width; x++)
@@ -318,42 +327,20 @@ namespace StreetviewRipper
                     Color pixel = sphereBMP.GetPixel(x, y);
                     thisAvgBrightness += pixel.GetBrightness();
                 }
-                thisAvgBrightness /= sphereBMP.Height;
+                thisAvgBrightness /= sphereBMP.Width;
                 avgBrightY.Add(new PixelInfo(thisAvgBrightness, y));
             }
             avgBrightY = avgBrightY.OrderByDescending(o => o.brightness).ToList();
-
-            return new Vector2(avgBrightX[0].pos, avgBrightY[0].pos);
-        }
-
-        /* Guess the X position of the sun in the image */
-        public int GetSunXPos(Image sphere)
-        {
-            int guess1 = GuessSunPos(sphere.Height / 4, (Bitmap)sphere);
-            int guess2 = GuessSunPos(sphere.Height / 3, (Bitmap)sphere);
-            if (guess2 - guess1 > sphere.Width / 2 || guess1 - guess2 > sphere.Width / 2) return guess1;
-            return (guess1 + guess2) / 2;
-        }
-        private int GuessSunPos(int y, Bitmap sphere)
-        {
-            List<PixelInfo> p = new List<PixelInfo>();
-            for (int x = 0; x < sphere.Width; x++)
+            float avgYPos = 0.0f;
+            maxIterations = groundY / 3;
+            if (maxIterations < 1) maxIterations = 1;
+            for (int i = 0; i < maxIterations; i++)
             {
-                PixelInfo pi = new PixelInfo(0.0f, 0);
-                Color pixel = sphere.GetPixel(x, y);
-                pi.brightness = pixel.GetBrightness();
-                pi.pos = x;
-                p.Add(pi);
+                avgYPos += avgBrightY[i].pos;
             }
-            p = p.OrderByDescending(o => o.brightness).ToList();
-            if (p.Count == 0) return 0;
-            int guessX = 0;
-            for (int i = 0; i < sphere.Width / 70; i++)
-            {
-                guessX += p[i].pos;
-            }
-            guessX /= sphere.Width / 70;
-            return guessX;
+            avgYPos /= maxIterations;
+
+            return new Vector2(avgXPos, avgYPos);
         }
     }
 }
