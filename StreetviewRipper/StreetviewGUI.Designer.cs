@@ -33,12 +33,12 @@
             this.label1 = new System.Windows.Forms.Label();
             this.streetviewURL = new System.Windows.Forms.TextBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.stopThreadedDownload = new System.Windows.Forms.Button();
             this.straightBias = new System.Windows.Forms.ComboBox();
             this.imageQuality = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.downloadTracker = new System.Windows.Forms.Label();
-            this.stopThreadedDownload = new System.Windows.Forms.Button();
             this.statusText = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
@@ -70,6 +70,18 @@
             this.streetviewURL.Size = new System.Drawing.Size(484, 267);
             this.streetviewURL.TabIndex = 1;
             this.toolTip1.SetToolTip(this.streetviewURL, "URLs to download - copy this from Streetview on Google Maps.");
+            // 
+            // stopThreadedDownload
+            // 
+            this.stopThreadedDownload.Enabled = false;
+            this.stopThreadedDownload.Location = new System.Drawing.Point(409, 331);
+            this.stopThreadedDownload.Name = "stopThreadedDownload";
+            this.stopThreadedDownload.Size = new System.Drawing.Size(90, 29);
+            this.stopThreadedDownload.TabIndex = 16;
+            this.stopThreadedDownload.Text = "Stop";
+            this.toolTip1.SetToolTip(this.stopThreadedDownload, "Download the provided URLs with given settings.");
+            this.stopThreadedDownload.UseVisualStyleBackColor = true;
+            this.stopThreadedDownload.Click += new System.EventHandler(this.stopThreadedDownload_Click);
             // 
             // straightBias
             // 
@@ -126,18 +138,6 @@
             this.downloadTracker.Size = new System.Drawing.Size(152, 13);
             this.downloadTracker.TabIndex = 15;
             this.downloadTracker.Text = "Downloaded and processed: 0";
-            // 
-            // stopThreadedDownload
-            // 
-            this.stopThreadedDownload.Enabled = false;
-            this.stopThreadedDownload.Location = new System.Drawing.Point(409, 331);
-            this.stopThreadedDownload.Name = "stopThreadedDownload";
-            this.stopThreadedDownload.Size = new System.Drawing.Size(90, 29);
-            this.stopThreadedDownload.TabIndex = 16;
-            this.stopThreadedDownload.Text = "Stop";
-            this.toolTip1.SetToolTip(this.stopThreadedDownload, "Download the provided URLs with given settings.");
-            this.stopThreadedDownload.UseVisualStyleBackColor = true;
-            this.stopThreadedDownload.Click += new System.EventHandler(this.stopThreadedDownload_Click);
             // 
             // statusText
             // 

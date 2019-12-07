@@ -211,54 +211,114 @@ namespace StreetviewRipper
             localMeta["sun"] = new JArray { (int)sunPos.x, (int)sunPos.y };
             File.WriteAllText("OutputImages/" + id + ".json", localMeta.ToString(Formatting.Indented));
 
+            //This next bit uses a bunch of external programs, so make sure we have them first
+            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe") ||
+                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat") ||
+                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe"))
+            {
+                MessageBox.Show("Some external resources are missing!\nExtended image processing will not take place.", "Missing resources!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UpdateDownloadStatusText("exited!");
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                return thisMeta["neighbours"].Value<JArray>();
+            }
+
             //Shift the image to match Hosek-Wilkie sun position
             UpdateDownloadStatusText("adjusting image...");
             int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
             streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
 
-            //Create Hosek-Wilkie model
+            //Create Hosek-Wilkie sky model for background
             UpdateDownloadStatusText("calculating sky model...");
-            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe"))
-            {
-                if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
+            if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
 
-                float groundAlbedo = 0.5f; //TODO: set this between 0-1
-                float sunElevation = (sunPos.y / groundY) * 90;
-                float skyTurbidity = 3.0f; //TODO: set this between 1.7-10
+            float groundAlbedo = 0.5f; //TODO: set this between 0-1
+            float sunElevation = (sunPos.y / groundY) * 90;
+            float skyTurbidity = 3.0f; //TODO: set this between 1.7-10
 
-                ProcessStartInfo processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe", "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
-                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/PBRT/";
-                processInfo.CreateNoWindow = true;
-                processInfo.UseShellExecute = false;
-                Process process = Process.Start(processInfo);
-                process.WaitForExit();
-                process.Close();
+            ProcessStartInfo processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe", "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
+            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/PBRT/";
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            Process process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
 
-                if (File.Exists("OutputImages/" + id + ".exr")) File.Delete("OutputImages/" + id + ".exr");
-                if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + ".exr");
-                if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
-            }
+            if (File.Exists("OutputImages/" + id + ".exr")) File.Delete("OutputImages/" + id + ".exr");
+            if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + ".exr");
+            if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
 
-            //Convert to HDR
+            //Convert to HDR image
             UpdateDownloadStatusText("converting to HDR...");
-            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat"))
-            {
-                if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
-                if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
-                streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
+            if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
+            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
                 
-                ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat\"");
-                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/";
+            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat\"");
+            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/";
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            if (File.Exists("OutputImages/" + id + ".hdr")) File.Delete("OutputImages/" + id + ".hdr");
+            if (File.Exists("LDR2HDR/streetview.hdr")) File.Copy("LDR2HDR/streetview.hdr", "OutputImages/" + id + ".hdr");
+            if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
+            if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
+
+            if (File.Exists("OutputImages/" + id + ".hdr"))
+            {
+                //Read in HDR values
+                UpdateDownloadStatusText("reading HDR output...");
+                BinaryReader hdrFile = new BinaryReader(File.OpenRead("OutputImages/" + id + ".hdr"));
+                hdrFile.BaseStream.Position = 75; //The header will always be 75 from LDR2HDR
+                List<HDRPixel> hdrPixels = new List<HDRPixel>();
+                for (int i = 0; i < (hdrFile.BaseStream.Length - 75)/4; i++)
+                {
+                    HDRPixel newPixel = new HDRPixel();
+                    newPixel.R = (int)hdrFile.ReadByte();
+                    newPixel.G = (int)hdrFile.ReadByte();
+                    newPixel.B = (int)hdrFile.ReadByte();
+                    newPixel.E = (int)hdrFile.ReadByte();
+                    hdrPixels.Add(newPixel);
+                }
+                hdrFile.Close();
+
+                /*
+                //Convert HDR values to regular float values
+                UpdateDownloadStatusText("converting HDR output...");
+                if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
+                File.Copy("OutputImages/" + id + ".hdr", "HDR2Float/streetview.hdr");
+
+                processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe", "");
+                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/";
                 processInfo.CreateNoWindow = true;
                 processInfo.UseShellExecute = false;
-                Process process = Process.Start(processInfo);
+                process = Process.Start(processInfo);
                 process.WaitForExit();
                 process.Close();
 
-                if (File.Exists("OutputImages/" + id + ".hdr")) File.Delete("OutputImages/" + id + ".hdr");
-                if (File.Exists("LDR2HDR/streetview.hdr")) File.Copy("LDR2HDR/streetview.hdr", "OutputImages/" + id + ".hdr");
-                if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
-                if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
+                if (File.Exists("OutputImages/" + id + ".bin")) File.Delete("OutputImages/" + id + ".bin");
+                if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", "OutputImages/" + id + ".bin");
+                if (File.Exists("HDR2Float/streetview.bin")) File.Delete("HDR2Float/streetview.bin");
+                if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
+
+                //Read in the converted float values from the HDR
+                BinaryReader binReader = new BinaryReader(File.OpenRead("OutputImages/" + id + ".bin"));
+                List<HDRPixelAsFloat> parsedPixels = new List<HDRPixelAsFloat>();
+                for (int i = 0; i < binReader.BaseStream.Length / sizeof(float) / 3; i++)
+                {
+                    HDRPixelAsFloat newPixel = new HDRPixelAsFloat();
+                    newPixel.R = binReader.ReadSingle();
+                    newPixel.G = binReader.ReadSingle();
+                    newPixel.B = binReader.ReadSingle();
+                    parsedPixels.Add(newPixel);
+                }
+                binReader.Close();
+                */
+
+                //TODO: Linearly interpolate between HDR values to upscale the output
             }
 
             //Done!

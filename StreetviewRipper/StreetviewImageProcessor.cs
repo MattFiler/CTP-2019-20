@@ -37,6 +37,21 @@ namespace StreetviewRipper
         public int pos;
     }
 
+    class HDRPixel
+    {
+        public int R;
+        public int G;
+        public int B;
+        public int E;
+    }
+
+    class HDRPixelAsFloat
+    {
+        public float R;
+        public float G;
+        public float B;
+    }
+
     class PrevBest
     {
         public PrevBest(float _d, int _p)
