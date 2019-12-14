@@ -43,6 +43,9 @@ namespace StreetviewRipper
         public int G;
         public int B;
         public int E;
+
+        public int x;
+        public int y;
     }
 
     class HDRPixelAsFloat

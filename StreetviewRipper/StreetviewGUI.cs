@@ -267,6 +267,7 @@ namespace StreetviewRipper
             if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
             if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
 
+            //Upscale HDR image & classify
             if (File.Exists("OutputImages/" + id + ".hdr"))
             {
                 //Read in HDR values
@@ -274,13 +275,26 @@ namespace StreetviewRipper
                 BinaryReader hdrFile = new BinaryReader(File.OpenRead("OutputImages/" + id + ".hdr"));
                 hdrFile.BaseStream.Position = 75; //The header will always be 75 from LDR2HDR
                 List<HDRPixel> hdrPixels = new List<HDRPixel>();
+                int x = 0;
+                int y = 0;
                 for (int i = 0; i < (hdrFile.BaseStream.Length - 75)/4; i++)
                 {
                     HDRPixel newPixel = new HDRPixel();
+
                     newPixel.R = (int)hdrFile.ReadByte();
                     newPixel.G = (int)hdrFile.ReadByte();
                     newPixel.B = (int)hdrFile.ReadByte();
                     newPixel.E = (int)hdrFile.ReadByte();
+
+                    newPixel.x = x;
+                    newPixel.y = y;
+                    x++;
+                    if (x == 128)
+                    {
+                        x = 0;
+                        y++;
+                    }
+
                     hdrPixels.Add(newPixel);
                 }
                 hdrFile.Close();
@@ -318,7 +332,28 @@ namespace StreetviewRipper
                 binReader.Close();
                 */
 
-                //TODO: Linearly interpolate between HDR values to upscale the output
+
+                //TODO: Linearly interpolate between HDR values to upscale the output - output to hdr image called id + _upscaled, and adjust the filename in the classifier call below
+
+
+                //Classify the upscaled image
+                UpdateDownloadStatusText("classifying cloud formations...");
+                if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
+                if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
+                File.Copy("OutputImages/" + id + ".hdr", "Classify/Input_Output_Files/" + id + ".hdr"); //adjust this filename to _upscaled
+
+                processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/Classify/Classify.exe", "5 400 100 0 " + id + " " + id + "_classified");
+                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/Classify/";
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+                process = Process.Start(processInfo);
+                process.WaitForExit();
+                process.Close();
+
+                if (File.Exists("OutputImages/" + id + "_classified.hdr")) File.Delete("OutputImages/" + id + "_classified.hdr");
+                if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_classified.hdr");
+                if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
+                if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
             }
 
             //Done!
