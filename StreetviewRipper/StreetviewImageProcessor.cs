@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,6 +38,82 @@ namespace StreetviewRipper
         public int pos;
     }
 
+    class HDRImage
+    {
+        private int width;
+        private int height;
+        private HDRPixel[] pixels;
+
+        /* Set the resolution of the HDR image */
+        public void SetResolution(int w, int h)
+        {
+            width = w;
+            height = h;
+            pixels = new HDRPixel[width * height];
+        }
+
+        /* Get the resolution of the HDR image */
+        public int Width
+        {
+            get { return width; }
+        }
+        public int Height
+        {
+            get { return height; }
+        }
+
+        /* Set a pixel by X,Y position */
+        public void SetPixel(int x, int y, HDRPixel p)
+        {
+            pixels[(y * Width) + x] = p;
+        }
+
+        /* Get a pixel by X,Y position */
+        public HDRPixel GetPixel(int x, int y)
+        {
+            return pixels[(y * Width) + x];
+        }
+
+        /* Load in a HDR file - TODO: read header */
+        public void Open(string filename)
+        {
+            BinaryReader InFile = new BinaryReader(File.OpenRead(filename));
+
+            InFile.BaseStream.Position = 75; //The header will always be 75 from LDR2HDR
+            SetResolution(128, 64);
+
+            for (int i = 0; i < (InFile.BaseStream.Length - 75) / 4; i++)
+            {
+                HDRPixel newPixel = new HDRPixel();
+                newPixel.R = (int)InFile.ReadByte();
+                newPixel.G = (int)InFile.ReadByte();
+                newPixel.B = (int)InFile.ReadByte();
+                newPixel.E = (int)InFile.ReadByte();
+                pixels[i] = newPixel;
+            }
+
+            InFile.Close();
+        }
+
+        /* Save out as a HDR file */
+        public void Save(string filename)
+        {
+            BinaryWriter OutFile = new BinaryWriter(File.OpenWrite(filename));
+            OutFile.Write("FORMAT=32-bit_rle_rgbe".ToCharArray());
+            OutFile.Write(new byte[] { 0x0A, 0x0A });
+            OutFile.Write(("-Y " + height + " +X " + width).ToCharArray());
+            OutFile.Write((byte)0x0A);
+            for (int i = 0; i < height * width; i++)
+            {
+                OutFile.Write((byte)pixels[i].R);
+                OutFile.Write((byte)pixels[i].G);
+                OutFile.Write((byte)pixels[i].B);
+                OutFile.Write((byte)pixels[i].E);
+            }
+            OutFile.Close();
+        }
+    }
+
     class HDRPixel
     {
         public int R;
@@ -44,8 +121,14 @@ namespace StreetviewRipper
         public int B;
         public int E;
 
-        public int x;
-        public int y;
+        public HDRPixel() { }
+        public HDRPixel(int _r, int _g, int _b, int _e)
+        {
+            R = _r;
+            G = _g;
+            B = _b;
+            E = _e;
+        }
     }
 
     class HDRPixelAsFloat
@@ -305,7 +388,8 @@ namespace StreetviewRipper
             for (int x = 0; x < sphere.Width; x++)
             {
                 int newX = x - offset;
-                if (newX < 0) newX += sphere.Width; //loop back around
+                if (newX < 0) newX += sphere.Width;
+                if (newX >= sphere.Width) newX -= sphere.Width;
                 for (int y = 0; y < sphere.Height; y++)
                 {
                     newSphere.SetPixel(newX, y, origSphere.GetPixel(x, y));
