@@ -58,14 +58,18 @@ namespace StreetviewRipper
         }
         private void StartDownloading(List<string> ids)
         {
-            foreach (string id in ids)
-            {
-                if (id != "")
+            //try
+            //{
+                foreach (string id in ids)
                 {
-                    JArray neighbours = DownloadStreetview(id);
-                    DownloadNeighbours(neighbours);
+                    if (id != "")
+                    {
+                        JArray neighbours = DownloadStreetview(id);
+                        DownloadNeighbours(neighbours);
+                    }
                 }
-            }
+            //}
+            //catch { }
         }
 
         /* Stop downloading */
@@ -182,9 +186,9 @@ namespace StreetviewRipper
             //Compile all image tiles to one whole image
             Bitmap streetviewImage = new Bitmap(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), thisMeta["compiled_sizes"][selectedQuality][1].Value<int>());
             Graphics streetviewRenderer = Graphics.FromImage(streetviewImage);
-            foreach (StreetviewTile thisTile in streetviewTiles)
+            for (int i = 0; i < streetviewTiles.Count; i++)
             {
-                streetviewRenderer.DrawImage(thisTile.image, thisTile.x, thisTile.y, tileWidth, tileHeight);
+                streetviewRenderer.DrawImage(streetviewTiles[i].image, streetviewTiles[i].x, streetviewTiles[i].y, tileWidth, tileHeight);
             }
             streetviewRenderer.Dispose();
             if (!Directory.Exists("OutputImages")) Directory.CreateDirectory("OutputImages");
@@ -267,85 +271,92 @@ namespace StreetviewRipper
             if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
             if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
 
-            //Upscale HDR image & classify
-            if (File.Exists("OutputImages/" + id + ".hdr"))
+            //If we didn't get a HDR image back, the Python environment probably isn't installed properly
+            if (!File.Exists("OutputImages/" + id + ".hdr"))
             {
-                //Read in HDR values
-                UpdateDownloadStatusText("reading HDR output...");
-                HDRImage hdrImage = new HDRImage();
-                hdrImage.Open("OutputImages/" + id + ".hdr");
-
-                //Upscale the HDR image
-                UpdateDownloadStatusText("upscaling HDR...");
-                UpscaleHDR upscaler = new UpscaleHDR();
-                HDRImage hdrUpscaled = upscaler.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
-                hdrUpscaled.Save("OutputImages/" + id + "_upscaled.hdr");
-
-                /*
-                //Convert HDR values to regular float values
-                UpdateDownloadStatusText("converting HDR output...");
-                if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
-                File.Copy("OutputImages/" + id + ".hdr", "HDR2Float/streetview.hdr");
-
-                processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe", "");
-                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/";
-                processInfo.CreateNoWindow = true;
-                processInfo.UseShellExecute = false;
-                process = Process.Start(processInfo);
-                process.WaitForExit();
-                process.Close();
-
-                if (File.Exists("OutputImages/" + id + ".bin")) File.Delete("OutputImages/" + id + ".bin");
-                if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", "OutputImages/" + id + ".bin");
-                if (File.Exists("HDR2Float/streetview.bin")) File.Delete("HDR2Float/streetview.bin");
-                if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
-
-                //Read in the converted float values from the HDR
-                BinaryReader binReader = new BinaryReader(File.OpenRead("OutputImages/" + id + ".bin"));
-                List<HDRPixelAsFloat> parsedPixels = new List<HDRPixelAsFloat>();
-                for (int i = 0; i < binReader.BaseStream.Length / sizeof(float) / 3; i++)
-                {
-                    HDRPixelAsFloat newPixel = new HDRPixelAsFloat();
-                    newPixel.R = binReader.ReadSingle();
-                    newPixel.G = binReader.ReadSingle();
-                    newPixel.B = binReader.ReadSingle();
-                    parsedPixels.Add(newPixel);
-                }
-                binReader.Close();
-                */
-                
-                //Re-write the upscaled HDR image without the ground
-                UpdateDownloadStatusText("cropping upscaled HDR...");
-                HDRImage hdrCropped = new HDRImage();
-                hdrCropped.SetResolution(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
-                for (int x = 0; x < hdrCropped.Width; x++)
-                {
-                    for (int y = 0; y < hdrCropped.Height; y++)
-                    {
-                        hdrCropped.SetPixel(x, y, hdrUpscaled.GetPixel(x, y));
-                    }
-                }
-                hdrCropped.Save("OutputImages/" + id + "_upscaled_trim.hdr");
-                
-                //Classify the upscaled image
-                UpdateDownloadStatusText("classifying cloud formations...");
-                if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
-                if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
-                File.Copy("OutputImages/" + id + "_upscaled_trim.hdr", "Classify/Input_Output_Files/" + id + ".hdr");
-
-                processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/Classify/Classify.exe", "5 400 100 0 " + id + " " + id + "_classified");
-                processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/Classify/";
-                processInfo.CreateNoWindow = true;
-                processInfo.UseShellExecute = false;
-                process = Process.Start(processInfo);
-                process.WaitForExit();
-                process.Close();
-
-                if (File.Exists("OutputImages/" + id + "_upscaled_trim_classified.hdr")) File.Delete("OutputImages/" + id + "_upscaled_trim_classified.hdr");
-                if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_upscaled_trim_classified.hdr");
-                if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
-                if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
+                MessageBox.Show("Could not convert to HDR.\nCheck Conda environment!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                shouldStop = true;
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                UpdateDownloadStatusText("failed on HDR stage!");
+                return null;
             }
+
+            //Read in HDR values
+            UpdateDownloadStatusText("reading HDR output...");
+            HDRImage hdrImage = new HDRImage();
+            hdrImage.Open("OutputImages/" + id + ".hdr");
+
+            //Upscale the HDR image
+            UpdateDownloadStatusText("upscaling HDR...");
+            UpscaleHDR upscaler = new UpscaleHDR();
+            HDRImage hdrUpscaled = upscaler.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
+            hdrUpscaled.Save("OutputImages/" + id + "_upscaled.hdr");
+                
+            //Re-write the upscaled HDR image without the ground
+            UpdateDownloadStatusText("cropping upscaled HDR...");
+            HDRImage hdrCropped = new HDRImage();
+            hdrCropped.SetResolution(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
+            for (int x = 0; x < hdrCropped.Width; x++)
+            {
+                for (int y = 0; y < hdrCropped.Height; y++)
+                {
+                    hdrCropped.SetPixel(x, y, hdrUpscaled.GetPixel(x, y));
+                }
+            }
+            hdrCropped.Save("OutputImages/" + id + "_upscaled_trim.hdr");
+                
+            //Classify the upscaled image
+            UpdateDownloadStatusText("classifying cloud formations...");
+            if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
+            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
+            File.Copy("OutputImages/" + id + "_upscaled_trim.hdr", "Classify/Input_Output_Files/" + id + ".hdr");
+
+            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/Classify/Classify.exe", "5 400 100 0 " + id + " " + id + "_classified");
+            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/Classify/";
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            if (File.Exists("OutputImages/" + id + "_upscaled_trim_classified.hdr")) File.Delete("OutputImages/" + id + "_upscaled_trim_classified.hdr");
+            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_upscaled_trim_classified.hdr");
+            if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
+            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
+
+            /*
+            //Convert HDR values to regular float values
+            UpdateDownloadStatusText("converting HDR output...");
+            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
+            File.Copy("OutputImages/" + id + ".hdr", "HDR2Float/streetview.hdr");
+
+            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe", "");
+            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/";
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            if (File.Exists("OutputImages/" + id + ".bin")) File.Delete("OutputImages/" + id + ".bin");
+            if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", "OutputImages/" + id + ".bin");
+            if (File.Exists("HDR2Float/streetview.bin")) File.Delete("HDR2Float/streetview.bin");
+            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
+
+            //Read in the converted float values from the HDR
+            BinaryReader binReader = new BinaryReader(File.OpenRead("OutputImages/" + id + ".bin"));
+            List<HDRPixelAsFloat> parsedPixels = new List<HDRPixelAsFloat>();
+            for (int i = 0; i < binReader.BaseStream.Length / sizeof(float) / 3; i++)
+            {
+                HDRPixelAsFloat newPixel = new HDRPixelAsFloat();
+                newPixel.R = binReader.ReadSingle();
+                newPixel.G = binReader.ReadSingle();
+                newPixel.B = binReader.ReadSingle();
+                parsedPixels.Add(newPixel);
+            }
+            binReader.Close();
+            */
 
             //Done!
             downloadCount++;
