@@ -289,8 +289,8 @@ namespace StreetviewRipper
 
             //Upscale the HDR image
             UpdateDownloadStatusText("upscaling HDR...");
-            UpscaleHDR upscaler = new UpscaleHDR();
-            HDRImage hdrUpscaled = upscaler.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
+            HDRUtilities hdrUtils = new HDRUtilities();
+            HDRImage hdrUpscaled = hdrUtils.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
             hdrUpscaled.Save("OutputImages/" + id + "_upscaled.hdr");
                 
             //Re-write the upscaled HDR image without the ground
@@ -305,12 +305,17 @@ namespace StreetviewRipper
                 }
             }
             hdrCropped.Save("OutputImages/" + id + "_upscaled_trim.hdr");
+
+            //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
+            UpdateDownloadStatusText("converting to fisheye...");
+            HDRImage hdrFisheye = hdrUtils.ToFisheye(hdrCropped, hdrCropped.Width / 10);
+            hdrFisheye.Save("OutputImages/" + id + "_upscaled_trim_fisheye.hdr");
                 
             //Classify the upscaled image
             UpdateDownloadStatusText("classifying cloud formations...");
             if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
-            File.Copy("OutputImages/" + id + "_upscaled_trim.hdr", "Classify/Input_Output_Files/" + id + ".hdr");
+            File.Copy("OutputImages/" + id + "_upscaled_trim_fisheye.hdr", "Classify/Input_Output_Files/" + id + ".hdr");
 
             processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/Classify/Classify.exe", "5 400 100 0 " + id + " " + id + "_classified");
             processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/Classify/";
@@ -320,8 +325,8 @@ namespace StreetviewRipper
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("OutputImages/" + id + "_upscaled_trim_classified.hdr")) File.Delete("OutputImages/" + id + "_upscaled_trim_classified.hdr");
-            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_upscaled_trim_classified.hdr");
+            if (File.Exists("OutputImages/" + id + "_upscaled_trim_fisheye_classified.hdr")) File.Delete("OutputImages/" + id + "_upscaled_trim_fisheye_classified.hdr");
+            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_upscaled_trim_fisheye_classified.hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
 
