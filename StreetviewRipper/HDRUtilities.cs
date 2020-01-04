@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -9,7 +10,7 @@ namespace StreetviewRipper
 {
     class HDRUtilities
     {
-        /* Convert a HDR image to fisheye */
+        /* Convert a HDR image to fisheye, based on: https://stackoverflow.com/a/26682324/3798962 */
         public HDRImage ToFisheye(HDRImage origImage, int radius)
         {
             HDRImage outImage = new HDRImage();
@@ -17,7 +18,8 @@ namespace StreetviewRipper
             int c = radius * 2;
 
             //First, make every pixel black
-            HDRPixel blackPixel = new HDRPixel(0, 0, 0, 0);
+            HDRPixel blackPixel = new HDRPixel();
+            blackPixel.FromRGBE(0, 0, 0, 0);
             for (int x = 0; x < outImage.Width; x++)
             {
                 for (int y = 0; y < outImage.Height; y++)
@@ -92,6 +94,47 @@ namespace StreetviewRipper
         /* Upscale a HDR image */
         public HDRImage Upscale(HDRImage origImage, float scale)
         {
+            Bitmap newimg = new Bitmap((int)(origImage.Width * scale), (int)(origImage.Height * scale));
+            Bitmap origimg = new Bitmap(origImage.Width, origImage.Height);
+
+            for (int x = 0; x < origImage.Width; x++)
+            {
+                for (int y = 0; y < origImage.Height; y++)
+                {
+                    HDRPixel thisHDRPixel = origImage.GetPixel(x, y);
+                    Color thisLDRPixel = Color.FromArgb((int)(thisHDRPixel.R * 255), (int)(thisHDRPixel.G * 255), (int)(thisHDRPixel.B * 255), (int)(thisHDRPixel.L * 255)); //Using A as E
+                    origimg.SetPixel(x, y, thisLDRPixel);
+                }
+            }
+
+            origimg.Save("original.png", System.Drawing.Imaging.ImageFormat.Png);
+
+            using (Graphics g = Graphics.FromImage(newimg))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(origimg, new Rectangle(Point.Empty, newimg.Size));
+            }
+
+            newimg.Save("upscaled.png", System.Drawing.Imaging.ImageFormat.Png);
+
+            HDRImage upscaledImage = new HDRImage();
+            upscaledImage.SetResolution(newimg.Width, newimg.Height);
+
+            for (int x = 0; x < newimg.Width; x++)
+            {
+                for (int y = 0; y < newimg.Height; y++)
+                {
+                    Color thisLDRPixel = newimg.GetPixel(x, y);
+                    HDRPixel thisHDRPixel = new HDRPixel();
+                    thisHDRPixel.FromRGBE(thisLDRPixel.R / 255, thisLDRPixel.G / 255, thisLDRPixel.B / 255, thisLDRPixel.A / 255);
+                    upscaledImage.SetPixel(x, y, thisHDRPixel);
+                }
+            }
+
+            return upscaledImage;
+
+
+            /*
             HDRImage outImage = new HDRImage();
             outImage.SetResolution((int)(origImage.Width * scale), (int)(origImage.Height * scale));
             
@@ -119,6 +162,7 @@ namespace StreetviewRipper
             }
             
             return outImage;
+            */
         }
 
         /* Maths functions for upscaling: https://rosettacode.org/wiki/Bilinear_interpolation */
