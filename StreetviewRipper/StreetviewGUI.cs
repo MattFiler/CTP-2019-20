@@ -283,40 +283,6 @@ namespace StreetviewRipper
                 return null;
             }
 
-            /*
-            //Convert HDR values to regular float values
-            UpdateDownloadStatusText("converting HDR output...");
-            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
-            File.Copy("OutputImages/" + id + ".hdr", "HDR2Float/streetview.hdr");
-
-            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe", "");
-            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/";
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            if (File.Exists("OutputImages/" + id + ".bin")) File.Delete("OutputImages/" + id + ".bin");
-            if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", "OutputImages/" + id + ".bin");
-            if (File.Exists("HDR2Float/streetview.bin")) File.Delete("HDR2Float/streetview.bin");
-            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
-
-            //Read in the converted float values from the HDR
-            BinaryReader binReader = new BinaryReader(File.OpenRead("OutputImages/" + id + ".bin"));
-            List<HDRPixelFloat> parsedPixels = new List<HDRPixelFloat>();
-            for (int i = 0; i < binReader.BaseStream.Length / sizeof(float) / 3; i++)
-            {
-                HDRPixelFloat newPixel = new HDRPixelFloat();
-                newPixel.R = binReader.ReadSingle();
-                newPixel.G = binReader.ReadSingle();
-                newPixel.B = binReader.ReadSingle();
-                newPixel.L = (newPixel.R * 0.2126f) + (newPixel.G * 0.7152f) + (newPixel.B * 0.0722f);
-                parsedPixels.Add(newPixel);
-            }
-            binReader.Close();
-            */
-
             //Read in HDR values
             UpdateDownloadStatusText("reading HDR output...");
             HDRImage hdrImage = new HDRImage();
@@ -364,7 +330,38 @@ namespace StreetviewRipper
             if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_upscaled_trim_fisheye_classified.hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
-            
+
+            /*
+            //Convert HDR values to regular float values
+            UpdateDownloadStatusText("converting HDR output...");
+            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
+            File.Copy("OutputImages/" + id + ".hdr", "HDR2Float/streetview.hdr");
+
+            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe", "");
+            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/";
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            if (File.Exists("OutputImages/" + id + ".bin")) File.Delete("OutputImages/" + id + ".bin");
+            if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", "OutputImages/" + id + ".bin");
+            if (File.Exists("HDR2Float/streetview.bin")) File.Delete("HDR2Float/streetview.bin");
+            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
+
+            //Read in the converted float values from the HDR
+            BinaryReader binReader = new BinaryReader(File.OpenRead("OutputImages/" + id + ".bin"));
+            List<HDRPixelAsFloat> parsedPixels = new List<HDRPixelAsFloat>();
+            for (int i = 0; i < binReader.BaseStream.Length / sizeof(float) / 3; i++)
+            {
+                HDRPixelAsFloat newPixel = new HDRPixelAsFloat();
+                newPixel.R = binReader.ReadSingle();
+                newPixel.G = binReader.ReadSingle();
+                newPixel.B = binReader.ReadSingle();
+                parsedPixels.Add(newPixel);
+            }
+            binReader.Close();
             */
 
             //Done!

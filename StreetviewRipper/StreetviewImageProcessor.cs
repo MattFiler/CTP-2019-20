@@ -85,7 +85,10 @@ namespace StreetviewRipper
             for (int i = 0; i < (InFile.BaseStream.Length - 75) / 4; i++)
             {
                 HDRPixel newPixel = new HDRPixel();
-                newPixel.FromRGBE((int)InFile.ReadByte(), (int)InFile.ReadByte(), (int)InFile.ReadByte(), (int)InFile.ReadByte());
+                newPixel.R = (int)InFile.ReadByte();
+                newPixel.G = (int)InFile.ReadByte();
+                newPixel.B = (int)InFile.ReadByte();
+                newPixel.E = (int)InFile.ReadByte();
                 pixels[i] = newPixel;
             }
 
@@ -102,11 +105,10 @@ namespace StreetviewRipper
             OutFile.Write((byte)0x0A);
             for (int i = 0; i < height * width; i++)
             {
-                List<int> rgbePixel = pixels[i].ToRGBE();
-                OutFile.Write((byte)rgbePixel[0]);
-                OutFile.Write((byte)rgbePixel[1]);
-                OutFile.Write((byte)rgbePixel[2]);
-                OutFile.Write((byte)rgbePixel[3]);
+                OutFile.Write((byte)pixels[i].R);
+                OutFile.Write((byte)pixels[i].G);
+                OutFile.Write((byte)pixels[i].B);
+                OutFile.Write((byte)pixels[i].E);
             }
             OutFile.Close();
         }
@@ -114,48 +116,26 @@ namespace StreetviewRipper
 
     class HDRPixel
     {
-        private float r;
-        private float g;
-        private float b;
-        private float l;
+        public int R;
+        public int G;
+        public int B;
+        public int E;
 
-        public float R
+        public HDRPixel() { }
+        public HDRPixel(int _r, int _g, int _b, int _e)
         {
-            get { return r; }
+            R = _r;
+            G = _g;
+            B = _b;
+            E = _e;
         }
-        public float G
-        {
-            get { return g; }
-        }
-        public float B
-        {
-            get { return b; }
-        }
-        public float L
-        {
-            get { return l; }
-        }
+    }
 
-        public void FromRGBE(int _r, int _g, int _b, int _e)
-        {
-            float f = (float)C.math.ldexp(1.0, _e - (int)(128 + 8));
-            r = _r * f;
-            g = _g * f;
-            b = _b * f;
-            l = (r * 0.2126f) + (g * 0.7152f) + (b * 0.0722f);
-        }
-
-        public List<int> ToRGBE()
-        {
-            List<int> asRGBE = new List<int>();
-            int e = 0;
-            float v = (float)(C.math.frexp(r, ref e) * 256.0 / r);
-            asRGBE.Add((int)(r * v));
-            asRGBE.Add((int)(g * v));
-            asRGBE.Add((int)(b * v));
-            asRGBE.Add((int)(e + 128));
-            return asRGBE;
-        }
+    class HDRPixelAsFloat
+    {
+        public float R;
+        public float G;
+        public float B;
     }
 
     class PrevBest

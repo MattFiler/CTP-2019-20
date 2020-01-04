@@ -18,8 +18,7 @@ namespace StreetviewRipper
             int c = radius * 2;
 
             //First, make every pixel black
-            HDRPixel blackPixel = new HDRPixel();
-            blackPixel.FromRGBE(0, 0, 0, 0);
+            HDRPixel blackPixel = new HDRPixel(0, 0, 0, 0);
             for (int x = 0; x < outImage.Width; x++)
             {
                 for (int y = 0; y < outImage.Height; y++)
@@ -102,20 +101,16 @@ namespace StreetviewRipper
                 for (int y = 0; y < origImage.Height; y++)
                 {
                     HDRPixel thisHDRPixel = origImage.GetPixel(x, y);
-                    Color thisLDRPixel = Color.FromArgb((int)(thisHDRPixel.R * 255), (int)(thisHDRPixel.G * 255), (int)(thisHDRPixel.B * 255), (int)(thisHDRPixel.L * 255)); //Using A as E
+                    Color thisLDRPixel = Color.FromArgb(255, thisHDRPixel.E, thisHDRPixel.E, thisHDRPixel.E);
                     origimg.SetPixel(x, y, thisLDRPixel);
                 }
             }
 
-            origimg.Save("original.png", System.Drawing.Imaging.ImageFormat.Png);
-
             using (Graphics g = Graphics.FromImage(newimg))
             {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
                 g.DrawImage(origimg, new Rectangle(Point.Empty, newimg.Size));
             }
-
-            newimg.Save("upscaled.png", System.Drawing.Imaging.ImageFormat.Png);
 
             HDRImage upscaledImage = new HDRImage();
             upscaledImage.SetResolution(newimg.Width, newimg.Height);
@@ -124,9 +119,37 @@ namespace StreetviewRipper
             {
                 for (int y = 0; y < newimg.Height; y++)
                 {
-                    Color thisLDRPixel = newimg.GetPixel(x, y);
                     HDRPixel thisHDRPixel = new HDRPixel();
-                    thisHDRPixel.FromRGBE(thisLDRPixel.R / 255, thisLDRPixel.G / 255, thisLDRPixel.B / 255, thisLDRPixel.A / 255);
+                    thisHDRPixel.E = newimg.GetPixel(x, y).R;
+                    upscaledImage.SetPixel(x, y, thisHDRPixel);
+                }
+            }
+
+            for (int x = 0; x < origImage.Width; x++)
+            {
+                for (int y = 0; y < origImage.Height; y++)
+                {
+                    HDRPixel thisHDRPixel = origImage.GetPixel(x, y);
+                    Color thisLDRPixel = Color.FromArgb(255, thisHDRPixel.R, thisHDRPixel.G, thisHDRPixel.B); 
+                    origimg.SetPixel(x, y, thisLDRPixel);
+                }
+            }
+
+            using (Graphics g = Graphics.FromImage(newimg))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+                g.DrawImage(origimg, new Rectangle(Point.Empty, newimg.Size));
+            }
+
+            for (int x = 0; x < newimg.Width; x++)
+            {
+                for (int y = 0; y < newimg.Height; y++)
+                {
+                    Color thisLDRPixel = newimg.GetPixel(x, y);
+                    HDRPixel thisHDRPixel = upscaledImage.GetPixel(x, y);
+                    thisHDRPixel.R = thisLDRPixel.R;
+                    thisHDRPixel.G = thisLDRPixel.G;
+                    thisHDRPixel.B = thisLDRPixel.B;
                     upscaledImage.SetPixel(x, y, thisHDRPixel);
                 }
             }
@@ -134,7 +157,7 @@ namespace StreetviewRipper
             return upscaledImage;
 
 
-            /*
+
             HDRImage outImage = new HDRImage();
             outImage.SetResolution((int)(origImage.Width * scale), (int)(origImage.Height * scale));
             
@@ -162,7 +185,6 @@ namespace StreetviewRipper
             }
             
             return outImage;
-            */
         }
 
         /* Maths functions for upscaling: https://rosettacode.org/wiki/Bilinear_interpolation */
