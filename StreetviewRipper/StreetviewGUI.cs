@@ -135,7 +135,7 @@ namespace StreetviewRipper
         {
             UpdateDownloadStatusText("Finished");
             if (shouldStop) return null;
-            UpdateDownloadStatusText("downloading image...");
+            UpdateDownloadStatusText("downloading LDR image...");
 
             //Get metadata
             downloadedIDs.Add(id);
@@ -193,13 +193,15 @@ namespace StreetviewRipper
             streetviewRenderer.Dispose();
             if (!Directory.Exists("OutputImages")) Directory.CreateDirectory("OutputImages");
             streetviewImage.Save("OutputImages/" + id + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            streetviewTiles = null;
 
             //Calculate metadata
             UpdateDownloadStatusText("calculating metadata...");
             StreetviewImageProcessor processor = new StreetviewImageProcessor();
             List<GroundInfo> groundPositions = processor.GuessGroundPositions(streetviewImage, (selectedQuality * 5) + 15, true, (StraightLineBias)selectedBias);
             int groundY = (int)groundPositions[0].position.y; //We only have [0] and [1] when using straight line cutting, both have the same Y
-            Vector2 sunPos = processor.GuessSunPosition(streetviewImage, groundY); 
+            Vector2 sunPos = processor.GuessSunPosition(streetviewImage, groundY);
+            groundPositions = null;
 
             //Write some of the metadata locally
             JToken localMeta = JToken.Parse("{}");
@@ -227,11 +229,6 @@ namespace StreetviewRipper
                 return thisMeta["neighbours"].Value<JArray>();
             }
 
-            //Shift the image to match Hosek-Wilkie sun position
-            UpdateDownloadStatusText("adjusting image...");
-            int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
-            streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
-
             //Create Hosek-Wilkie sky model for background
             UpdateDownloadStatusText("calculating sky model...");
             if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
@@ -252,12 +249,16 @@ namespace StreetviewRipper
             if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + ".exr");
             if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
 
+            //Shift the image to match Hosek-Wilkie sun position
+            UpdateDownloadStatusText("adjusting LDR image...");
+            int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
+            streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
+            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+
             //Convert to HDR image
             UpdateDownloadStatusText("converting to HDR...");
-            if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
             if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
-            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-                
+
             processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat\"");
             processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/";
             processInfo.CreateNoWindow = true;
@@ -282,6 +283,18 @@ namespace StreetviewRipper
                 return null;
             }
 
+            //Trim the ground from the adjusted image
+            UpdateDownloadStatusText("cropping LDR image...");
+            Bitmap streetviewImageTrim = new Bitmap(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
+            for (int x = 0; x < streetviewImageTrim.Width; x++)
+            {
+                for (int y = 0; y < streetviewImageTrim.Height; y++)
+                {
+                    streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
+                }
+            }
+            streetviewImage = null;
+
             //Read in HDR values
             UpdateDownloadStatusText("reading HDR output...");
             HDRImage hdrImage = new HDRImage();
@@ -292,7 +305,8 @@ namespace StreetviewRipper
             HDRUtilities hdrUtils = new HDRUtilities();
             HDRImage hdrUpscaled = hdrUtils.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
             hdrUpscaled.Save("OutputImages/" + id + "_upscaled.hdr");
-                
+            hdrImage = null;
+
             //Re-write the upscaled HDR image without the ground
             UpdateDownloadStatusText("cropping upscaled HDR...");
             HDRImage hdrCropped = new HDRImage();
@@ -305,17 +319,21 @@ namespace StreetviewRipper
                 }
             }
             hdrCropped.Save("OutputImages/" + id + "_upscaled_trim.hdr");
+            hdrUpscaled = null;
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
+            /*
             UpdateDownloadStatusText("converting to fisheye...");
             HDRImage hdrFisheye = hdrUtils.ToFisheye(hdrCropped, hdrCropped.Width / 10);
             hdrFisheye.Save("OutputImages/" + id + "_upscaled_trim_fisheye.hdr");
-                
+            */
+
             //Classify the upscaled image
             UpdateDownloadStatusText("classifying cloud formations...");
             if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
-            File.Copy("OutputImages/" + id + "_upscaled_trim_fisheye.hdr", "Classify/Input_Output_Files/" + id + ".hdr");
+            //File.Copy("OutputImages/" + id + "_upscaled_trim_fisheye.hdr", "Classify/Input_Output_Files/" + id + ".hdr");
+            File.Copy("OutputImages/" + id + "_upscaled_trim.hdr", "Classify/Input_Output_Files/" + id + ".hdr"); //Fisheye is a bit janky, so for now, use the trim
 
             processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/Classify/Classify.exe", "5 400 100 0 " + id + " " + id + "_classified");
             processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/Classify/";
@@ -325,10 +343,20 @@ namespace StreetviewRipper
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("OutputImages/" + id + "_upscaled_trim_fisheye_classified.hdr")) File.Delete("OutputImages/" + id + "_upscaled_trim_fisheye_classified.hdr");
-            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_upscaled_trim_fisheye_classified.hdr");
+            if (File.Exists("OutputImages/" + id + "_classified.hdr")) File.Delete("OutputImages/" + id + "_classified.hdr");
+            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_classified.hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
             if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
+            HDRImage hdrClassified = new HDRImage();
+            hdrClassified.Open("OutputImages/" + id + "_classified.hdr");
+            hdrClassified.Save("OutputImages/" + id + "_classified_sanity.hdr");
+
+            //Pull classified clouds from the image & save them
+            UpdateDownloadStatusText("extracting classified clouds...");
+            Bitmap hdrCloudType1 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_1);
+            Bitmap hdrCloudType2 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_2);
+            hdrCloudType1.Save("OutputImages/" + id + "_cloudtype1.png", System.Drawing.Imaging.ImageFormat.Png);
+            hdrCloudType2.Save("OutputImages/" + id + "_cloudtype2.png", System.Drawing.Imaging.ImageFormat.Png);
 
             /*
             //Convert HDR values to regular float values

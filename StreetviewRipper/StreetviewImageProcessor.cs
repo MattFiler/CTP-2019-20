@@ -50,6 +50,10 @@ namespace StreetviewRipper
             width = w;
             height = h;
             pixels = new HDRPixel[width * height];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = new HDRPixel(0, 0, 0, 0);
+            }
         }
 
         /* Get the resolution of the HDR image */
@@ -74,15 +78,42 @@ namespace StreetviewRipper
             return pixels[(y * Width) + x];
         }
 
-        /* Load in a HDR file - TODO: read header */
+        /* Load in a HDR file */
         public void Open(string filename)
         {
             BinaryReader InFile = new BinaryReader(File.OpenRead(filename));
 
-            InFile.BaseStream.Position = 75; //The header will always be 75 from LDR2HDR
-            SetResolution(128, 64);
+            string thisHeaderLine = "";
+            while (true)
+            {
+                byte thisByte = InFile.ReadByte();
+                if (thisByte == 0x0A)
+                {
+                    if (thisHeaderLine.Length >= 6 && thisHeaderLine.Substring(0, 6).ToUpper() == "FORMAT")
+                    {
+                        if (thisHeaderLine.Substring(7) != "32-bit_rle_rgbe")
+                        {
+                            throw new System.FormatException("Can only read 32-bit RGBE HDR images!");
+                        }
+                    }
+                    else if (thisHeaderLine.Length >= 2 && thisHeaderLine.Substring(0, 2).ToUpper() == "-Y")
+                    {
+                        string[] sizeData = thisHeaderLine.Split(' ');
+                        int Y = Convert.ToInt32(sizeData[1]);
+                        int X = Convert.ToInt32(sizeData[3]);
+                        SetResolution(X, Y);
+                        break; //Resolution should always be last param!
+                    }
+                    thisHeaderLine = "";
+                }
+                else
+                {
+                    thisHeaderLine += (char)thisByte;
+                }
+            }
+            int headerLen = (int)InFile.BaseStream.Position;
 
-            for (int i = 0; i < (InFile.BaseStream.Length - 75) / 4; i++)
+            for (int i = 0; i < (InFile.BaseStream.Length - headerLen) / 4; i++)
             {
                 HDRPixel newPixel = new HDRPixel();
                 newPixel.R = (int)InFile.ReadByte();
@@ -123,6 +154,14 @@ namespace StreetviewRipper
 
         public HDRPixel() { }
         public HDRPixel(int _r, int _g, int _b, int _e)
+        {
+            R = _r;
+            G = _g;
+            B = _b;
+            E = _e;
+        }
+
+        public void Set(int _r, int _g, int _b, int _e)
         {
             R = _r;
             G = _g;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -15,16 +16,6 @@ namespace StreetviewRipper
             HDRImage outImage = new HDRImage();
             outImage.SetResolution(radius * 4, radius * 4);
             int c = radius * 2;
-
-            //First, make every pixel black
-            HDRPixel blackPixel = new HDRPixel(0, 0, 0, 0);
-            for (int x = 0; x < outImage.Width; x++)
-            {
-                for (int y = 0; y < outImage.Height; y++)
-                {
-                    outImage.SetPixel(x, y, blackPixel);
-                }
-            }
 
             //Work out the maximum number of calls we're going to make to draw around the circle
             int maxCount = 0;
@@ -87,6 +78,47 @@ namespace StreetviewRipper
             }
             
             return outImageFinal;
+        }
+
+        /* Pull clouds from an LDR image, by the HDR classifier's data */
+        public enum CloudTypes
+        {
+            NONE,         //Purple colour code
+            CLOUD_TYPE_1, //Red colour code (need to work out what it actually thinks these are)
+            CLOUD_TYPE_2  //Green colour code (need to work out what it actually thinks these are)
+        }
+        public Bitmap PullCloudType(HDRImage classifiedImage, Bitmap origImage, CloudTypes cloudType)
+        {
+            //Ignore E for the cloud type colours
+            HDRPixel colourToMatch = new HDRPixel(128, 0, 128, 129);
+            switch (cloudType)
+            {
+                case CloudTypes.CLOUD_TYPE_1:
+                    colourToMatch = new HDRPixel(128, 0, 0, 129);
+                    break;
+                case CloudTypes.CLOUD_TYPE_2:
+                    colourToMatch = new HDRPixel(0, 128, 0, 129);
+                    break;
+            }
+
+            //Pull all pixels from original image that match our cloud type in classified image
+            Bitmap classifiedTrim = new Bitmap(origImage.Width, origImage.Height);
+            for (int x = 0; x < origImage.Width; x++)
+            {
+                for (int y = 0; y < origImage.Height; y++)
+                {
+                    HDRPixel thisPixel = classifiedImage.GetPixel(x, y);
+                    if (thisPixel != null && 
+                        thisPixel.R == colourToMatch.R &&
+                        thisPixel.G == colourToMatch.G &&
+                        thisPixel.B == colourToMatch.B &&
+                        thisPixel.E == colourToMatch.E)
+                    {
+                        classifiedTrim.SetPixel(x, y, origImage.GetPixel(x, y));
+                    }
+                }
+            }
+            return classifiedTrim;
         }
 
         /* Upscale a HDR image */
