@@ -170,11 +170,50 @@ namespace StreetviewRipper
         }
     }
 
-    class HDRPixelAsFloat
+    class HDRPixelFloat
     {
-        public float R;
-        public float G;
-        public float B;
+        private float r;
+        private float g;
+        private float b;
+        private float l;
+
+        public float R
+        {
+            get { return r; }
+        }
+        public float G
+        {
+            get { return g; }
+        }
+        public float B
+        {
+            get { return b; }
+        }
+        public float L
+        {
+            get { return l; }
+        }
+
+        public void FromRGBE(int _r, int _g, int _b, int _e)
+        {
+            float f = (float)C.math.ldexp(1.0, _e - (int)(128 + 8));
+            r = _r * f;
+            g = _g * f;
+            b = _b * f;
+            l = (r * 0.2126f) + (g * 0.7152f) + (b * 0.0722f);
+        }
+
+        public List<int> ToRGBE()
+        {
+            List<int> asRGBE = new List<int>();
+            int e = 0;
+            float v = (float)(C.math.frexp(r, ref e) * 256.0 / r);
+            asRGBE.Add((int)(r * v));
+            asRGBE.Add((int)(g * v));
+            asRGBE.Add((int)(b * v));
+            asRGBE.Add((int)(e + 128));
+            return asRGBE;
+        }
     }
 
     class PrevBest
