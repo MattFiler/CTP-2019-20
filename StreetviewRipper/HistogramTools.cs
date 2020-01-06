@@ -54,10 +54,10 @@ namespace StreetviewRipper
                         HDRPixelFloat thisPixelFloat = new HDRPixelFloat();
                         thisPixelFloat.FromRGBE(thisPixel.R, thisPixel.G, thisPixel.B, thisPixel.E);
 
-                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.R, 4));
-                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.G, 4));
-                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.B, 4));
-                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.L, 4));
+                        dataR.Add(thisPixelFloat.R);
+                        dataG.Add(thisPixelFloat.G);
+                        dataB.Add(thisPixelFloat.B);
+                        dataL.Add((float)decimal.Round((decimal)thisPixelFloat.L, 4));
                     }
                 }
                 JArray completeHistoData = new JArray();

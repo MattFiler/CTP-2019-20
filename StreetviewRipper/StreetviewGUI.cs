@@ -362,14 +362,15 @@ namespace StreetviewRipper
             if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
             HDRImage hdrClassified = new HDRImage();
             hdrClassified.Open("OutputImages/" + id + "_classified.hdr");
-            hdrClassified.Save("OutputImages/" + id + "_classified_sanity.hdr");
 
             //Pull classified clouds from the image & save them
             UpdateDownloadStatusText("extracting classified clouds...");
             Bitmap hdrCloudType1 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_1);
             Bitmap hdrCloudType2 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_2);
+            Bitmap hdrCloudType3 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_3);
             hdrCloudType1.Save("OutputImages/" + id + "_cloudtype1.png", System.Drawing.Imaging.ImageFormat.Png);
             hdrCloudType2.Save("OutputImages/" + id + "_cloudtype2.png", System.Drawing.Imaging.ImageFormat.Png);
+            hdrCloudType3.Save("OutputImages/" + id + "_cloudtype3.png", System.Drawing.Imaging.ImageFormat.Png);
 
             /*
             //Convert HDR values to regular float values

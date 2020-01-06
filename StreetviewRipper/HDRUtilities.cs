@@ -85,7 +85,8 @@ namespace StreetviewRipper
         {
             NONE,         //Purple colour code
             CLOUD_TYPE_1, //Red colour code (need to work out what it actually thinks these are)
-            CLOUD_TYPE_2  //Green colour code (need to work out what it actually thinks these are)
+            CLOUD_TYPE_2, //Green colour code (need to work out what it actually thinks these are)
+            CLOUD_TYPE_3  //Blue colour code (need to work out what it actually thinks these are)
         }
         public Bitmap PullCloudType(HDRImage classifiedImage, Bitmap origImage, CloudTypes cloudType)
         {
@@ -98,6 +99,9 @@ namespace StreetviewRipper
                     break;
                 case CloudTypes.CLOUD_TYPE_2:
                     colourToMatch = new HDRPixel(0, 128, 0, 129);
+                    break;
+                case CloudTypes.CLOUD_TYPE_3:
+                    colourToMatch = new HDRPixel(0, 0, 128, 129);
                     break;
             }
 
