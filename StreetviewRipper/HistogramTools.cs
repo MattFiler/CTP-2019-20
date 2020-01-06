@@ -31,10 +31,13 @@ namespace StreetviewRipper
                         dataE.Add(thisPixel.E);
                     }
                 }
-                OutputHistogram(filename + "_rgbe_r", "HDR Histogram RGBE R", CalculateHistogram(dataR));
-                OutputHistogram(filename + "_rgbe_g", "HDR Histogram RGBE G", CalculateHistogram(dataG));
-                OutputHistogram(filename + "_rgbe_b", "HDR Histogram RGBE B", CalculateHistogram(dataB));
-                OutputHistogram(filename + "_rgbe_e", "HDR Histogram RGBE E", CalculateHistogram(dataE));
+                JArray completeHistoData = new JArray();
+                completeHistoData.Add(CalculateHistogram(dataR));
+                completeHistoData.Add(CalculateHistogram(dataG));
+                completeHistoData.Add(CalculateHistogram(dataB));
+                OutputHistogram(filename + "_rgbe_noe", "HDR RGBE (Excluding E) Histogram", completeHistoData);
+                completeHistoData.Add(CalculateHistogram(dataE));
+                OutputHistogram(filename + "_rgbe", "HDR RGBE Histogram", completeHistoData);
             }
 
             //Run for RGBL version
@@ -51,16 +54,19 @@ namespace StreetviewRipper
                         HDRPixelFloat thisPixelFloat = new HDRPixelFloat();
                         thisPixelFloat.FromRGBE(thisPixel.R, thisPixel.G, thisPixel.B, thisPixel.E);
 
-                        dataR.Add(thisPixelFloat.R);
-                        dataG.Add(thisPixelFloat.G);
-                        dataB.Add(thisPixelFloat.B);
-                        dataL.Add(thisPixelFloat.L);
+                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.R, 4));
+                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.G, 4));
+                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.B, 4));
+                        dataR.Add((float)decimal.Round((decimal)thisPixelFloat.L, 4));
                     }
                 }
-                OutputHistogram(filename + "_rgbl_r", "HDR Histogram RGBL R", CalculateHistogram(dataR));
-                OutputHistogram(filename + "_rgbl_g", "HDR Histogram RGBL G", CalculateHistogram(dataG));
-                OutputHistogram(filename + "_rgbl_b", "HDR Histogram RGBL B", CalculateHistogram(dataB));
-                OutputHistogram(filename + "_rgbl_l", "HDR Histogram RGBL L", CalculateHistogram(dataB));
+                JArray completeHistoData = new JArray();
+                completeHistoData.Add(CalculateHistogram(dataR));
+                completeHistoData.Add(CalculateHistogram(dataG));
+                completeHistoData.Add(CalculateHistogram(dataB));
+                OutputHistogram(filename + "_rgbl_nol", "HDR RGBL (Excluding L) Histogram", completeHistoData);
+                completeHistoData.Add(CalculateHistogram(dataL));
+                OutputHistogram(filename + "_rgbl", "HDR RGBL Histogram", completeHistoData);
             }
         }
 
@@ -80,9 +86,11 @@ namespace StreetviewRipper
                     dataB.Add(thisPixel.B);
                 }
             }
-            OutputHistogram(filename + "_r", "LDR Histogram R", CalculateHistogram(dataR));
-            OutputHistogram(filename + "_g", "LDR Histogram G", CalculateHistogram(dataG));
-            OutputHistogram(filename + "_b", "LDR Histogram B", CalculateHistogram(dataB));
+            JArray completeHistoData = new JArray();
+            completeHistoData.Add(CalculateHistogram(dataR));
+            completeHistoData.Add(CalculateHistogram(dataG));
+            completeHistoData.Add(CalculateHistogram(dataB));
+            OutputHistogram(filename, "LDR Histogram", completeHistoData);
         }
 
         /* FLOAT: Calculate the histogram and return as JSON array */
@@ -147,13 +155,14 @@ namespace StreetviewRipper
             //Rewrite html page
             string htmlPage = Properties.Resources.HistogramHTML.ToString();
             htmlPage = htmlPage.Replace("%TITLE%", title);
-            htmlPage = htmlPage.Replace("%DATA_URL%", "data/" + filename + ".json");
+            for (int i = 0; i < json.Count; i++) htmlPage = htmlPage.Replace("%DATA_URL" + (i+1).ToString() + "%", "data/" + filename + (i+1).ToString() + ".json");
+            htmlPage = htmlPage.Replace("%USE_4%", (json.Count == 4) ? "true" : "false");
             Directory.CreateDirectory("HistogramOutput/");
             File.WriteAllText("HistogramOutput/" + filename + ".html", htmlPage);
 
             //Save JSON
             Directory.CreateDirectory("HistogramOutput/data/");
-            File.WriteAllText("HistogramOutput/data/" + filename + ".json", json.ToString());
+            for (int i = 0; i < json.Count; i++) File.WriteAllText("HistogramOutput/data/" + filename + (i+1).ToString() + ".json", json[i].ToString());
         }
     }
 }
