@@ -254,6 +254,18 @@ namespace StreetviewRipper
             streetviewImage.Save("OutputImages/" + id + "_shifted.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
 
+            //Write LDR histograms
+            HistogramTools histogramUtils = new HistogramTools();
+            UpdateDownloadStatusText("calculating LDR histograms...");
+            histogramUtils.CreateLDRHistogram(streetviewImage, id + "_ldr");
+            Image downsampledStreetview = new Bitmap(128, 64);
+            using (Graphics g = Graphics.FromImage(downsampledStreetview))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+                g.DrawImage(streetviewImage, new Rectangle(Point.Empty, downsampledStreetview.Size));
+            }
+            histogramUtils.CreateLDRHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled");
+
             //Convert to HDR image
             UpdateDownloadStatusText("converting to HDR...");
             if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
@@ -304,6 +316,11 @@ namespace StreetviewRipper
             HDRImage hdrUpscaled = hdrUtils.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
             hdrUpscaled.Save("OutputImages/" + id + "_upscaled.hdr");
 
+            //Calculate histograms for HDR
+            UpdateDownloadStatusText("calculating HDR histograms...");
+            histogramUtils.CreateHDRHistogram(hdrImage, id + "_hdr");
+            histogramUtils.CreateHDRHistogram(hdrUpscaled, id + "_hdrupscaled");
+
             //Re-write the upscaled HDR image without the ground
             UpdateDownloadStatusText("cropping upscaled HDR...");
             HDRImage hdrCropped = new HDRImage();
@@ -353,20 +370,6 @@ namespace StreetviewRipper
             Bitmap hdrCloudType2 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_2);
             hdrCloudType1.Save("OutputImages/" + id + "_cloudtype1.png", System.Drawing.Imaging.ImageFormat.Png);
             hdrCloudType2.Save("OutputImages/" + id + "_cloudtype2.png", System.Drawing.Imaging.ImageFormat.Png);
-
-            //Calculate histograms
-            UpdateDownloadStatusText("creating histograms...");
-            HistogramTools histogramUtils = new HistogramTools();
-            histogramUtils.CreateHDRHistogram(hdrImage, id + "_hdr");
-            histogramUtils.CreateHDRHistogram(hdrUpscaled, id + "_hdrupscaled");
-            histogramUtils.CreateLDRHistogram(streetviewImage, id + "_ldr");
-            Image downsampledStreetview = new Bitmap(128, 64);
-            using (Graphics g = Graphics.FromImage(downsampledStreetview))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
-                g.DrawImage(streetviewImage, new Rectangle(Point.Empty, downsampledStreetview.Size));
-            }
-            histogramUtils.CreateLDRHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled");
 
             /*
             //Convert HDR values to regular float values

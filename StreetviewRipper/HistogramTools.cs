@@ -60,6 +60,10 @@ namespace StreetviewRipper
         private JArray CalculateHistogram(List<int> data)
         {
             SortedDictionary<uint, int> histogram = new SortedDictionary<uint, int>();
+            for (uint i= 0; i < 256; i++)
+            {
+                histogram[i] = 0;
+            }
             foreach (uint item in data)
             {
                 if (histogram.ContainsKey(item))
