@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script>
+window.onload = function() {
+
+var dataPoints = [];
+
+var options =  {
+	animationEnabled: true,
+	theme: "light2",
+	title: {
+		text: "%TITLE%"
+	},
+	axisX: {
+		title: "Value",
+		titleFontSize: 24,
+		includeZero: false
+	},
+	axisY: {
+		title: "Occurances",
+		titleFontSize: 24,
+		includeZero: false
+	},
+	data: [{
+		type: "spline", 
+		dataPoints: dataPoints
+	}]
+};
+
+function addData(data) {
+	for (var i = 0; i < data.length; i++) {
+		dataPoints.push({
+            x: data[i].colour_value,
+            y: data[i].colour_occurance
+		});
+	}
+	$("#chartContainer").CanvasJSChart(options);
+
+}
+$.getJSON("%DATA_URL%", addData);
+
+}
+</script>
+</head>
+<body>
+<div id="chartContainer" style="height: 370px; width: 100%;"></div>
+<script src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+<script src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+</body>
+</html>

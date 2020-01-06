@@ -193,7 +193,6 @@ namespace StreetviewRipper
             streetviewRenderer.Dispose();
             if (!Directory.Exists("OutputImages")) Directory.CreateDirectory("OutputImages");
             streetviewImage.Save("OutputImages/" + id + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            streetviewTiles = null;
 
             //Calculate metadata
             UpdateDownloadStatusText("calculating metadata...");
@@ -201,7 +200,6 @@ namespace StreetviewRipper
             List<GroundInfo> groundPositions = processor.GuessGroundPositions(streetviewImage, (selectedQuality * 5) + 15, true, (StraightLineBias)selectedBias);
             int groundY = (int)groundPositions[0].position.y; //We only have [0] and [1] when using straight line cutting, both have the same Y
             Vector2 sunPos = processor.GuessSunPosition(streetviewImage, groundY);
-            groundPositions = null;
 
             //Write some of the metadata locally
             JToken localMeta = JToken.Parse("{}");
@@ -253,6 +251,7 @@ namespace StreetviewRipper
             UpdateDownloadStatusText("adjusting LDR image...");
             int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
             streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
+            streetviewImage.Save("OutputImages/" + id + "_shifted.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Convert to HDR image
@@ -293,7 +292,6 @@ namespace StreetviewRipper
                     streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
                 }
             }
-            streetviewImage = null;
 
             //Read in HDR values
             UpdateDownloadStatusText("reading HDR output...");
@@ -305,7 +303,6 @@ namespace StreetviewRipper
             HDRUtilities hdrUtils = new HDRUtilities();
             HDRImage hdrUpscaled = hdrUtils.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
             hdrUpscaled.Save("OutputImages/" + id + "_upscaled.hdr");
-            hdrImage = null;
 
             //Re-write the upscaled HDR image without the ground
             UpdateDownloadStatusText("cropping upscaled HDR...");
@@ -319,7 +316,6 @@ namespace StreetviewRipper
                 }
             }
             hdrCropped.Save("OutputImages/" + id + "_upscaled_trim.hdr");
-            hdrUpscaled = null;
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
             /*
@@ -357,6 +353,20 @@ namespace StreetviewRipper
             Bitmap hdrCloudType2 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_2);
             hdrCloudType1.Save("OutputImages/" + id + "_cloudtype1.png", System.Drawing.Imaging.ImageFormat.Png);
             hdrCloudType2.Save("OutputImages/" + id + "_cloudtype2.png", System.Drawing.Imaging.ImageFormat.Png);
+
+            //Calculate histograms
+            UpdateDownloadStatusText("creating histograms...");
+            HistogramTools histogramUtils = new HistogramTools();
+            histogramUtils.CreateHDRHistogram(hdrImage, id + "_hdr");
+            histogramUtils.CreateHDRHistogram(hdrUpscaled, id + "_hdrupscaled");
+            histogramUtils.CreateLDRHistogram(streetviewImage, id + "_ldr");
+            Image downsampledStreetview = new Bitmap(128, 64);
+            using (Graphics g = Graphics.FromImage(downsampledStreetview))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+                g.DrawImage(streetviewImage, new Rectangle(Point.Empty, downsampledStreetview.Size));
+            }
+            histogramUtils.CreateLDRHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled");
 
             /*
             //Convert HDR values to regular float values

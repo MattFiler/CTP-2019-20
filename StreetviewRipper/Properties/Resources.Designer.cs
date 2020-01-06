@@ -19,7 +19,7 @@ namespace StreetviewRipper.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -57,6 +57,47 @@ namespace StreetviewRipper.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;!DOCTYPE HTML&gt;
+        ///&lt;html&gt;
+        ///&lt;head&gt;
+        ///&lt;script&gt;
+        ///window.onload = function() {
+        ///
+        ///var dataPoints = [];
+        ///
+        ///var options =  {
+        ///	animationEnabled: true,
+        ///	theme: &quot;light2&quot;,
+        ///	title: {
+        ///		text: &quot;%TITLE%&quot;
+        ///	},
+        ///	axisX: {
+        ///		title: &quot;Value&quot;,
+        ///		titleFontSize: 24,
+        ///		includeZero: false
+        ///	},
+        ///	axisY: {
+        ///		title: &quot;Occurances&quot;,
+        ///		titleFontSize: 24,
+        ///		includeZero: false
+        ///	},
+        ///	data: [{
+        ///		type: &quot;spline&quot;, 
+        ///		dataPoints: dataPoints
+        ///	}]
+        ///};
+        ///
+        ///function addData(data) {
+        ///	for (var i = 0; i &lt; data.length; i++) {
+        ///		dataPoints.pus [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string HistogramHTML {
+            get {
+                return ResourceManager.GetString("HistogramHTML", resourceCulture);
             }
         }
     }
