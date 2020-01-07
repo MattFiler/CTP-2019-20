@@ -3,6 +3,8 @@ Newtonsoft.Json.xml
 /OutputImages/*
 /LDR2HDR/streetview.jpg
 /LDR2HDR/streetview.hdr
+/EXR2HDR/input.exr
+/EXR2HDR/output.hdr
 /Classify/timerOutput.txt
 /Classify/Input_Output_Files/*
 /HistogramOutput/*

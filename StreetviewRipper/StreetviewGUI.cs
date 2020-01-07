@@ -218,6 +218,7 @@ namespace StreetviewRipper
             //This next bit uses a bunch of external programs, so make sure we have them first
             if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe") ||
                 !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat") ||
+                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/EXR2HDR/run.bat") ||
                 !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe"))
             {
                 MessageBox.Show("Some external resources are missing!\nExtended image processing will not take place.", "Missing resources!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -243,9 +244,41 @@ namespace StreetviewRipper
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("OutputImages/" + id + ".exr")) File.Delete("OutputImages/" + id + ".exr");
-            if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + ".exr");
+            if (File.Exists("EXR2HDR/input.exr")) File.Delete("EXR2HDR/input.exr");
+            if (File.Exists("EXR2HDR/output.hdr")) File.Delete("EXR2HDR/output.hdr");
+            if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "EXR2HDR/input.exr");
             if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
+
+            //Convert sky model to HDR from EXR
+            UpdateDownloadStatusText("converting sky model...");
+            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/EXR2HDR/run.bat\"");
+            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/EXR2HDR/";
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            if (File.Exists("OutputImages/" + id + "_sky.hdr")) File.Delete("OutputImages/" + id + "_sky.hdr");
+            if (File.Exists("EXR2HDR/output.hdr")) File.Copy("EXR2HDR/output.hdr", "OutputImages/" + id + "_sky.hdr");
+            if (File.Exists("EXR2HDR/input.exr")) File.Delete("EXR2HDR/input.exr");
+            if (File.Exists("EXR2HDR/output.hdr")) File.Delete("EXR2HDR/output.hdr");
+
+            //If we didn't get a HDR image back, the Python environment probably isn't installed properly
+            if (!File.Exists("OutputImages/" + id + "_sky.hdr"))
+            {
+                MessageBox.Show("Could not convert sky model.\nCheck Conda environment!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                shouldStop = true;
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                UpdateDownloadStatusText("failed on sky model conversion stage!");
+                return null;
+            }
+
+            //Load the sky model in
+            UpdateDownloadStatusText("loading sky model...");
+            HDRImage skyModel = new HDRImage();
+            skyModel.Open("OutputImages/" + id + "_sky.hdr");
 
             //Shift the image to match Hosek-Wilkie sun position
             UpdateDownloadStatusText("adjusting LDR image...");
