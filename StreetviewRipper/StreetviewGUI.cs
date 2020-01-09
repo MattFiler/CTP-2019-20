@@ -218,7 +218,7 @@ namespace StreetviewRipper
             //This next bit uses a bunch of external programs, so make sure we have them first
             if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe") ||
                 !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat") ||
-                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/EXR2HDR/run.bat") ||
+                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/EXR2LDR/exr2ldr.exe") ||
                 !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe"))
             {
                 MessageBox.Show("Some external resources are missing!\nExtended image processing will not take place.", "Missing resources!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -227,6 +227,24 @@ namespace StreetviewRipper
                 UpdateDownloadCountText(downloadCount);
                 return thisMeta["neighbours"].Value<JArray>();
             }
+
+            //Trim the ground from the adjusted image
+            UpdateDownloadStatusText("cropping LDR image...");
+            Bitmap streetviewImageTrim = new Bitmap(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
+            for (int x = 0; x < streetviewImageTrim.Width; x++)
+            {
+                for (int y = 0; y < streetviewImageTrim.Height; y++)
+                {
+                    streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
+                }
+            }
+
+            //Shift the image to match Hosek-Wilkie sun position
+            UpdateDownloadStatusText("adjusting LDR image...");
+            int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
+            streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
+            streetviewImage.Save("OutputImages/" + id + "_shifted.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Create Hosek-Wilkie sky model for background
             UpdateDownloadStatusText("calculating sky model...");
@@ -244,48 +262,48 @@ namespace StreetviewRipper
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("EXR2HDR/input.exr")) File.Delete("EXR2HDR/input.exr");
-            if (File.Exists("EXR2HDR/output.hdr")) File.Delete("EXR2HDR/output.hdr");
-            if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "EXR2HDR/input.exr");
+            if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + "_sky.exr", true);
             if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
 
-            //Convert sky model to HDR from EXR
+            //Convert sky model to HDR from LDR
             UpdateDownloadStatusText("converting sky model...");
-            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/EXR2HDR/run.bat\"");
-            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/EXR2HDR/";
+            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/EXR2LDR/exr2ldr.exe", id + "_sky.exr " + id + "_sky.png");
+            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/OutputImages/";
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("OutputImages/" + id + "_sky.hdr")) File.Delete("OutputImages/" + id + "_sky.hdr");
-            if (File.Exists("EXR2HDR/output.hdr")) File.Copy("EXR2HDR/output.hdr", "OutputImages/" + id + "_sky.hdr");
-            if (File.Exists("EXR2HDR/input.exr")) File.Delete("EXR2HDR/input.exr");
-            if (File.Exists("EXR2HDR/output.hdr")) File.Delete("EXR2HDR/output.hdr");
-
-            //If we didn't get a HDR image back, the Python environment probably isn't installed properly
-            if (!File.Exists("OutputImages/" + id + "_sky.hdr"))
+            //Cut the sky model out of the original LDR image
+            UpdateDownloadStatusText("removing sky model from LDR...");
+            Bitmap skyModel = (Bitmap)Image.FromFile("OutputImages/" + id + "_sky.png");
+            Bitmap streetviewNoSky = new Bitmap(streetviewImageTrim.Width, streetviewImageTrim.Height);
+            for (int x = 0; x < streetviewImageTrim.Width; x++)
             {
-                MessageBox.Show("Could not convert sky model.\nCheck Conda environment!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                shouldStop = true;
-                downloadCount++;
-                UpdateDownloadCountText(downloadCount);
-                UpdateDownloadStatusText("failed on sky model conversion stage!");
-                return null;
+                for (int y = 0; y < streetviewImageTrim.Height; y++)
+                {
+                    Color skyPixel = skyModel.GetPixel(x, y);
+                    Color originalPixel = streetviewImageTrim.GetPixel(x, y);
+
+                    float newR = (float)(originalPixel.R - skyPixel.R) / 255.0f;
+                    if (newR < 0) newR = 0;
+                    float newG = (float)(originalPixel.G - skyPixel.G) / 255.0f;
+                    if (newG < 0) newG = 0;
+                    float newB = (float)(originalPixel.B - skyPixel.B) / 255.0f;
+                    if (newB < 0) newB = 0;
+
+                    float newA = (newR * 0.2126f) + (newG * 0.7152f) + (newB * 0.0722f);
+                    int newAFinal = ((int)(newA * 255) - 255) * -1;
+                    if (newAFinal < 0) newAFinal = 0;
+                    if (newAFinal > 255) newAFinal = 255;
+                    //int grayScale = (int)((originalPixel.R * .3) + (originalPixel.G * .59) + (originalPixel.B * .11));
+                    Color newColor = Color.FromArgb(newAFinal, originalPixel.R, originalPixel.G, originalPixel.B);
+
+                    streetviewNoSky.SetPixel(x, y, newColor);
+                }
             }
-
-            //Load the sky model in
-            UpdateDownloadStatusText("loading sky model...");
-            HDRImage skyModel = new HDRImage();
-            skyModel.Open("OutputImages/" + id + "_sky.hdr");
-
-            //Shift the image to match Hosek-Wilkie sun position
-            UpdateDownloadStatusText("adjusting LDR image...");
-            int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
-            streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
-            streetviewImage.Save("OutputImages/" + id + "_shifted.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            streetviewNoSky.Save("OutputImages/" + id + "_removedsky.png", System.Drawing.Imaging.ImageFormat.Png);
 
             //Write LDR histograms
             HistogramTools histogramUtils = new HistogramTools();
@@ -326,55 +344,6 @@ namespace StreetviewRipper
                 UpdateDownloadStatusText("failed on HDR stage!");
                 return null;
             }
-
-            //Trim the ground from the adjusted image
-            UpdateDownloadStatusText("cropping LDR image...");
-            Bitmap streetviewImageTrim = new Bitmap(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
-            for (int x = 0; x < streetviewImageTrim.Width; x++)
-            {
-                for (int y = 0; y < streetviewImageTrim.Height; y++)
-                {
-                    streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
-                }
-            }
-
-            //Cut the sky model out of the original LDR image
-            UpdateDownloadStatusText("removing sky model from LDR...");
-            Bitmap streetviewNoSky = new Bitmap(streetviewImageTrim.Width, streetviewImageTrim.Height);
-            for (int x = 0; x < streetviewImageTrim.Width; x++)
-            {
-                for (int y = 0; y < streetviewImageTrim.Height; y++)
-                {
-                    HDRPixel skyPixel = skyModel.GetPixel(x, y);
-                    HDRPixelFloat skyPixelFloat = new HDRPixelFloat();
-                    skyPixelFloat.FromRGBE(skyPixel.R, skyPixel.G, skyPixel.B, skyPixel.E);
-                    Color skyPixelNonHDR = Color.FromArgb(
-                        1,
-                        (skyPixelFloat.R > 1.0f) ? 255 : (int)(skyPixelFloat.R * 255),
-                        (skyPixelFloat.G > 1.0f) ? 255 : (int)(skyPixelFloat.G * 255),
-                        (skyPixelFloat.B > 1.0f) ? 255 : (int)(skyPixelFloat.B * 255)
-                    );
-                    Color originalPixel = streetviewImageTrim.GetPixel(x, y);
-                    /*
-                    int newR = originalPixel.R - skyPixelNonHDR.R;
-                    if (newR < 0) newR = 0;
-                    int newG = originalPixel.G - skyPixelNonHDR.G;
-                    if (newG < 0) newG = 0;
-                    int newB = originalPixel.B - skyPixelNonHDR.B;
-                    if (newB < 0) newB = 0;
-
-                    Color pixelDiff = Color.FromArgb(1, newR, newG, newB); //TODO: handle transparency*/
-                    streetviewNoSky.SetPixel(x, y, skyPixelNonHDR);
-                }
-            }
-            skyModel.Save("sanity_new.hdr");
-            streetviewNoSky.Save("output_test.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            
-            shouldStop = true;
-            downloadCount++;
-            UpdateDownloadCountText(downloadCount);
-            UpdateDownloadStatusText("done!");
-            return null;
 
             //Read in HDR values
             UpdateDownloadStatusText("reading HDR output...");
