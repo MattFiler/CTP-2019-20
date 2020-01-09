@@ -17,6 +17,7 @@ namespace StreetviewRipper
         int downloadCount = 0;
         int selectedQuality = 4;
         bool shouldStop = false;
+        bool canEnableProcessing = true;
         StraightLineBias selectedBias = StraightLineBias.MIDDLE;
         List<string> downloadedIDs = new List<string>();
 
@@ -33,8 +34,10 @@ namespace StreetviewRipper
             //Setup UI
             stopThreadedDownload.Enabled = true;
             downloadStreetview.Enabled = false;
+            processImages.Enabled = false;
             straightBias.Enabled = false;
             imageQuality.Enabled = false;
+            streetviewURL.Enabled = false;
 
             //Download all in list
             downloadCount = 0;
@@ -58,8 +61,8 @@ namespace StreetviewRipper
         }
         private void StartDownloading(List<string> ids)
         {
-            //try
-            //{
+            try
+            {
                 foreach (string id in ids)
                 {
                     if (id != "")
@@ -68,19 +71,25 @@ namespace StreetviewRipper
                         DownloadNeighbours(neighbours);
                     }
                 }
-            //}
-            //catch { }
+            }
+            catch { }
+
+            //Downloads are done, re-enable UI
+            stoppingText.Visible = false;
+            downloadStreetview.Enabled = true;
+            straightBias.Enabled = true;
+            if (canEnableProcessing) processImages.Enabled = true;
+            imageQuality.Enabled = true;
+            streetviewURL.Enabled = true;
+            streetviewURL.Text = "";
         }
 
         /* Stop downloading */
         private void stopThreadedDownload_Click(object sender, EventArgs e)
         {
-            stopThreadedDownload.Enabled = false;
-            downloadStreetview.Enabled = true;
-            straightBias.Enabled = true;
-            imageQuality.Enabled = true;
-            streetviewURL.Text = "";
             shouldStop = true;
+            stopThreadedDownload.Enabled = false;
+            stoppingText.Visible = true;
         }
 
         /* Update download text (multithread support) */
@@ -91,7 +100,7 @@ namespace StreetviewRipper
                 this.Invoke(new Action<int>(UpdateDownloadCountText), new object[] { value });
                 return;
             }
-            downloadTracker.Text = "Downloaded and processed: " + value;
+            downloadTracker.Text = "Total: " + value;
         }
         public void UpdateDownloadStatusText(string value)
         {
@@ -133,7 +142,7 @@ namespace StreetviewRipper
         /* Download a complete sphere from Streetview at a globally defined quality */
         private JArray DownloadStreetview(string id)
         {
-            UpdateDownloadStatusText("Finished");
+            UpdateDownloadStatusText("finished!");
             if (shouldStop) return null;
             UpdateDownloadStatusText("downloading LDR image...");
 
@@ -194,6 +203,15 @@ namespace StreetviewRipper
             if (!Directory.Exists("OutputImages")) Directory.CreateDirectory("OutputImages");
             streetviewImage.Save("OutputImages/" + id + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
 
+            //Only continue if the user chose to process images
+            if (!processImages.Checked)
+            {
+                UpdateDownloadStatusText("finished!");
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                return thisMeta["neighbours"].Value<JArray>();
+            }
+
             //Calculate metadata
             UpdateDownloadStatusText("calculating metadata...");
             StreetviewImageProcessor processor = new StreetviewImageProcessor();
@@ -215,18 +233,11 @@ namespace StreetviewRipper
             localMeta["sun"] = new JArray { (int)sunPos.x, (int)sunPos.y };
             File.WriteAllText("OutputImages/" + id + ".json", localMeta.ToString(Formatting.Indented));
 
-            //This next bit uses a bunch of external programs, so make sure we have them first
-            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe") ||
-                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat") ||
-                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/EXR2LDR/exr2ldr.exe") ||
-                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe"))
-            {
-                MessageBox.Show("Some external resources are missing!\nExtended image processing will not take place.", "Missing resources!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                UpdateDownloadStatusText("exited!");
-                downloadCount++;
-                UpdateDownloadCountText(downloadCount);
-                return thisMeta["neighbours"].Value<JArray>();
-            }
+            //Shift the image to match Hosek-Wilkie sun position
+            UpdateDownloadStatusText("adjusting LDR image...");
+            int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
+            streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
+            streetviewImage.Save("OutputImages/" + id + "_shifted.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Trim the ground from the adjusted image
             UpdateDownloadStatusText("cropping LDR image...");
@@ -238,13 +249,6 @@ namespace StreetviewRipper
                     streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
                 }
             }
-
-            //Shift the image to match Hosek-Wilkie sun position
-            UpdateDownloadStatusText("adjusting LDR image...");
-            int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
-            streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
-            streetviewImage.Save("OutputImages/" + id + "_shifted.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Create Hosek-Wilkie sky model for background
             UpdateDownloadStatusText("calculating sky model...");
@@ -319,6 +323,7 @@ namespace StreetviewRipper
 
             //Convert to HDR image
             UpdateDownloadStatusText("converting to HDR...");
+            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
 
             processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat\"");
@@ -450,6 +455,29 @@ namespace StreetviewRipper
             UpdateDownloadCountText(downloadCount);
             UpdateDownloadStatusText("finished!");
             return thisMeta["neighbours"].Value<JArray>();
+        }
+
+        /* On load, validate our setup, and disable image processing options if external tools are unavailable. */
+        private void StreetviewGUI_Load(object sender, EventArgs e)
+        {
+            Control.CheckForIllegalCrossThreadCalls = false; //We always do this safely.
+
+            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe") ||
+                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat") ||
+                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/EXR2LDR/exr2ldr.exe") ||
+                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe"))
+            {
+                processImages.Checked = false;
+                processImages.Enabled = false;
+                straightBias.Enabled = false;
+                canEnableProcessing = false;
+            }
+        }
+
+        /* Change available options on check changed */
+        private void processImages_CheckedChanged(object sender, EventArgs e)
+        {
+            straightBias.Enabled = processImages.Checked;
         }
     }
 }
