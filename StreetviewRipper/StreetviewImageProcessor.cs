@@ -81,6 +81,10 @@ namespace StreetviewRipper
         /* Load in a HDR file */
         public void Open(string filename)
         {
+            if (Path.GetExtension(filename) != ".hdr")
+            {
+                throw new System.FormatException("Trying to load a non-HDR image!");
+            }
             BinaryReader InFile = new BinaryReader(File.OpenRead(filename));
 
             string thisHeaderLine = "";
@@ -113,6 +117,11 @@ namespace StreetviewRipper
             }
             int headerLen = (int)InFile.BaseStream.Position;
 
+            if (InFile.BaseStream.Length < (width * height * 4))
+            {
+                throw new System.FormatException("Can only read uncompressed HDR images!"); //Some HDRs use scanline compression
+            }
+
             for (int i = 0; i < (InFile.BaseStream.Length - headerLen) / 4; i++)
             {
                 HDRPixel newPixel = new HDRPixel();
@@ -129,6 +138,12 @@ namespace StreetviewRipper
         /* Save out as a HDR file */
         public void Save(string filename)
         {
+            if (File.Exists(filename)) File.Delete(filename);
+            if (filename == "sanity.hdr")
+            {
+                string breakhere = "";
+            }
+
             BinaryWriter OutFile = new BinaryWriter(File.OpenWrite(filename));
             OutFile.Write("FORMAT=32-bit_rle_rgbe".ToCharArray());
             OutFile.Write(new byte[] { 0x0A, 0x0A });

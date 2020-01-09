@@ -338,6 +338,44 @@ namespace StreetviewRipper
                 }
             }
 
+            //Cut the sky model out of the original LDR image
+            UpdateDownloadStatusText("removing sky model from LDR...");
+            Bitmap streetviewNoSky = new Bitmap(streetviewImageTrim.Width, streetviewImageTrim.Height);
+            for (int x = 0; x < streetviewImageTrim.Width; x++)
+            {
+                for (int y = 0; y < streetviewImageTrim.Height; y++)
+                {
+                    HDRPixel skyPixel = skyModel.GetPixel(x, y);
+                    HDRPixelFloat skyPixelFloat = new HDRPixelFloat();
+                    skyPixelFloat.FromRGBE(skyPixel.R, skyPixel.G, skyPixel.B, skyPixel.E);
+                    Color skyPixelNonHDR = Color.FromArgb(
+                        1,
+                        (skyPixelFloat.R > 1.0f) ? 255 : (int)(skyPixelFloat.R * 255),
+                        (skyPixelFloat.G > 1.0f) ? 255 : (int)(skyPixelFloat.G * 255),
+                        (skyPixelFloat.B > 1.0f) ? 255 : (int)(skyPixelFloat.B * 255)
+                    );
+                    Color originalPixel = streetviewImageTrim.GetPixel(x, y);
+                    /*
+                    int newR = originalPixel.R - skyPixelNonHDR.R;
+                    if (newR < 0) newR = 0;
+                    int newG = originalPixel.G - skyPixelNonHDR.G;
+                    if (newG < 0) newG = 0;
+                    int newB = originalPixel.B - skyPixelNonHDR.B;
+                    if (newB < 0) newB = 0;
+
+                    Color pixelDiff = Color.FromArgb(1, newR, newG, newB); //TODO: handle transparency*/
+                    streetviewNoSky.SetPixel(x, y, skyPixelNonHDR);
+                }
+            }
+            skyModel.Save("sanity_new.hdr");
+            streetviewNoSky.Save("output_test.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            
+            shouldStop = true;
+            downloadCount++;
+            UpdateDownloadCountText(downloadCount);
+            UpdateDownloadStatusText("done!");
+            return null;
+
             //Read in HDR values
             UpdateDownloadStatusText("reading HDR output...");
             HDRImage hdrImage = new HDRImage();
