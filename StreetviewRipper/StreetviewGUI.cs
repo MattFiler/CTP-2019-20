@@ -410,12 +410,14 @@ namespace StreetviewRipper
 
             //Pull classified clouds from the image & save them
             UpdateDownloadStatusText("extracting classified clouds...");
-            Bitmap hdrCloudType1 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_1);
-            Bitmap hdrCloudType2 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_2);
-            Bitmap hdrCloudType3 = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLOUD_TYPE_3);
-            hdrCloudType1.Save("OutputImages/" + id + "_cloudtype1.png", System.Drawing.Imaging.ImageFormat.Png);
-            hdrCloudType2.Save("OutputImages/" + id + "_cloudtype2.png", System.Drawing.Imaging.ImageFormat.Png);
-            hdrCloudType3.Save("OutputImages/" + id + "_cloudtype3.png", System.Drawing.Imaging.ImageFormat.Png);
+            Bitmap cutoutStratocumulus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.STRATOCUMULUS);
+            Bitmap cutoutCumulus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CUMULUS);
+            Bitmap cutoutCirrus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CIRRUS);
+            Bitmap cutoutClearSky = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLEAR_SKY);
+            cutoutStratocumulus.Save("OutputImages/" + id + "_classified_stratocumulus.png", System.Drawing.Imaging.ImageFormat.Png);
+            cutoutCumulus.Save("OutputImages/" + id + "_classified_cumulus.png", System.Drawing.Imaging.ImageFormat.Png);
+            cutoutCirrus.Save("OutputImages/" + id + "_classified_cirrus.png", System.Drawing.Imaging.ImageFormat.Png);
+            cutoutClearSky.Save("OutputImages/" + id + "_classified_clearsky.png", System.Drawing.Imaging.ImageFormat.Png);
 
             /*
             //Convert HDR values to regular float values

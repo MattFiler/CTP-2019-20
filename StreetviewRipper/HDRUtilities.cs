@@ -83,24 +83,24 @@ namespace StreetviewRipper
         /* Pull clouds from an LDR image, by the HDR classifier's data */
         public enum CloudTypes
         {
-            NONE,         //Purple colour code
-            CLOUD_TYPE_1, //Red colour code (need to work out what it actually thinks these are)
-            CLOUD_TYPE_2, //Green colour code (need to work out what it actually thinks these are)
-            CLOUD_TYPE_3  //Blue colour code (need to work out what it actually thinks these are)
+            STRATOCUMULUS, //Purple/pink colour code
+            CUMULUS,       //Red colour code
+            CIRRUS,        //Green colour code
+            CLEAR_SKY      //Blue colour code
         }
         public Bitmap PullCloudType(HDRImage classifiedImage, Bitmap origImage, CloudTypes cloudType)
         {
-            //Ignore E for the cloud type colours
+            //Work out what colour we should look for
             HDRPixel colourToMatch = new HDRPixel(128, 0, 128, 129);
             switch (cloudType)
             {
-                case CloudTypes.CLOUD_TYPE_1:
+                case CloudTypes.CUMULUS:
                     colourToMatch = new HDRPixel(128, 0, 0, 129);
                     break;
-                case CloudTypes.CLOUD_TYPE_2:
+                case CloudTypes.CIRRUS:
                     colourToMatch = new HDRPixel(0, 128, 0, 129);
                     break;
-                case CloudTypes.CLOUD_TYPE_3:
+                case CloudTypes.CLEAR_SKY:
                     colourToMatch = new HDRPixel(0, 0, 128, 129);
                     break;
             }
