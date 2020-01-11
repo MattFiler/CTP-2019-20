@@ -11,67 +11,76 @@ namespace StreetviewRipper
 {
     class HistogramTools
     {
-        /* Create and output a histogram for a HDR image */
-        public void CreateHDRHistogram(HDRImage image, string filename)
+        /* Create and output a luma histogram for a HDR bitmap */
+        public void CreateHDR_LumaHistogram(HDRImage image, string filename)
         {
-            //Run for RGBE version
+            List<int> dataLuma = new List<int>();
+            for (int x = 0; x < image.Width; x++)
             {
-                List<int> dataR = new List<int>();
-                List<int> dataG = new List<int>();
-                List<int> dataB = new List<int>();
-                List<int> dataE = new List<int>();
-                for (int x = 0; x < image.Width; x++)
+                for (int y = 0; y < image.Height; y++)
                 {
-                    for (int y = 0; y < image.Height; y++)
-                    {
-                        HDRPixel thisPixel = image.GetPixel(x, y);
-                        dataR.Add(thisPixel.R);
-                        dataG.Add(thisPixel.G);
-                        dataB.Add(thisPixel.B);
-                        dataE.Add(thisPixel.E);
-                    }
+                    HDRPixel thisPixel = image.GetPixel(x, y);
+                    HDRPixelFloat thisPixelFloat = new HDRPixelFloat();
+                    thisPixelFloat.FromRGBE(thisPixel.R, thisPixel.G, thisPixel.B, thisPixel.E);
+                    dataLuma.Add((int)(thisPixelFloat.L * 255));
                 }
-                JArray completeHistoData = new JArray();
-                completeHistoData.Add(CalculateHistogram(dataR));
-                completeHistoData.Add(CalculateHistogram(dataG));
-                completeHistoData.Add(CalculateHistogram(dataB));
-                OutputHistogram(filename + "_rgbe_noe", "HDR RGBE (Excluding E) Histogram", completeHistoData);
-                completeHistoData.Add(CalculateHistogram(dataE));
-                OutputHistogram(filename + "_rgbe", "HDR RGBE Histogram", completeHistoData);
             }
-
-            //Run for RGBL version
-            {
-                List<float> dataR = new List<float>();
-                List<float> dataG = new List<float>();
-                List<float> dataB = new List<float>();
-                List<float> dataL = new List<float>();
-                for (int x = 0; x < image.Width; x++)
-                {
-                    for (int y = 0; y < image.Height; y++)
-                    {
-                        HDRPixel thisPixel = image.GetPixel(x, y);
-                        HDRPixelFloat thisPixelFloat = new HDRPixelFloat();
-                        thisPixelFloat.FromRGBE(thisPixel.R, thisPixel.G, thisPixel.B, thisPixel.E);
-
-                        dataR.Add(thisPixelFloat.R);
-                        dataG.Add(thisPixelFloat.G);
-                        dataB.Add(thisPixelFloat.B);
-                        dataL.Add((float)decimal.Round((decimal)thisPixelFloat.L, 4));
-                    }
-                }
-                JArray completeHistoData = new JArray();
-                completeHistoData.Add(CalculateHistogram(dataR));
-                completeHistoData.Add(CalculateHistogram(dataG));
-                completeHistoData.Add(CalculateHistogram(dataB));
-                OutputHistogram(filename + "_rgbl_nol", "HDR RGBL (Excluding L) Histogram", completeHistoData);
-                completeHistoData.Add(CalculateHistogram(dataL));
-                OutputHistogram(filename + "_rgbl", "HDR RGBL Histogram", completeHistoData);
-            }
+            JArray completeHistoData = new JArray();
+            completeHistoData.Add(CalculateHistogram(dataLuma));
+            OutputHistogram(filename, "HDR Luma Histogram", completeHistoData);
         }
 
-        /* Create and output a histogram for an LDR bitmap */
-        public void CreateLDRHistogram(Bitmap image, string filename)
+        /* Create and output a luma histogram for an LDR bitmap */
+        public void CreateLDR_LumaHistogram(Bitmap image, string filename)
+        {
+            List<int> dataLuma = new List<int>();
+            for (int x = 0; x < image.Width; x++)
+            {
+                for (int y = 0; y < image.Height; y++)
+                {
+                    dataLuma.Add(CalculateLuma(image.GetPixel(x, y)));
+                }
+            }
+            JArray completeHistoData = new JArray();
+            completeHistoData.Add(CalculateHistogram(dataLuma));
+            OutputHistogram(filename, "LDR Luma Histogram", completeHistoData);
+        }
+
+        /* Calculate luma for an RGB pixel */
+        private int CalculateLuma(Color pixel)
+        {
+            return (int)((0.2126f * pixel.R) + (0.7152f * pixel.G) + (0.0722f * pixel.B));
+        }
+
+        /* Create and output an RGB histogram for a HDR image */
+        public void CreateHDR_RGBHistogram(HDRImage image, string filename)
+        {
+            List<int> dataR = new List<int>();
+            List<int> dataG = new List<int>();
+            List<int> dataB = new List<int>();
+            List<int> dataE = new List<int>();
+            for (int x = 0; x < image.Width; x++)
+            {
+                for (int y = 0; y < image.Height; y++)
+                {
+                    HDRPixel thisPixel = image.GetPixel(x, y);
+                    dataR.Add(thisPixel.R);
+                    dataG.Add(thisPixel.G);
+                    dataB.Add(thisPixel.B);
+                    dataE.Add(thisPixel.E);
+                }
+            }
+            JArray completeHistoData = new JArray();
+            completeHistoData.Add(CalculateHistogram(dataR));
+            completeHistoData.Add(CalculateHistogram(dataG));
+            completeHistoData.Add(CalculateHistogram(dataB));
+            OutputHistogram(filename + "_noe", "HDR RGBE (Excluding E) Histogram", completeHistoData);
+            completeHistoData.Add(CalculateHistogram(dataE));
+            OutputHistogram(filename, "HDR RGBE Histogram", completeHistoData);
+        }
+
+        /* Create and output an RGB histogram for an LDR bitmap */
+        public void CreateLDR_RGBHistogram(Bitmap image, string filename)
         {
             List<int> dataR = new List<int>();
             List<int> dataG = new List<int>();
@@ -90,7 +99,7 @@ namespace StreetviewRipper
             completeHistoData.Add(CalculateHistogram(dataR));
             completeHistoData.Add(CalculateHistogram(dataG));
             completeHistoData.Add(CalculateHistogram(dataB));
-            OutputHistogram(filename, "LDR Histogram", completeHistoData);
+            OutputHistogram(filename, "LDR RGB Histogram", completeHistoData);
         }
 
         /* FLOAT: Calculate the histogram and return as JSON array */
@@ -156,13 +165,13 @@ namespace StreetviewRipper
             string htmlPage = Properties.Resources.HistogramHTML.ToString();
             htmlPage = htmlPage.Replace("%TITLE%", title);
             for (int i = 0; i < json.Count; i++) htmlPage = htmlPage.Replace("%DATA_URL" + (i+1).ToString() + "%", "data/" + filename + (i+1).ToString() + ".json");
-            htmlPage = htmlPage.Replace("%USE_4%", (json.Count == 4) ? "true" : "false");
-            Directory.CreateDirectory("HistogramOutput/");
-            File.WriteAllText("HistogramOutput/" + filename + ".html", htmlPage);
+            for (int i = 2; i < 5; i++) htmlPage = htmlPage.Replace("%USE_" + i + "%", (json.Count >= i) ? "true" : "false");
+            Directory.CreateDirectory(Properties.Resources.Output_Histogram);
+            File.WriteAllText(Properties.Resources.Output_Histogram + filename + ".html", htmlPage);
 
             //Save JSON
-            Directory.CreateDirectory("HistogramOutput/data/");
-            for (int i = 0; i < json.Count; i++) File.WriteAllText("HistogramOutput/data/" + filename + (i+1).ToString() + ".json", json[i].ToString());
+            Directory.CreateDirectory(Properties.Resources.Output_Histogram + "data/");
+            for (int i = 0; i < json.Count; i++) File.WriteAllText(Properties.Resources.Output_Histogram + "data/" + filename + (i+1).ToString() + ".json", json[i].ToString());
         }
     }
 }

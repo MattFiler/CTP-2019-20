@@ -63,41 +63,98 @@ namespace StreetviewRipper.Properties {
         /// <summary>
         ///   Looks up a localized string similar to &lt;!DOCTYPE HTML&gt;
         ///&lt;html&gt;
-        ///&lt;head&gt;
-        ///&lt;script&gt;
-        ///window.onload = function() {
+        ///    &lt;head&gt;
+        ///        &lt;script&gt;
+        ///            window.onload = function() {
+        ///                var dataPoints1 = [];
+        ///                var dataPoints2 = [];
+        ///                var dataPoints3 = [];
+        ///                var dataPoints4 = [];
+        ///            
+        ///                var use2 = %USE_2%;
+        ///                var use3 = %USE_3%;
+        ///                var use4 = %USE_4%;
         ///
-        ///var dataPoints = [];
-        ///
-        ///var options =  {
-        ///	animationEnabled: true,
-        ///	theme: &quot;light2&quot;,
-        ///	title: {
-        ///		text: &quot;%TITLE%&quot;
-        ///	},
-        ///	axisX: {
-        ///		title: &quot;Value&quot;,
-        ///		titleFontSize: 24,
-        ///		includeZero: false
-        ///	},
-        ///	axisY: {
-        ///		title: &quot;Occurances&quot;,
-        ///		titleFontSize: 24,
-        ///		includeZero: false
-        ///	},
-        ///	data: [{
-        ///		type: &quot;spline&quot;, 
-        ///		dataPoints: dataPoints
-        ///	}]
-        ///};
-        ///
-        ///function addData(data) {
-        ///	for (var i = 0; i &lt; data.length; i++) {
-        ///		dataPoints.pus [rest of string was truncated]&quot;;.
+        ///                var options =  {
+        ///	                animationEnabled: true,
+        ///	                theme: &quot;light2&quot;,
+        ///	                titl [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string HistogramHTML {
             get {
                 return ResourceManager.GetString("HistogramHTML", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Libraries/Classify/.
+        /// </summary>
+        internal static string Library_Classifier {
+            get {
+                return ResourceManager.GetString("Library_Classifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Libraries/EXR2HDR/.
+        /// </summary>
+        internal static string Library_EXR2HDR {
+            get {
+                return ResourceManager.GetString("Library_EXR2HDR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Libraries/EXR2LDR/.
+        /// </summary>
+        internal static string Library_EXR2LDR {
+            get {
+                return ResourceManager.GetString("Library_EXR2LDR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Libraries/HDR2Float/.
+        /// </summary>
+        internal static string Library_HDR2Float {
+            get {
+                return ResourceManager.GetString("Library_HDR2Float", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Libraries/LDR2HDR/.
+        /// </summary>
+        internal static string Library_LDR2HDR {
+            get {
+                return ResourceManager.GetString("Library_LDR2HDR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Libraries/PBRT/.
+        /// </summary>
+        internal static string Library_PBRT {
+            get {
+                return ResourceManager.GetString("Library_PBRT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Output/Histograms/.
+        /// </summary>
+        internal static string Output_Histogram {
+            get {
+                return ResourceManager.GetString("Output_Histogram", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Output/Images/.
+        /// </summary>
+        internal static string Output_Images {
+            get {
+                return ResourceManager.GetString("Output_Images", resourceCulture);
             }
         }
     }

@@ -7,7 +7,9 @@
                 var dataPoints2 = [];
                 var dataPoints3 = [];
                 var dataPoints4 = [];
-
+            
+                var use2 = %USE_2%;
+                var use3 = %USE_3%;
                 var use4 = %USE_4%;
 
                 var options =  {
@@ -51,7 +53,8 @@
                             x: data[i].colour_value,
                             y: data[i].colour_occurance
 		                });
-	                }
+                    }
+                    if (!use2) $("#chartContainer").CanvasJSChart(options);
                 }
                 function addData2(data) {
                     for (var i = 0; i < data.length; i++) {
@@ -60,6 +63,7 @@
                             y: data[i].colour_occurance
                         });
                     }
+                    if (!use3) $("#chartContainer").CanvasJSChart(options);
                 }
                 function addData3(data) {
                     for (var i = 0; i < data.length; i++) {
@@ -79,9 +83,10 @@
                     }
                     $("#chartContainer").CanvasJSChart(options);
                 }
+
                 $.getJSON("%DATA_URL1%", addData1);
-                $.getJSON("%DATA_URL2%", addData2);
-                $.getJSON("%DATA_URL3%", addData3);
+                if (use2) $.getJSON("%DATA_URL2%", addData2);
+                if (use3) $.getJSON("%DATA_URL3%", addData3);
                 if (use4) $.getJSON("%DATA_URL4%", addData4);
             }
         </script>

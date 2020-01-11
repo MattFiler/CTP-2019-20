@@ -121,4 +121,28 @@
   <data name="HistogramHTML" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\render.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="Library_Classifier" xml:space="preserve">
+    <value>Libraries/Classify/</value>
+  </data>
+  <data name="Library_EXR2HDR" xml:space="preserve">
+    <value>Libraries/EXR2HDR/</value>
+  </data>
+  <data name="Library_EXR2LDR" xml:space="preserve">
+    <value>Libraries/EXR2LDR/</value>
+  </data>
+  <data name="Library_HDR2Float" xml:space="preserve">
+    <value>Libraries/HDR2Float/</value>
+  </data>
+  <data name="Library_LDR2HDR" xml:space="preserve">
+    <value>Libraries/LDR2HDR/</value>
+  </data>
+  <data name="Library_PBRT" xml:space="preserve">
+    <value>Libraries/PBRT/</value>
+  </data>
+  <data name="Output_Histogram" xml:space="preserve">
+    <value>Output/Histograms/</value>
+  </data>
+  <data name="Output_Images" xml:space="preserve">
+    <value>Output/Images/</value>
+  </data>
 </root>

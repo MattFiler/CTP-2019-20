@@ -146,6 +146,34 @@ namespace StreetviewRipper
             if (shouldStop) return null;
             UpdateDownloadStatusText("downloading LDR image...");
 
+            //First up, here are all the files we'll be creating/dealing with
+            string File_InitialLDR = Properties.Resources.Output_Images + id + ".jpg";
+            string File_ShiftedLDR = Properties.Resources.Output_Images + id + "_shifted.jpg";
+            string File_Metadata = Properties.Resources.Output_Images + id + ".json";
+            string File_SkyHDR = Properties.Resources.Output_Images + id + "_sky.exr";
+            string File_SkyLDR = Properties.Resources.Output_Images + id + "_sky.png";
+            string File_SkyExtracted = Properties.Resources.Output_Images + id + "_removedsky.png";
+            string File_InitialHDR = Properties.Resources.Output_Images + id + ".hdr";
+            string File_UpscaledHDR = Properties.Resources.Output_Images + id + "_upscaled.hdr";
+            string File_UpscaledHDRTrim = Properties.Resources.Output_Images + id + "_upscaled_trim.hdr";
+            string File_ClassifiedHDR = Properties.Resources.Output_Images + id + "_classified.hdr";
+
+            string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
+            string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
+            string File_LDR2HDROutput = Properties.Resources.Library_LDR2HDR + "streetview.hdr";
+            string File_ClassifierInput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + ".hdr";
+            string File_ClassifierOutput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + "_classified.hdr";
+
+            //And here are all the library executables we'll be using
+            string Library_PBRT = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_PBRT + "imgtool.exe";
+            string Library_EXR2LDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_EXR2LDR + "exr2ldr.exe";
+            string Library_LDR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_LDR2HDR + "run.bat";
+            string Library_Classifier = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_Classifier + "Classify.exe";
+
+            //Create any directories we'll need
+            if (!Directory.Exists(Properties.Resources.Output_Images)) Directory.CreateDirectory(Properties.Resources.Output_Images);
+            if (!Directory.Exists(Properties.Resources.Output_Histogram)) Directory.CreateDirectory(Properties.Resources.Output_Histogram);
+
             //Get metadata
             downloadedIDs.Add(id);
             JToken thisMeta = GetMetadata(id);
@@ -200,8 +228,7 @@ namespace StreetviewRipper
                 streetviewRenderer.DrawImage(streetviewTiles[i].image, streetviewTiles[i].x, streetviewTiles[i].y, tileWidth, tileHeight);
             }
             streetviewRenderer.Dispose();
-            if (!Directory.Exists("OutputImages")) Directory.CreateDirectory("OutputImages");
-            streetviewImage.Save("OutputImages/" + id + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            streetviewImage.Save(File_InitialLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Only continue if the user chose to process images
             if (!processImages.Checked)
@@ -231,13 +258,13 @@ namespace StreetviewRipper
             else localMeta["creator"] = "Google";
             localMeta["ground_y"] = groundY;
             localMeta["sun"] = new JArray { (int)sunPos.x, (int)sunPos.y };
-            File.WriteAllText("OutputImages/" + id + ".json", localMeta.ToString(Formatting.Indented));
+            File.WriteAllText(File_Metadata, localMeta.ToString(Formatting.Indented));
 
             //Shift the image to match Hosek-Wilkie sun position
             UpdateDownloadStatusText("adjusting LDR image...");
             int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
             streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
-            streetviewImage.Save("OutputImages/" + id + "_shifted.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+            streetviewImage.Save(File_ShiftedLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Trim the ground from the adjusted image
             UpdateDownloadStatusText("cropping LDR image...");
@@ -252,27 +279,27 @@ namespace StreetviewRipper
 
             //Create Hosek-Wilkie sky model for background
             UpdateDownloadStatusText("calculating sky model...");
-            if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
+            if (File.Exists(File_PBRTOutput)) File.Delete(File_PBRTOutput);
 
             float groundAlbedo = 0.5f; //TODO: set this between 0-1
             float sunElevation = (sunPos.y / groundY) * 90;
             float skyTurbidity = 3.0f; //TODO: set this between 1.7-10
 
-            ProcessStartInfo processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe", "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
-            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/PBRT/";
+            ProcessStartInfo processInfo = new ProcessStartInfo(Library_PBRT, "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
+            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_PBRT);
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             Process process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("PBRT/" + id + ".exr")) File.Copy("PBRT/" + id + ".exr", "OutputImages/" + id + "_sky.exr", true);
-            if (File.Exists("PBRT/" + id + ".exr")) File.Delete("PBRT/" + id + ".exr");
+            if (File.Exists(File_PBRTOutput)) File.Copy(File_PBRTOutput, File_SkyHDR, true);
+            if (File.Exists(File_PBRTOutput)) File.Delete(File_PBRTOutput);
 
             //Convert sky model to HDR from LDR
             UpdateDownloadStatusText("converting sky model...");
-            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/EXR2LDR/exr2ldr.exe", id + "_sky.exr " + id + "_sky.png");
-            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/OutputImages/";
+            processInfo = new ProcessStartInfo(Library_EXR2LDR, Path.GetFileName(File_SkyHDR) + " " + Path.GetFileName(File_SkyLDR));
+            processInfo.WorkingDirectory = GetPathWithoutFilename(File_SkyHDR);
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
@@ -281,7 +308,7 @@ namespace StreetviewRipper
 
             //Cut the sky model out of the original LDR image
             UpdateDownloadStatusText("removing sky model from LDR...");
-            Bitmap skyModel = (Bitmap)Image.FromFile("OutputImages/" + id + "_sky.png");
+            Bitmap skyModel = (Bitmap)Image.FromFile(File_SkyLDR);
             Bitmap streetviewNoSky = new Bitmap(streetviewImageTrim.Width, streetviewImageTrim.Height);
             for (int x = 0; x < streetviewImageTrim.Width; x++)
             {
@@ -307,40 +334,41 @@ namespace StreetviewRipper
                     streetviewNoSky.SetPixel(x, y, newColor);
                 }
             }
-            streetviewNoSky.Save("OutputImages/" + id + "_removedsky.png", System.Drawing.Imaging.ImageFormat.Png);
+            streetviewNoSky.Save(File_SkyExtracted, System.Drawing.Imaging.ImageFormat.Png);
 
             //Write LDR histograms
             HistogramTools histogramUtils = new HistogramTools();
             UpdateDownloadStatusText("calculating LDR histograms...");
-            histogramUtils.CreateLDRHistogram(streetviewImage, id + "_ldr");
+            histogramUtils.CreateLDR_RGBHistogram(streetviewImage, id + "_ldr_rgb");
+            histogramUtils.CreateLDR_LumaHistogram(streetviewImage, id + "_ldr_luma");
             Image downsampledStreetview = new Bitmap(128, 64);
             using (Graphics g = Graphics.FromImage(downsampledStreetview))
             {
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
                 g.DrawImage(streetviewImage, new Rectangle(Point.Empty, downsampledStreetview.Size));
             }
-            histogramUtils.CreateLDRHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled");
+            histogramUtils.CreateLDR_RGBHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled_rgb");
+            histogramUtils.CreateLDR_LumaHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled_luma");
 
             //Convert to HDR image
             UpdateDownloadStatusText("converting to HDR...");
-            streetviewImage.Save("LDR2HDR/streetview.jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-            if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
+            streetviewImage.Save(File_LDR2HDRInput, System.Drawing.Imaging.ImageFormat.Jpeg);
+            if (File.Exists(File_LDR2HDROutput)) File.Delete(File_LDR2HDROutput);
 
-            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat\"");
-            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/";
+            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + Library_LDR2HDR + "\"");
+            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_LDR2HDR);
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("OutputImages/" + id + ".hdr")) File.Delete("OutputImages/" + id + ".hdr");
-            if (File.Exists("LDR2HDR/streetview.hdr")) File.Copy("LDR2HDR/streetview.hdr", "OutputImages/" + id + ".hdr");
-            if (File.Exists("LDR2HDR/streetview.jpg")) File.Delete("LDR2HDR/streetview.jpg");
-            if (File.Exists("LDR2HDR/streetview.hdr")) File.Delete("LDR2HDR/streetview.hdr");
+            if (File.Exists(File_InitialHDR)) File.Delete(File_InitialHDR);
+            if (File.Exists(File_LDR2HDROutput)) File.Move(File_LDR2HDROutput, File_InitialHDR);
+            if (File.Exists(File_LDR2HDRInput)) File.Delete(File_LDR2HDRInput);
 
             //If we didn't get a HDR image back, the Python environment probably isn't installed properly
-            if (!File.Exists("OutputImages/" + id + ".hdr"))
+            if (!File.Exists(File_InitialHDR))
             {
                 MessageBox.Show("Could not convert to HDR.\nCheck Conda environment!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 shouldStop = true;
@@ -353,18 +381,20 @@ namespace StreetviewRipper
             //Read in HDR values
             UpdateDownloadStatusText("reading HDR output...");
             HDRImage hdrImage = new HDRImage();
-            hdrImage.Open("OutputImages/" + id + ".hdr");
+            hdrImage.Open(File_InitialHDR);
 
             //Upscale the HDR image
             UpdateDownloadStatusText("upscaling HDR...");
             HDRUtilities hdrUtils = new HDRUtilities();
             HDRImage hdrUpscaled = hdrUtils.Upscale(hdrImage, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / hdrImage.Width);
-            hdrUpscaled.Save("OutputImages/" + id + "_upscaled.hdr");
+            hdrUpscaled.Save(File_UpscaledHDR);
 
             //Calculate histograms for HDR
             UpdateDownloadStatusText("calculating HDR histograms...");
-            histogramUtils.CreateHDRHistogram(hdrImage, id + "_hdr");
-            histogramUtils.CreateHDRHistogram(hdrUpscaled, id + "_hdrupscaled");
+            histogramUtils.CreateHDR_RGBHistogram(hdrImage, id + "_hdr_rgbe");
+            histogramUtils.CreateHDR_LumaHistogram(hdrImage, id + "_hdr_luma");
+            histogramUtils.CreateHDR_RGBHistogram(hdrUpscaled, id + "_hdrupscaled");
+            histogramUtils.CreateHDR_LumaHistogram(hdrUpscaled, id + "_hdrupscaled_luma");
 
             //Re-write the upscaled HDR image without the ground
             UpdateDownloadStatusText("cropping upscaled HDR...");
@@ -377,53 +407,53 @@ namespace StreetviewRipper
                     hdrCropped.SetPixel(x, y, hdrUpscaled.GetPixel(x, y));
                 }
             }
-            hdrCropped.Save("OutputImages/" + id + "_upscaled_trim.hdr");
+            hdrCropped.Save(File_UpscaledHDRTrim);
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
             /*
             UpdateDownloadStatusText("converting to fisheye...");
             HDRImage hdrFisheye = hdrUtils.ToFisheye(hdrCropped, hdrCropped.Width / 10);
-            hdrFisheye.Save("OutputImages/" + id + "_upscaled_trim_fisheye.hdr");
+            hdrFisheye.Save(Properties.Resources.Output_Images + id + "_upscaled_trim_fisheye.hdr");
             */
 
             //Classify the upscaled image
             UpdateDownloadStatusText("classifying cloud formations...");
-            if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
-            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
-            //File.Copy("OutputImages/" + id + "_upscaled_trim_fisheye.hdr", "Classify/Input_Output_Files/" + id + ".hdr");
-            File.Copy("OutputImages/" + id + "_upscaled_trim.hdr", "Classify/Input_Output_Files/" + id + ".hdr"); //Fisheye is a bit janky, so for now, use the trim
+            if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
+            if (File.Exists(File_ClassifierOutput)) File.Delete(File_ClassifierOutput);
+            File.Copy(File_UpscaledHDRTrim, File_ClassifierInput); //Fisheye is a bit janky, so for now, use the trim
 
-            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/Classify/Classify.exe", "5 400 100 0 " + id + " " + id + "_classified");
-            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/Classify/";
+            processInfo = new ProcessStartInfo(Library_Classifier, "5 400 100 0 " + id + " " + id + "_classified");
+            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_Classifier);
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("OutputImages/" + id + "_classified.hdr")) File.Delete("OutputImages/" + id + "_classified.hdr");
-            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Copy("Classify/Input_Output_Files/" + id + "_classified.hdr", "OutputImages/" + id + "_classified.hdr");
-            if (File.Exists("Classify/Input_Output_Files/" + id + ".hdr")) File.Delete("Classify/Input_Output_Files/" + id + ".hdr");
-            if (File.Exists("Classify/Input_Output_Files/" + id + "_classified.hdr")) File.Delete("Classify/Input_Output_Files/" + id + "_classified.hdr");
-            HDRImage hdrClassified = new HDRImage();
-            hdrClassified.Open("OutputImages/" + id + "_classified.hdr");
+            if (File.Exists(File_ClassifiedHDR)) File.Delete(File_ClassifiedHDR);
+            if (File.Exists(File_ClassifierOutput)) File.Move(File_ClassifierOutput, File_ClassifiedHDR);
+            if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
 
             //Pull classified clouds from the image & save them
             UpdateDownloadStatusText("extracting classified clouds...");
+            HDRImage hdrClassified = new HDRImage();
+            hdrClassified.Open(File_ClassifiedHDR);
+
             Bitmap cutoutStratocumulus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.STRATOCUMULUS);
             Bitmap cutoutCumulus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CUMULUS);
             Bitmap cutoutCirrus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CIRRUS);
             Bitmap cutoutClearSky = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLEAR_SKY);
-            cutoutStratocumulus.Save("OutputImages/" + id + "_classified_stratocumulus.png", System.Drawing.Imaging.ImageFormat.Png);
-            cutoutCumulus.Save("OutputImages/" + id + "_classified_cumulus.png", System.Drawing.Imaging.ImageFormat.Png);
-            cutoutCirrus.Save("OutputImages/" + id + "_classified_cirrus.png", System.Drawing.Imaging.ImageFormat.Png);
-            cutoutClearSky.Save("OutputImages/" + id + "_classified_clearsky.png", System.Drawing.Imaging.ImageFormat.Png);
+
+            cutoutStratocumulus.Save(Properties.Resources.Output_Images + id + "_classified_stratocumulus.png", System.Drawing.Imaging.ImageFormat.Png);
+            cutoutCumulus.Save(Properties.Resources.Output_Images + id + "_classified_cumulus.png", System.Drawing.Imaging.ImageFormat.Png);
+            cutoutCirrus.Save(Properties.Resources.Output_Images + id + "_classified_cirrus.png", System.Drawing.Imaging.ImageFormat.Png);
+            cutoutClearSky.Save(Properties.Resources.Output_Images + id + "_classified_clearsky.png", System.Drawing.Imaging.ImageFormat.Png);
 
             /*
             //Convert HDR values to regular float values
             UpdateDownloadStatusText("converting HDR output...");
             if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
-            File.Copy("OutputImages/" + id + ".hdr", "HDR2Float/streetview.hdr");
+            File.Copy(Properties.Resources.Output_Images + id + ".hdr", "HDR2Float/streetview.hdr");
 
             processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe", "");
             processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/";
@@ -433,13 +463,13 @@ namespace StreetviewRipper
             process.WaitForExit();
             process.Close();
 
-            if (File.Exists("OutputImages/" + id + ".bin")) File.Delete("OutputImages/" + id + ".bin");
-            if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", "OutputImages/" + id + ".bin");
+            if (File.Exists(Properties.Resources.Output_Images + id + ".bin")) File.Delete(Properties.Resources.Output_Images + id + ".bin");
+            if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", Properties.Resources.Output_Images + id + ".bin");
             if (File.Exists("HDR2Float/streetview.bin")) File.Delete("HDR2Float/streetview.bin");
             if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
 
             //Read in the converted float values from the HDR
-            BinaryReader binReader = new BinaryReader(File.OpenRead("OutputImages/" + id + ".bin"));
+            BinaryReader binReader = new BinaryReader(File.OpenRead(Properties.Resources.Output_Images + id + ".bin"));
             List<HDRPixelAsFloat> parsedPixels = new List<HDRPixelAsFloat>();
             for (int i = 0; i < binReader.BaseStream.Length / sizeof(float) / 3; i++)
             {
@@ -464,10 +494,10 @@ namespace StreetviewRipper
         {
             Control.CheckForIllegalCrossThreadCalls = false; //We always do this safely.
 
-            if (!File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/PBRT/imgtool.exe") ||
-                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/LDR2HDR/run.bat") ||
-                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/EXR2LDR/exr2ldr.exe") ||
-                !File.Exists(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe"))
+            if (!Directory.Exists(Properties.Resources.Library_PBRT) ||
+                !Directory.Exists(Properties.Resources.Library_LDR2HDR) ||
+                !Directory.Exists(Properties.Resources.Library_EXR2LDR) ||
+                !Directory.Exists(Properties.Resources.Library_Classifier))
             {
                 processImages.Checked = false;
                 processImages.Enabled = false;
@@ -480,6 +510,19 @@ namespace StreetviewRipper
         private void processImages_CheckedChanged(object sender, EventArgs e)
         {
             straightBias.Enabled = processImages.Checked;
+        }
+
+        /* Get a file path without filename from string */
+        private string GetPathWithoutFilename(string fullPath)
+        {
+            try
+            {
+                return fullPath.Substring(0, fullPath.Length - Path.GetFileName(fullPath).Length);
+            }
+            catch
+            {
+                throw new FormatException("Couldn't get path from given filename.");
+            }
         }
     }
 }
