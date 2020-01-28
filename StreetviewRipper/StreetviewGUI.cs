@@ -149,6 +149,7 @@ namespace StreetviewRipper
             //First up, here are all the files we'll be creating/dealing with
             string File_InitialLDR = Properties.Resources.Output_Images + id + ".jpg";
             string File_ShiftedLDR = Properties.Resources.Output_Images + id + "_shifted.jpg";
+            string File_DownscaledLDR = Properties.Resources.Output_Images + id + "_downscaled.jpg";
             string File_Metadata = Properties.Resources.Output_Images + id + ".json";
             string File_SkyHDR = Properties.Resources.Output_Images + id + "_sky.exr";
             string File_SkyLDR = Properties.Resources.Output_Images + id + "_sky.png";
@@ -339,7 +340,7 @@ namespace StreetviewRipper
             //Write LDR histograms
             HistogramTools histogramUtils = new HistogramTools();
             UpdateDownloadStatusText("calculating LDR histograms...");
-            histogramUtils.CreateLDR_RGBHistogram(streetviewImage, id + "_ldr_rgb");
+            //histogramUtils.CreateLDR_RGBHistogram(streetviewImage, id + "_ldr_rgb");
             histogramUtils.CreateLDR_LumaHistogram(streetviewImage, id + "_ldr_luma");
             Image downsampledStreetview = new Bitmap(128, 64);
             using (Graphics g = Graphics.FromImage(downsampledStreetview))
@@ -347,7 +348,8 @@ namespace StreetviewRipper
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
                 g.DrawImage(streetviewImage, new Rectangle(Point.Empty, downsampledStreetview.Size));
             }
-            histogramUtils.CreateLDR_RGBHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled_rgb");
+            downsampledStreetview.Save(File_DownscaledLDR);
+            //histogramUtils.CreateLDR_RGBHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled_rgb");
             histogramUtils.CreateLDR_LumaHistogram((Bitmap)downsampledStreetview, id + "_ldrdownscaled_luma");
 
             //Convert to HDR image
@@ -391,9 +393,9 @@ namespace StreetviewRipper
 
             //Calculate histograms for HDR
             UpdateDownloadStatusText("calculating HDR histograms...");
-            histogramUtils.CreateHDR_RGBHistogram(hdrImage, id + "_hdr_rgbe");
+            //histogramUtils.CreateHDR_RGBHistogram(hdrImage, id + "_hdr_rgbe");
             histogramUtils.CreateHDR_LumaHistogram(hdrImage, id + "_hdr_luma");
-            histogramUtils.CreateHDR_RGBHistogram(hdrUpscaled, id + "_hdrupscaled");
+            //histogramUtils.CreateHDR_RGBHistogram(hdrUpscaled, id + "_hdrupscaled");
             histogramUtils.CreateHDR_LumaHistogram(hdrUpscaled, id + "_hdrupscaled_luma");
 
             //Re-write the upscaled HDR image without the ground

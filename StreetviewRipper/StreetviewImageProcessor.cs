@@ -140,6 +140,7 @@ namespace StreetviewRipper
         {
             if (File.Exists(filename)) File.Delete(filename);
             BinaryWriter OutFile = new BinaryWriter(File.OpenWrite(filename));
+            OutFile.Write("#?RADIANCE".ToCharArray());
             OutFile.Write("FORMAT=32-bit_rle_rgbe".ToCharArray());
             OutFile.Write(new byte[] { 0x0A, 0x0A });
             OutFile.Write(("-Y " + height + " +X " + width).ToCharArray());
