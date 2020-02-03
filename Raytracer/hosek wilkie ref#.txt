@@ -1,0 +1,36 @@
+col.r = arhosek_tristim_skymodel_radiance(state[0], theta, gamma, 0) / 106.856980;
+col.g = arhosek_tristim_skymodel_radiance(state[1], theta, gamma, 1) / 106.856980;
+col.b = arhosek_tristim_skymodel_radiance(state[2], theta, gamma, 2) / 106.856980;
+
+
+    ArHosekSkyModelState *state[3];
+    ArHosekSkyModelState *sunstate[11];
+
+        for (i = 0; i < 11; i++)
+        {
+            sunstate[i] = arhosekskymodelstate_alloc_init(sunElevation, turbidity, albedo);
+        }
+
+Colour evalSun(float theta, float phi)
+    {
+        int i = 0;
+        Vec3 wi;
+        wi = Vec3(sinf(theta) * cosf(phi), cosf(theta), sinf(theta) * sinf(phi));
+        if (sunVisible(wi) == 0)
+        {
+            return evalSky(theta, phi);
+        }
+        float gamma;
+        gamma = acosf(minf(Dot(wi, sunDir), 1.0f));
+        Spectrum11 suns;
+        for (i = 0; i < 11; i++)
+        {
+            suns.v[i] = arhosekskymodel_solar_radiance(sunstate[i], theta, gamma, Spectrum11::wavelength(i));
+        }
+        Colour col;
+        col = suns.toColour();
+        float L;
+        L = col.Lum();
+        col = Colour(L, L, L); // Hack to make the sun always white
+        return (col * sunScale / sunRadiusScale);
+    }
