@@ -11,11 +11,11 @@ hdrhist = hdrhist ./ (64 * 128);
 ldrhist = ldrhist ./ (size(ldrlum, 1) * size(ldrlum, 2));
 
 % Plot out the values
-clf;
-plot(ldrhist, 'DisplayName', 'LDR Luma');
+figure;
 hold on;
+title(STREETVIEW_ID, 'Interpreter', 'none');
+plot(ldrhist, 'DisplayName', 'LDR Luma');
 plot(hdrhist, 'DisplayName', 'HDR Luma');
-%legend;
 
 % Try and match both distributions
 hdrhistmod = zeros(1, 100);
@@ -37,8 +37,10 @@ for x = 1:100
 end
 
 % Re-plot
-hold on;
 plot(hdrhistmod, 'DisplayName', 'HDR Luma Adjusted');
-hold on;
 plot(hdrhistdiff, 'DisplayName', 'HDR Luma Diff');
 legend;
+
+% Apply the difference
+%hdr_reshape = reshape(hdrlum, [64 * 128, 1]);
+%hdr_reshape_back = reshape(hdr_reshape, [64, 128]);
