@@ -1,33 +1,26 @@
+% Load luma data from LDR/HDR images matching ID
 STREETVIEW_ID = 'xdU_R-qfflPfs8x-tTKM8g';
+[hdrlum, ldrlum] = LoadFromID(STREETVIEW_ID);
 
-%Downscaled LDR
-image = imread(strcat(STREETVIEW_ID,'_downscaled.jpg'));
-ycbcr = rgb2ycbcr(image);
-y = ycbcr(:,:,1);
-figure
-imshow(y);
-title('Downscaled LDR Image Luma');
+% Create a histogram from the luma data
+hdrhist = hist(reshape(hdrlum, [64 * 128, 1]), 100);
+ldrhist = hist(reshape(ldrlum, [size(ldrlum, 1) * size(ldrlum, 2), 1]), 100);
 
-%Regular size LDR
-image = imread(strcat(STREETVIEW_ID,'_downscaled.jpg') + '_shifted.jpg');
-ycbcr = rgb2ycbcr(image);
-y = ycbcr(:,:,1);
-figure
-imshow(y);
-title('Regular LDR Image Luma');
+% Bring our values down to a normalised range
+hdrhist = hdrhist ./ (64 * 128);
+ldrhist = ldrhist ./ (size(ldrlum, 1) * size(ldrlum, 2));
 
-%Regular size HDR
-image = hdrread(strcat(STREETVIEW_ID,'_downscaled.jpg') + '.hdr'); 
-ycbcr = rgb2ycbcr(image); 
-y = ycbcr(:,:,1);
-figure
-imshow(y); 
-title('Regular HDR Image Luma');
+% Plot out the values
+clf;
+plot(ldrhist, 'DisplayName', 'LDR Luma');
+hold on;
+plot(hdrhist, 'DisplayName', 'HDR Luma');
+%legend;
 
-%Upscaled HDR
-image = hdrread(strcat(STREETVIEW_ID,'_upscaled.hdr') + '_upscaled.hdr'); 
-ycbcr = rgb2ycbcr(image); 
-y = ycbcr(:,:,1);
-figure
-imshow(y); 
-title('Upscaled HDR Image Luma');
+% Try and match both distributions
+for c = 1:
+
+% Re-plot
+hold on;
+plot(hdrhist, 'DisplayName', 'HDR Luma Adjusted');
+legend;
