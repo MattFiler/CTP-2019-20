@@ -13,36 +13,72 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Objects">
+      <UniqueIdentifier>{ef1cf78f-769f-4906-bc36-7bd422f9f5ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Hosek-Wilkie">
+      <UniqueIdentifier>{2ab0832e-34a2-4efe-a5cf-3c8c53985128}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Hosek-Wilkie">
+      <UniqueIdentifier>{cbe5dbe3-1603-495c-b4e3-2f5d52e5e3c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Objects">
+      <UniqueIdentifier>{d2fa5d82-7180-4b46-b6b4-04657f3a1cef}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\geometry.h">
+    <ClInclude Include="spectrum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ArHosekSkyModelData_RGB.h">
+    <ClInclude Include="math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ArHosekSkyModelData_Spectral.h">
+    <ClInclude Include="geometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ArHosekSkyModel.h">
+    <ClInclude Include="Sphere.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="ArHosekSkyModel.h">
+      <Filter>Header Files\Hosek-Wilkie</Filter>
+    </ClInclude>
+    <ClInclude Include="ArHosekSkyModelData_CIEXYZ.h">
+      <Filter>Header Files\Hosek-Wilkie</Filter>
+    </ClInclude>
+    <ClInclude Include="ArHosekSkyModelData_RGB.h">
+      <Filter>Header Files\Hosek-Wilkie</Filter>
+    </ClInclude>
+    <ClInclude Include="ArHosekSkyModelData_Spectral.h">
+      <Filter>Header Files\Hosek-Wilkie</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ArHosekSkyModelData_CIEXYZ.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\spectrum.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Box.h">
+      <Filter>Header Files\Objects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\simpleshapes.cpp">
+    <ClCompile Include="spectrum.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ArHosekSkyModel.cpp">
+    <ClCompile Include="ArHosekSkyModel.cpp">
+      <Filter>Source Files\Hosek-Wilkie</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\spectrum.cpp">
+    <ClCompile Include="Raytracer.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Box.cpp">
+      <Filter>Source Files\Objects</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

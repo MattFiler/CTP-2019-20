@@ -31,6 +31,7 @@
  */
 
 
+/*
  // core/spectrum.cpp*
 #include "spectrum.h"
 #include <algorithm>
@@ -1306,3 +1307,4 @@ namespace pbrt {
 	}
 
 }  // namespace pbrt
+*/

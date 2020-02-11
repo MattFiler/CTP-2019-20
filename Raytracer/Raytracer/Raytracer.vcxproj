@@ -115,17 +115,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\ArHosekSkyModel.h" />
-    <ClInclude Include="..\ArHosekSkyModelData_CIEXYZ.h" />
-    <ClInclude Include="..\ArHosekSkyModelData_RGB.h" />
-    <ClInclude Include="..\ArHosekSkyModelData_Spectral.h" />
-    <ClInclude Include="..\geometry.h" />
-    <ClInclude Include="..\spectrum.h" />
+    <ClInclude Include="ArHosekSkyModel.h" />
+    <ClInclude Include="ArHosekSkyModelData_CIEXYZ.h" />
+    <ClInclude Include="ArHosekSkyModelData_RGB.h" />
+    <ClInclude Include="ArHosekSkyModelData_Spectral.h" />
+    <ClInclude Include="Box.h" />
+    <ClInclude Include="geometry.h" />
+    <ClInclude Include="math.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="Raytracer.h" />
+    <ClInclude Include="spectrum.h" />
+    <ClInclude Include="Sphere.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\ArHosekSkyModel.cpp" />
-    <ClCompile Include="..\simpleshapes.cpp" />
-    <ClCompile Include="..\spectrum.cpp" />
+    <ClCompile Include="ArHosekSkyModel.cpp" />
+    <ClCompile Include="Box.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Raytracer.cpp" />
+    <ClCompile Include="spectrum.cpp" />
+    <ClCompile Include="Sphere.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
