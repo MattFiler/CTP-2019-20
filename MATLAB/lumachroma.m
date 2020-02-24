@@ -79,17 +79,18 @@ end
 
 % Try and change the values for the HDR image to match LDR
 reshaped_hdr = zeros(size(hdrlum, 1), size(hdrlum, 2));
-for x = 1:size(hdrlum, 1)
-    for y = 1:size(hdrlum, 2)
+for x = 1:size(ldrlum, 1)
+    for y = 1:size(ldrlum, 2)
         graph_offset = -1;
         hist_cumulative = 0;
         for i = 1:100
            hist_cumulative = hist_cumulative + hdrhist(1, i);
-           if hdrlum(x, y) > hist_cumulative
-               graph_offset = i;
+           graph_offset = i;
+           if ldrlum(x, y) < hist_cumulative
+               break;
            end
         end
-        reshaped_hdr(x, y) = hdrlum(x, y) + leftover(1, graph_offset);
+        reshaped_hdr(x, y) = ldrlum(x, y) + leftover(1, graph_offset);
     end
 end
 
