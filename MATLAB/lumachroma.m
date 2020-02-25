@@ -63,16 +63,18 @@ end
 reshaped_hdrhist = hist(reshape(reshaped_hdr, [size(reshaped_hdr, 1) * size(reshaped_hdr, 2), 1]), 100);
 reshaped_hdrhist = reshaped_hdrhist ./ (size(reshaped_hdr, 1) * size(reshaped_hdr, 2));
 
-% Pull the new LDR/HDR combination back to RGB, and write out
+% Pull the new LDR/HDR combination back to RGB
 reshaped_hdrrgb = rgb2ycbcr(ldrimage); 
 reshaped_hdrrgb(:,:,1) = reshaped_hdr * 255;
 reshaped_hdrrgb = ycbcr2rgb(reshaped_hdrrgb);
-hdrwrite(single(single(reshaped_hdrrgb) / single(255)), strcat('../Output/Images/',strcat(STREETVIEW_ID,'_matlab_upscale.hdr'))); 
 
-% For debugging, show the HDR output
+% Show the HDR output in range of 255
 figure;
 imshow(reshaped_hdrrgb);
 title("MAX LUMA: " + max(max(reshaped_hdr)));
+
+% Write out the HDR as HDR floating point values
+% ** TODO **
 
 % Plot out the histogram values
 figure;
