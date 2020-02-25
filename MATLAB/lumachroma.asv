@@ -54,7 +54,7 @@ for x = 1:size(ldrlum, 1)
                break;
            end
         end
-        % Apply the diff between LDR/HDR from that histogram point
+        % Pull the histogram mapped HDR
         reshaped_hdr(x, y) = hdrhist_centres(1, graph_offset);
     end
 end
@@ -63,10 +63,21 @@ end
 reshaped_hdrhist = hist(reshape(reshaped_hdr, [size(reshaped_hdr, 1) * size(reshaped_hdr, 2), 1]), 100);
 reshaped_hdrhist = reshaped_hdrhist ./ (size(reshaped_hdr, 1) * size(reshaped_hdr, 2));
 
-% Pull the new LDR/HDR combination back to RGB
+% Pull the new LDR/HDR combination back to RGB, and write out
 reshaped_hdrrgb = rgb2ycbcr(ldrimage); 
-reshaped_hdrrgb(:,:,1) = reshaped_hdr * 255; % Remove 255
-reshaped_hdrrgb = ycbcr2rgb(reshaped_hdrrgb);
+for i = 1:size(reshaped_hdrrgb(1,:,:))
+    reshaped_hdrrgb(i,:,:) = reshaped
+end
+reshaped_hdrrgb(1,:,:) = single(reshaped_hdrrgb(1,:,:)) ./ 255;
+reshaped_hdrrgb(:,1,:) = single(reshaped_hdrrgb(:,1,:)) ./ 255;
+reshaped_hdrrgb(:,:,1) = reshaped_hdr;
+reshaped_hdrrgb = single(ycbcr2rgb(reshaped_hdrrgb));
+hdrwrite(reshaped_hdrrgb, strcat('../Output/Images/',strcat(STREETVIEW_ID,'_matlab_upscale.hdr'))); 
+
+% For debugging, show the HDR output (must be in 255 range to show)
+reshaped_hdrrgb(1,:,:) = reshaped_hdrrgb(1,:,:) * 255;
+reshaped_hdrrgb(:,1,:) = reshaped_hdrrgb(:,1,:) * 255;
+reshaped_hdrrgb(:,:,1) = reshaped_hdr * 255;
 figure;
 imshow(reshaped_hdrrgb);
 title("MAX LUMA: " + max(max(reshaped_hdr)));
