@@ -1,16 +1,16 @@
-STREETVIEW_ID = 'xdU_R-qfflPfs8x-tTKM8g';
+STREETVIEW_ID = 'UeLdC8nLokOxI9Iu4ot2bw';
+%STREETVIEW_ID = 'OhnM3UKJb9e4urhWzKXDOQ';
+%STREETVIEW_ID = 'xdU_R-qfflPfs8x-tTKM8g';
+%STREETVIEW_ID = 'oQLPJHW-26bak8Cds5-Otw';
 close all;
 
 % Load luma data from HDR image
 hdrimage = hdrread(strcat('../Output/Images/',strcat(STREETVIEW_ID,'.hdr'))); 
-ycbcr = rgb2ycbcr(hdrimage); 
-hdrlum = ycbcr(:,:,1);
+hdrlum = (0.2126 * hdrimage(:,:,1)) + (0.7152 * hdrimage(:,:,2)) + (0.0722 * hdrimage(:,:,3));
 
 % Load luma data from LDR image
 ldrimage = imread(strcat('../Output/Images/',strcat(STREETVIEW_ID,'_shifted.jpg')));
-ycbcr = rgb2ycbcr(ldrimage);
-ldrlum = single(ycbcr(:,:,1)) ./ 255.0;
-clear ycbcr;
+ldrlum = single((0.2126 * ldrimage(:,:,1)) + (0.7152 * ldrimage(:,:,2)) + (0.0722 * ldrimage(:,:,3))) ./ 255.0;
 
 % Create LDR/HDR histograms from the luma data
 hdrlum = imresize(hdrlum, [size(ldrlum, 1), size(ldrlum, 2)]);
@@ -59,29 +59,16 @@ for x = 1:size(ldrlum, 1)
     end
 end
 
-% Create a histogram from the new luma
-reshaped_hdrhist = hist(reshape(reshaped_hdr, [size(reshaped_hdr, 1) * size(reshaped_hdr, 2), 1]), 100);
-reshaped_hdrhist = reshaped_hdrhist ./ (size(reshaped_hdr, 1) * size(reshaped_hdr, 2));
+% Undo the normal LDR luma
+ldrimage_hdr = zeros(size(ldrimage));
+ldrimage_hdr(:,:,1) = single(ldrimage(:,:,1)) ./ ldrlum;
+ldrimage_hdr(:,:,2) = single(ldrimage(:,:,2)) ./ ldrlum;
+ldrimage_hdr(:,:,3) = single(ldrimage(:,:,3)) ./ ldrlum;
 
-% Pull the new LDR/HDR combination back to RGB
-reshaped_hdrrgb = rgb2ycbcr(ldrimage); 
-reshaped_hdrrgb(:,:,1) = reshaped_hdr * 255;
-reshaped_hdrrgb = ycbcr2rgb(reshaped_hdrrgb);
+% Re-do the histogram mapped luma
+ldrimage_hdr(:,:,1) = single(ldrimage(:,:,1)) .* reshaped_hdr;
+ldrimage_hdr(:,:,2) = single(ldrimage(:,:,2)) .* reshaped_hdr;
+ldrimage_hdr(:,:,3) = single(ldrimage(:,:,3)) .* reshaped_hdr;
 
-% Show the HDR output in range of 255
-figure;
-imshow(reshaped_hdrrgb);
-title("MAX LUMA: " + max(max(reshaped_hdr)));
-
-% Write out the HDR as HDR floating point values
-% ** TODO **
-
-% Plot out the histogram values
-figure;
-hold on;
-title(STREETVIEW_ID, 'Interpreter', 'none');
-plot(ldrhist, 'DisplayName', 'LDR Luma');
-plot(hdrhist, 'DisplayName', 'HDR Luma');
-plot(leftover_total_historic, 'DisplayName', 'HDR Luma Diff');
-plot(reshaped_hdrhist, 'DisplayName', 'LDR/HDR Combo Luma');
-legend;
+% Write out the new HDR/LDR combo
+hdrwrite(single(single(ldrimage_hdr) / single(255)), strcat('../Output/Images/',strcat(STREETVIEW_ID,'_matlab_upscale.hdr')));

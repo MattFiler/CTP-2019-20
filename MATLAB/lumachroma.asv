@@ -1,16 +1,21 @@
-STREETVIEW_ID = 'xdU_R-qfflPfs8x-tTKM8g';
+%STREETVIEW_ID = 'UeLdC8nLokOxI9Iu4ot2bw';
+STREETVIEW_ID = 'OhnM3UKJb9e4urhWzKXDOQ';
+%STREETVIEW_ID = 'xdU_R-qfflPfs8x-tTKM8g';
+%STREETVIEW_ID = 'oQLPJHW-26bak8Cds5-Otw';
 close all;
 
 % Load luma data from HDR image
 hdrimage = hdrread(strcat('../Output/Images/',strcat(STREETVIEW_ID,'.hdr'))); 
-ycbcr = rgb2ycbcr(hdrimage); 
-hdrlum = ycbcr(:,:,1);
+%ycbcr = rgb2ycbcr(hdrimage); 
+%hdrlum = ycbcr(:,:,1);
+hdrlum = (0.2126 * hdrimage(:,:,1)) + (0.7152 * hdrimage(:,:,2)) + (0.0722 * hdrimage(:,:,3));
 
 % Load luma data from LDR image
 ldrimage = imread(strcat('../Output/Images/',strcat(STREETVIEW_ID,'_shifted.jpg')));
-ycbcr = rgb2ycbcr(ldrimage);
-ldrlum = single(ycbcr(:,:,1)) ./ 255.0;
-clear ycbcr;
+%ycbcr = rgb2ycbcr(ldrimage);
+%ldrlum = single(ycbcr(:,:,1)) ./ 255.0;
+ldrlum = single((0.2126 * ldrimage(:,:,1)) + (0.7152 * ldrimage(:,:,2)) + (0.0722 * ldrimage(:,:,3))) ./ 255.0;
+%clear ycbcr;
 
 % Create LDR/HDR histograms from the luma data
 hdrlum = imresize(hdrlum, [size(ldrlum, 1), size(ldrlum, 2)]);
@@ -59,28 +64,56 @@ for x = 1:size(ldrlum, 1)
     end
 end
 
+ldrimage_hdr = zeros(size(ldrimage));
+ldrimage_hdr(:,:,1) = single(ldrimage(:,:,1)) ./ ldrlum;
+ldrimage_hdr(:,:,2) = single(ldrimage(:,:,2)) ./ ldrlum;
+ldrimage_hdr(:,:,3) = single(ldrimage(:,:,3)) ./ ldrlum;
+
+ldrimage_hdr(:,:,1) = single(ldrimage(:,:,1)) .* reshaped_hdr;
+ldrimage_hdr(:,:,2) = single(ldrimage(:,:,2)) .* reshaped_hdr;
+ldrimage_hdr(:,:,3) = single(ldrimage(:,:,3)) .* reshaped_hdr;
+
+reshaped_hdrhist = hist(reshape(reshaped_hdr, [size(reshaped_hdr, 1) * size(reshaped_hdr, 2), 1]), 100);
+reshaped_hdrhist = reshaped_hdrhist ./ (size(reshaped_hdr, 1) * size(reshaped_hdr, 2));
+
+figure;
+imshow(ldrimage_hdr);
+title("MAX LUMA: " + max(max(ldrimage_hdr)));
+
+hdrwrite(single(single(ldrimage_hdr) / single(255)), strcat('../Output/Images/',strcat(STREETVIEW_ID,'_matlab_upscale.hdr')));
+
+
+figure;
+hold on;
+title(STREETVIEW_ID, 'Interpreter', 'none');
+plot(ldrhist, 'DisplayName', 'LDR Luma');
+plot(hdrhist, 'DisplayName', 'HDR Luma');
+plot(leftover_total_historic, 'DisplayName', 'HDR Luma Diff');
+plot(reshaped_hdrhist, 'DisplayName', 'LDR/HDR Combo Luma');
+legend;
+
+return;
+
 % Create a histogram from the new luma
 reshaped_hdrhist = hist(reshape(reshaped_hdr, [size(reshaped_hdr, 1) * size(reshaped_hdr, 2), 1]), 100);
 reshaped_hdrhist = reshaped_hdrhist ./ (size(reshaped_hdr, 1) * size(reshaped_hdr, 2));
 
-% Pull the new LDR/HDR combination back to RGB, and write out
+% Pull the new LDR/HDR combination back to RGB
 reshaped_hdrrgb = rgb2ycbcr(ldrimage); 
-for i = 1:size(reshaped_hdrrgb(1,:,:))
-    reshaped_hdrrgb(i,:,:) = reshaped
-end
-reshaped_hdrrgb(1,:,:) = single(reshaped_hdrrgb(1,:,:)) ./ 255;
-reshaped_hdrrgb(:,1,:) = single(reshaped_hdrrgb(:,1,:)) ./ 255;
-reshaped_hdrrgb(:,:,1) = reshaped_hdr;
-reshaped_hdrrgb = single(ycbcr2rgb(reshaped_hdrrgb));
-hdrwrite(reshaped_hdrrgb, strcat('../Output/Images/',strcat(STREETVIEW_ID,'_matlab_upscale.hdr'))); 
-
-% For debugging, show the HDR output (must be in 255 range to show)
-reshaped_hdrrgb(1,:,:) = reshaped_hdrrgb(1,:,:) * 255;
-reshaped_hdrrgb(:,1,:) = reshaped_hdrrgb(:,1,:) * 255;
 reshaped_hdrrgb(:,:,1) = reshaped_hdr * 255;
+reshaped_hdrrgb = ycbcr2rgb(reshaped_hdrrgb);
+
+% Show the HDR output in range of 255
 figure;
 imshow(reshaped_hdrrgb);
 title("MAX LUMA: " + max(max(reshaped_hdr)));
+
+% Do it again, but in the float range, for HDR output
+reshaped_hdrrgb_out = rgb2ycbcr(ldrimage);
+reshaped_hdrrgb_out = single(single(reshaped_hdrrgb_out)/single(255));
+reshaped_hdrrgb_out(:,:,1) = reshaped_hdr;
+reshaped_hdrrgb_out = ycbcr2rgbv2(reshaped_hdrrgb_out);
+hdrwrite(reshaped_hdrrgb_out, strcat('../Output/Images/',strcat(STREETVIEW_ID,'_matlab_upscale.hdr')));
 
 % Plot out the histogram values
 figure;
