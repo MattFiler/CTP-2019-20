@@ -1,15 +1,15 @@
-STREETVIEW_ID = 'UeLdC8nLokOxI9Iu4ot2bw';
-%STREETVIEW_ID = 'OhnM3UKJb9e4urhWzKXDOQ';
-%STREETVIEW_ID = 'xdU_R-qfflPfs8x-tTKM8g';
-%STREETVIEW_ID = 'oQLPJHW-26bak8Cds5-Otw';
-close all;
+%
+% Upscale a low-res HDR image to match its higher quality LDR version.
+% Created by Matt Filer
+%
+function [] = hdr_upscaler()
 
 % Load luma data from HDR image
-hdrimage = hdrread(strcat('../Output/Images/',strcat(STREETVIEW_ID,'.hdr'))); 
+hdrimage = hdrread('input.hdr'); 
 hdrlum = (0.2126 * hdrimage(:,:,1)) + (0.7152 * hdrimage(:,:,2)) + (0.0722 * hdrimage(:,:,3));
 
 % Load luma data from LDR image
-ldrimage = imread(strcat('../Output/Images/',strcat(STREETVIEW_ID,'_shifted.jpg')));
+ldrimage = imread('input.jpg');
 ldrlum = single((0.2126 * ldrimage(:,:,1)) + (0.7152 * ldrimage(:,:,2)) + (0.0722 * ldrimage(:,:,3))) ./ 255.0;
 
 % Create LDR/HDR histograms from the luma data
@@ -35,7 +35,6 @@ for x = 1:100
     leftover_total_historic(1, x) = leftover_total;
     
     if leftover_total <= 0
-        %error("Out of entries at iteration " + c);
         break;
     end
 end
@@ -56,19 +55,18 @@ for x = 1:size(ldrlum, 1)
         end
         % Pull the histogram mapped HDR
         reshaped_hdr(x, y) = hdrhist_centres(1, graph_offset);
+        if reshaped_hdr(x, y) == 0
+           reshaped_hdr(x, y) = 0.0001; % Hacky fix to disallow zero values
+        end
     end
 end
 
-% Undo the normal LDR luma
+% Undo the normal LDR luma & re-do the histogram mapped luma
 ldrimage_hdr = zeros(size(ldrimage));
-ldrimage_hdr(:,:,1) = single(ldrimage(:,:,1)) ./ ldrlum;
-ldrimage_hdr(:,:,2) = single(ldrimage(:,:,2)) ./ ldrlum;
-ldrimage_hdr(:,:,3) = single(ldrimage(:,:,3)) ./ ldrlum;
-
-% Re-do the histogram mapped luma
-ldrimage_hdr(:,:,1) = single(ldrimage(:,:,1)) .* reshaped_hdr;
-ldrimage_hdr(:,:,2) = single(ldrimage(:,:,2)) .* reshaped_hdr;
-ldrimage_hdr(:,:,3) = single(ldrimage(:,:,3)) .* reshaped_hdr;
+ldrimage_hdr(:,:,1) = (single(ldrimage(:,:,1)) .* ldrlum) ./ reshaped_hdr;
+ldrimage_hdr(:,:,2) = (single(ldrimage(:,:,2)) .* ldrlum) ./ reshaped_hdr;
+ldrimage_hdr(:,:,3) = (single(ldrimage(:,:,3)) .* ldrlum) ./ reshaped_hdr;
 
 % Write out the new HDR/LDR combo
-hdrwrite(single(single(ldrimage_hdr) / single(255)), strcat('../Output/Images/',strcat(STREETVIEW_ID,'_matlab_upscale.hdr')));
+hdrwrite(single(single(ldrimage_hdr) / single(255)), 'output.hdr');
+end
