@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -79,7 +80,7 @@ namespace StreetviewRipper
         }
 
         /* Load in a HDR file */
-        public void Open(string filename)
+        public void Open(string filename, bool can_reparse = true)
         {
             if (Path.GetExtension(filename) != ".hdr")
             {
@@ -117,9 +118,23 @@ namespace StreetviewRipper
             }
             int headerLen = (int)InFile.BaseStream.Position;
 
+            //Some HDRs use scanline compression - convert it for us, and try again
             if (InFile.BaseStream.Length < (width * height * 4))
             {
-                throw new System.FormatException("Can only read uncompressed HDR images!"); //Some HDRs use scanline compression
+                if (!can_reparse) throw new System.FormatException("Failed to load HDR, incorrect format!");
+                string HDRConverterPath = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRConverter;
+                File.Copy(filename, HDRConverterPath + "input.hdr", true);
+                ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + HDRConverterPath + "run.bat\"");
+                processInfo.WorkingDirectory = HDRConverterPath;
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+                Process process = Process.Start(processInfo);
+                process.WaitForExit();
+                process.Close();
+                if (!File.Exists(HDRConverterPath + "output.hdr")) throw new System.FormatException("Failed to convert HDR to correct format!");
+                Open(HDRConverterPath + "output.hdr", false);
+                File.Delete(HDRConverterPath + "output.hdr");
+                return;
             }
 
             for (int i = 0; i < (InFile.BaseStream.Length - headerLen) / 4; i++)
@@ -141,6 +156,7 @@ namespace StreetviewRipper
             if (File.Exists(filename)) File.Delete(filename);
             BinaryWriter OutFile = new BinaryWriter(File.OpenWrite(filename));
             OutFile.Write("#?RADIANCE".ToCharArray());
+            OutFile.Write(0x0A);
             OutFile.Write("FORMAT=32-bit_rle_rgbe".ToCharArray());
             OutFile.Write(new byte[] { 0x0A, 0x0A });
             OutFile.Write(("-Y " + height + " +X " + width).ToCharArray());

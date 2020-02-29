@@ -123,6 +123,15 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Libraries/HDRConverter/.
+        /// </summary>
+        internal static string Library_HDRConverter {
+            get {
+                return ResourceManager.GetString("Library_HDRConverter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Libraries/LDR2HDR_Upscaler/.
         /// </summary>
         internal static string Library_HDRUpscaler {

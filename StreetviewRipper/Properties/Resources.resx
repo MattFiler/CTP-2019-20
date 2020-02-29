@@ -133,6 +133,9 @@
   <data name="Library_HDR2Float" xml:space="preserve">
     <value>Libraries/HDR2Float/</value>
   </data>
+  <data name="Library_HDRConverter" xml:space="preserve">
+    <value>Libraries/HDRConverter/</value>
+  </data>
   <data name="Library_HDRUpscaler" xml:space="preserve">
     <value>Libraries/LDR2HDR_Upscaler/</value>
   </data>
