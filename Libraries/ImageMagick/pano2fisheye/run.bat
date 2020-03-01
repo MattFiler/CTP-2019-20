@@ -1,0 +1,1 @@
+"pano2fisheye.sh" -p orthographic -v manhole -b black "infile.hdr" "outfile.hdr"

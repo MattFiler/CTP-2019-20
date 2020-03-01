@@ -131,6 +131,7 @@ namespace StreetviewRipper
                 Process process = Process.Start(processInfo);
                 process.WaitForExit();
                 process.Close();
+                File.Delete(HDRConverterPath + "input.hdr");
                 if (!File.Exists(HDRConverterPath + "output.hdr")) throw new System.FormatException("Failed to convert HDR to correct format!");
                 Open(HDRConverterPath + "output.hdr", false);
                 File.Delete(HDRConverterPath + "output.hdr");
@@ -156,7 +157,7 @@ namespace StreetviewRipper
             if (File.Exists(filename)) File.Delete(filename);
             BinaryWriter OutFile = new BinaryWriter(File.OpenWrite(filename));
             OutFile.Write("#?RADIANCE".ToCharArray());
-            OutFile.Write(0x0A);
+            OutFile.Write((byte)0x0A);
             OutFile.Write("FORMAT=32-bit_rle_rgbe".ToCharArray());
             OutFile.Write(new byte[] { 0x0A, 0x0A });
             OutFile.Write(("-Y " + height + " +X " + width).ToCharArray());

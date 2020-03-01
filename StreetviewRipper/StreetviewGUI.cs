@@ -1,3 +1,4 @@
+using ImageMagick;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -164,6 +165,8 @@ namespace StreetviewRipper
             string File_HDRUpscalerInputLDR = Properties.Resources.Library_HDRUpscaler + "input.jpg";
             string File_HDRUpscalerInputHDR = Properties.Resources.Library_HDRUpscaler + "input.hdr";
             string File_HDRUpscalerOutput = Properties.Resources.Library_HDRUpscaler + "output.hdr";
+            string File_ToFisheyeInput = Properties.Resources.Library_IM_pano2fisheye + "infile.hdr";
+            string File_ToFisheyeOutput = Properties.Resources.Library_IM_pano2fisheye + "outfile.hdr";
             string File_ClassifierInput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + ".hdr";
             string File_ClassifierOutput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + "_classified.hdr";
 
@@ -173,11 +176,12 @@ namespace StreetviewRipper
             string Library_LDR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_LDR2HDR + "run.bat";
             string Library_Classifier = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_Classifier + "Classify.exe";
             string Library_HDRUpscaler = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRUpscaler /*+ "hdr_upscaler.m"*/;
+            string Library_ToFisheye = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_IM_pano2fisheye + "pano2fisheye.sh";
 
             //Create any directories we'll need
             if (!Directory.Exists(Properties.Resources.Output_Images)) Directory.CreateDirectory(Properties.Resources.Output_Images);
             //if (!Directory.Exists(Properties.Resources.Output_Histogram)) Directory.CreateDirectory(Properties.Resources.Output_Histogram);
-
+            
             //Get metadata
             downloadedIDs.Add(id);
             JToken thisMeta = GetMetadata(id);
@@ -414,17 +418,57 @@ namespace StreetviewRipper
             hdrCropped.Save(File_TrimmedHDR);
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
+            UpdateDownloadStatusText("converting to fisheye HDR...");
+            //File.Copy(File_TrimmedHDR, File_ToFisheyeInput, true);
+
+            /*
+             * WHY DOESNT THIS WORK
+            //string FisheyeFolder = GetPathWithoutFilename(Library_ToFisheye);
+            File.WriteAllText(FisheyeFolder + "run.bat", "\"" + Library_ToFisheye + "\" -p orthographic -v manhole -b black \"" + AppDomain.CurrentDomain.BaseDirectory + File_TrimmedHDR + "\" \"" + AppDomain.CurrentDomain.BaseDirectory + File_ToFisheyeOutput + "\"");
+            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + FisheyeFolder + "run.bat\"");
+            processInfo.WorkingDirectory = FisheyeFolder;
+           // processInfo.CreateNoWindow = true;
+            //processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            File.Delete(File_ToFisheyeInput);
+
+            //If we didn't get a fisheye back, we probably don't have Bash or ImageMagick installed
+            if (!File.Exists(File_ToFisheyeOutput))
+            {
+                MessageBox.Show("Could not distort to fisheye.\nCheck Bash/ImageMagick is installed!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                shouldStop = true;
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                UpdateDownloadStatusText("failed on fisheye conversion stage!");
+                return null;
+            }
+            */
+            
             /*
             UpdateDownloadStatusText("converting to fisheye...");
-            HDRImage hdrFisheye = hdrUtils.ToFisheye(hdrCropped, hdrCropped.Width / 10);
-            hdrFisheye.Save(Properties.Resources.Output_Images + id + "_upscaled_trim_fisheye.hdr");
+            using (MagickImage image = new MagickImage(streetviewImage))
+            {
+                using (IMagickImage backgroundImg = image.Clone())
+                {
+                    backgroundImg.VirtualPixelMethod = VirtualPixelMethod.Background;
+                    backgroundImg.BackgroundColor = Color.Black;
+                    backgroundImg.Resize(4096, 4096);
+                    backgroundImg.Fx("xd=(i-2047); yd=(j-2047); rd=hypot(xd,yd); theta=atan2(yd,xd); phiang=asin(2*rd/4096); xs=4095+theta*1303.8; ys=4096-phiang*2607.59; (rd>2047)?white:v.p{xs,ys}");
+                    backgroundImg.Rotate(90);
+                    backgroundImg.Write("test.png");
+                }
+            }
+            return null;
             */
 
-            //Classify the upscaled image
+            //Classify the processed image
             UpdateDownloadStatusText("classifying cloud formations...");
             if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
             if (File.Exists(File_ClassifierOutput)) File.Delete(File_ClassifierOutput);
-            File.Copy(File_TrimmedHDR, File_ClassifierInput); //Fisheye is a bit janky, so for now, use the trim
+            File.Move(/*File_ToFisheyeOutput*/File_TrimmedHDR, File_ClassifierInput); 
 
             processInfo = new ProcessStartInfo(Library_Classifier, "5 400 100 0 " + id + " " + id + "_classified");
             processInfo.WorkingDirectory = GetPathWithoutFilename(Library_Classifier);
@@ -437,6 +481,17 @@ namespace StreetviewRipper
             if (File.Exists(File_ClassifiedHDR)) File.Delete(File_ClassifiedHDR);
             if (File.Exists(File_ClassifierOutput)) File.Move(File_ClassifierOutput, File_ClassifiedHDR);
             if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
+
+            //If we didn't get anything back from the classifier, we have a larger issue (memory?)
+            if (!File.Exists(File_ClassifiedHDR))
+            {
+                MessageBox.Show("Failed to classify!", "Classifier error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                shouldStop = true;
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                UpdateDownloadStatusText("failed on classifier stage!");
+                return null;
+            }
 
             //Pull classified clouds from the image & save them
             UpdateDownloadStatusText("extracting classified clouds...");
