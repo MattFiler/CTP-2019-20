@@ -1,1 +1,1 @@
-python ldr2hdr.py
+python hdrconverter.py

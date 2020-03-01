@@ -180,7 +180,6 @@ namespace StreetviewRipper
 
             //Create any directories we'll need
             if (!Directory.Exists(Properties.Resources.Output_Images)) Directory.CreateDirectory(Properties.Resources.Output_Images);
-            //if (!Directory.Exists(Properties.Resources.Output_Histogram)) Directory.CreateDirectory(Properties.Resources.Output_Histogram);
             
             //Get metadata
             downloadedIDs.Add(id);
@@ -382,6 +381,7 @@ namespace StreetviewRipper
             matlab.Execute(@"cd '" + Library_HDRUpscaler + "'");
             object result = null;
             matlab.Feval("hdr_upscaler", 0, out result);
+            matlab.Quit();
 
             File.Delete(File_HDRUpscalerInputHDR);
             File.Delete(File_HDRUpscalerInputLDR);

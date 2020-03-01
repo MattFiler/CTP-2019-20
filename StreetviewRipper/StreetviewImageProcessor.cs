@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -85,6 +85,10 @@ namespace StreetviewRipper
             if (Path.GetExtension(filename) != ".hdr")
             {
                 throw new System.FormatException("Trying to load a non-HDR image!");
+            }
+            if (!File.Exists(filename))
+            {
+                throw new System.FormatException("Requested to open a file that doesn't exist!");
             }
             BinaryReader InFile = new BinaryReader(File.OpenRead(filename));
 
