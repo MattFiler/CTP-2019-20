@@ -313,8 +313,9 @@ elif [ "$viewtype" = "planet" ]; then
 fi
 
 # read the input image into the temporary cached image and test if valid
-convert -quiet "$infile" +repage $viewing $tmpA1 ||
-	echo "--- 1 FILE $infile DOES NOT EXIST OR IS NOT AN ORDINARY FILE, NOT READABLE OR HAS ZERO size  ---"
+convert -quiet "$infile" +repage $viewing $tmpA1
+echo "convert -quiet '$infile' +repage $viewing $tmpA1"
+	#echo "--- 1 FILE $infile DOES NOT EXIST OR IS NOT AN ORDINARY FILE, NOT READABLE OR HAS ZERO size  ---"
 
 # get input image dimensions and half dimensions
 ww=`convert -ping $tmpA1 -format "%w" info:`
@@ -348,6 +349,7 @@ ycd=`convert xc: -format "%[fx:floor($ht/2)-1]" info:`
 # set up for fade
 if [ "$fade" != "0" ]; then
 	convert $tmpA1 \( -size ${ww}x${fade} gradient:"${bcolor}-none" \) -gravity north -compose over -composite $tmpA1
+	echo "convert $tmpA1 \( -size ${ww}x${fade} gradient:'${bcolor}-none' \) -gravity north -compose over -composite $tmpA1"
 fi
 
 # set up for seeding
@@ -360,6 +362,7 @@ fi
 # create stars image
 if [ "$bgcolor" = "stars" ]; then
 	convert -size ${wd}x${ht} xc:black $seeding +noise random -channel g -separate +channel -threshold 99.9% $tmpA2
+	echo "convert -size ${wd}x${ht} xc:black $seeding +noise random -channel g -separate +channel -threshold 99.9% $tmpA2"
 fi
 
 # http://en.wikipedia.org/wiki/Fisheye_lens
@@ -440,18 +443,11 @@ fi
 # process image
 # -transverse to so origin of angle is north rather then east
 if [ "$bgcolor" = "stars" ]; then
-	convert -size ${wd}x${ht} xc: $tmpA1 $tproc -virtual-pixel background -background $bcolor \
-		-monitor -fx \
-		"$xd $yd $rd $theta $phiang $xs $ys (rd>$hh2)?$bcolor:v.p{xs,ys}" +monitor \
-		-rotate -90 $smoothing \
-		$tmpA2 +swap -compose over -composite \
-		"$outfile"
+	convert -size ${wd}x${ht} xc: $tmpA1 $tproc -virtual-pixel background -background $bcolor -monitor -fx "$xd $yd $rd $theta $phiang $xs $ys (rd>$hh2)?$bcolor:v.p{xs,ys}" +monitor -rotate -90 $smoothing $tmpA2 +swap -compose over -composite "$outfile"
+	echo "convert -size ${wd}x${ht} xc: $tmpA1 $tproc -virtual-pixel background -background $bcolor -monitor -fx '$xd $yd $rd $theta $phiang $xs $ys (rd>$hh2)?$bcolor:v.p{xs,ys}' +monitor -rotate -90 $smoothing $tmpA2 +swap -compose over -composite '$outfile'"
 else
-	convert -size ${wd}x${ht} xc: $tmpA1 $tproc -virtual-pixel background -background $bcolor \
-		-monitor -fx \
-		"$xd $yd $rd $theta $phiang $xs $ys (rd>$hh2)?$bcolor:v.p{xs,ys}" +monitor \
-		-rotate -90 $smoothing \
-		"$outfile"
+	convert -size ${wd}x${ht} xc: $tmpA1 $tproc -virtual-pixel background -background $bcolor -monitor -fx "$xd $yd $rd $theta $phiang $xs $ys (rd>$hh2)?$bcolor:v.p{xs,ys}" +monitor -rotate -90 $smoothing "$outfile"
+	echo "convert -size ${wd}x${ht} xc: $tmpA1 $tproc -virtual-pixel background -background $bcolor -monitor -fx '$xd $yd $rd $theta $phiang $xs $ys (rd>$hh2)?$bcolor:v.p{xs,ys}' +monitor -rotate -90 $smoothing '$outfile'"
 fi
 read
 exit 0

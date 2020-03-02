@@ -139,11 +139,8 @@
   <data name="Library_HDRUpscaler" xml:space="preserve">
     <value>Libraries/LDR2HDR_Upscaler/</value>
   </data>
-  <data name="Library_IM_fisheye2pano" xml:space="preserve">
-    <value>Libraries/ImageMagick/fisheye2pano/</value>
-  </data>
-  <data name="Library_IM_pano2fisheye" xml:space="preserve">
-    <value>Libraries/ImageMagick/pano2fisheye/</value>
+  <data name="Library_IM" xml:space="preserve">
+    <value>Libraries/ImageMagick/</value>
   </data>
   <data name="Library_LDR2HDR" xml:space="preserve">
     <value>Libraries/LDR2HDR/</value>

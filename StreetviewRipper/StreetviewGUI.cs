@@ -165,8 +165,8 @@ namespace StreetviewRipper
             string File_HDRUpscalerInputLDR = Properties.Resources.Library_HDRUpscaler + "input.jpg";
             string File_HDRUpscalerInputHDR = Properties.Resources.Library_HDRUpscaler + "input.hdr";
             string File_HDRUpscalerOutput = Properties.Resources.Library_HDRUpscaler + "output.hdr";
-            string File_ToFisheyeInput = Properties.Resources.Library_IM_pano2fisheye + "infile.hdr";
-            string File_ToFisheyeOutput = Properties.Resources.Library_IM_pano2fisheye + "outfile.hdr";
+            string File_ToFisheyeInput = Properties.Resources.Library_IM + "infile.hdr";
+            string File_ToFisheyeOutput = Properties.Resources.Library_IM + "outfile.hdr";
             string File_ClassifierInput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + ".hdr";
             string File_ClassifierOutput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + "_classified.hdr";
 
@@ -176,7 +176,7 @@ namespace StreetviewRipper
             string Library_LDR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_LDR2HDR + "run.bat";
             string Library_Classifier = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_Classifier + "Classify.exe";
             string Library_HDRUpscaler = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRUpscaler /*+ "hdr_upscaler.m"*/;
-            string Library_ToFisheye = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_IM_pano2fisheye + "pano2fisheye.sh";
+            string Library_ToFisheye = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_IM + "tools/convert.exe";
 
             //Create any directories we'll need
             if (!Directory.Exists(Properties.Resources.Output_Images)) Directory.CreateDirectory(Properties.Resources.Output_Images);
@@ -419,21 +419,26 @@ namespace StreetviewRipper
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
             UpdateDownloadStatusText("converting to fisheye HDR...");
-            //File.Copy(File_TrimmedHDR, File_ToFisheyeInput, true);
+            File.Copy(File_TrimmedHDR, File_ToFisheyeInput, true);
+            
+            string FisheyeFolder = GetPathWithoutFilename(Library_ToFisheye);
+            FisheyeFolder = FisheyeFolder.Substring(0, FisheyeFolder.Length - 6); //Remove "tools/"
+            File.WriteAllText(FisheyeFolder + "run.bat", 
+                //TODO implement the maths to calculate these magic numbers in script (take from pano2fisheye)
+                "\"tools/convert.exe\" -quiet infile.hdr +repage -roll +" + (hdrCropped.Width/2) + "+0 -rotate 180 temp.mpc" + Environment.NewLine +
+                "\"tools/convert.exe\" -size " + hdrCropped.Height + "x" + hdrCropped.Height + " xc: temp.mpc -virtual-pixel background -background black -monitor -fx \"xd=(i-779); yd=(j-779); rd=hypot(xd,yd); theta=atan2(yd,xd); phiang=asin(2*rd/1561); xs=3327+theta*1059.34; ys=1561-phiang*993.763; (rd>779)?black:v.p{xs,ys}\" +monitor -rotate -90 outfile.hdr");
 
-            /*
-             * WHY DOESNT THIS WORK
-            //string FisheyeFolder = GetPathWithoutFilename(Library_ToFisheye);
-            File.WriteAllText(FisheyeFolder + "run.bat", "\"" + Library_ToFisheye + "\" -p orthographic -v manhole -b black \"" + AppDomain.CurrentDomain.BaseDirectory + File_TrimmedHDR + "\" \"" + AppDomain.CurrentDomain.BaseDirectory + File_ToFisheyeOutput + "\"");
             processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + FisheyeFolder + "run.bat\"");
             processInfo.WorkingDirectory = FisheyeFolder;
-           // processInfo.CreateNoWindow = true;
-            //processInfo.UseShellExecute = false;
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
 
             File.Delete(File_ToFisheyeInput);
+            if (File.Exists(FisheyeFolder + "temp.mpc")) File.Delete(FisheyeFolder + "temp.mpc");
+            if (File.Exists(FisheyeFolder + "temp.cache")) File.Delete(FisheyeFolder + "temp.cache");
 
             //If we didn't get a fisheye back, we probably don't have Bash or ImageMagick installed
             if (!File.Exists(File_ToFisheyeOutput))
@@ -445,7 +450,6 @@ namespace StreetviewRipper
                 UpdateDownloadStatusText("failed on fisheye conversion stage!");
                 return null;
             }
-            */
             
             /*
             UpdateDownloadStatusText("converting to fisheye...");
@@ -468,7 +472,7 @@ namespace StreetviewRipper
             UpdateDownloadStatusText("classifying cloud formations...");
             if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
             if (File.Exists(File_ClassifierOutput)) File.Delete(File_ClassifierOutput);
-            File.Move(/*File_ToFisheyeOutput*/File_TrimmedHDR, File_ClassifierInput); 
+            File.Move(File_ToFisheyeOutput, File_ClassifierInput);
 
             processInfo = new ProcessStartInfo(Library_Classifier, "5 400 100 0 " + id + " " + id + "_classified");
             processInfo.WorkingDirectory = GetPathWithoutFilename(Library_Classifier);

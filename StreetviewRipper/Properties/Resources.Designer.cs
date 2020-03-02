@@ -141,20 +141,11 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/ImageMagick/fisheye2pano/.
+        ///   Looks up a localized string similar to Libraries/ImageMagick/.
         /// </summary>
-        internal static string Library_IM_fisheye2pano {
+        internal static string Library_IM {
             get {
-                return ResourceManager.GetString("Library_IM_fisheye2pano", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Libraries/ImageMagick/pano2fisheye/.
-        /// </summary>
-        internal static string Library_IM_pano2fisheye {
-            get {
-                return ResourceManager.GetString("Library_IM_pano2fisheye", resourceCulture);
+                return ResourceManager.GetString("Library_IM", resourceCulture);
             }
         }
         
