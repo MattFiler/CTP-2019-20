@@ -157,7 +157,8 @@ namespace StreetviewRipper
             string File_SkyExtracted = Properties.Resources.Output_Images + id + "_removedsky.png";
             string File_ConvertedHDR = Properties.Resources.Output_Images + id + ".hdr";
             string File_TrimmedHDR = Properties.Resources.Output_Images + id + "_upscaled_trim.hdr";
-            string File_ClassifiedHDR = Properties.Resources.Output_Images + id + "_classified.hdr";
+            string File_FisheyeHDR = Properties.Resources.Output_Images + id + "_fisheye.hdr";
+            string File_ClassifiedHDR = Properties.Resources.Output_Images + id + "_fisheye_classified.hdr";
 
             string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
             string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
@@ -424,9 +425,12 @@ namespace StreetviewRipper
             string FisheyeFolder = GetPathWithoutFilename(Library_ToFisheye);
             FisheyeFolder = FisheyeFolder.Substring(0, FisheyeFolder.Length - 6); //Remove "tools/"
             File.WriteAllText(FisheyeFolder + "run.bat", 
-                //TODO implement the maths to calculate these magic numbers in script (take from pano2fisheye)
                 "\"tools/convert.exe\" -quiet infile.hdr +repage -roll +" + (hdrCropped.Width/2) + "+0 -rotate 180 temp.mpc" + Environment.NewLine +
-                "\"tools/convert.exe\" -size " + hdrCropped.Height + "x" + hdrCropped.Height + " xc: temp.mpc -virtual-pixel background -background black -monitor -fx \"xd=(i-779); yd=(j-779); rd=hypot(xd,yd); theta=atan2(yd,xd); phiang=asin(2*rd/1561); xs=3327+theta*1059.34; ys=1561-phiang*993.763; (rd>779)?black:v.p{xs,ys}\" +monitor -rotate -90 outfile.hdr");
+                "\"tools/convert.exe\" -size " + hdrCropped.Height + "x" + hdrCropped.Height + " xc: temp.mpc -virtual-pixel background -background black " +
+                "-monitor -fx \"xd=(i-" + (Math.Floor(hdrCropped.Height / 2.0) - 1) + "); yd=(j-" + (Math.Floor(hdrCropped.Height / 2.0) - 1) + "); rd=hypot(xd,yd); " +
+                "theta=atan2(yd,xd); phiang=asin(2*rd/" + hdrCropped.Height + "); xs=" + (Math.Floor(hdrCropped.Width / 2.0) - 1) + "+theta*" + Math.Round(hdrCropped.Width / (2 * Math.PI), 2) + "; " +
+                "ys=" + hdrCropped.Height + "-phiang*" + Math.Round(hdrCropped.Height / (Math.PI / 2), 2) + "; (rd>" + (Math.Floor(hdrCropped.Height / 2.0) - 1) + ") ?black:v.p{xs,ys}\" " +
+                "+monitor -rotate -90 outfile.hdr");
 
             processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + FisheyeFolder + "run.bat\"");
             processInfo.WorkingDirectory = FisheyeFolder;
@@ -440,39 +444,24 @@ namespace StreetviewRipper
             if (File.Exists(FisheyeFolder + "temp.mpc")) File.Delete(FisheyeFolder + "temp.mpc");
             if (File.Exists(FisheyeFolder + "temp.cache")) File.Delete(FisheyeFolder + "temp.cache");
 
-            //If we didn't get a fisheye back, we probably don't have Bash or ImageMagick installed
+            //If we didn't get a fisheye back, we probably don't have ImageMagick installed (shouldn't need to now, but just in case)
             if (!File.Exists(File_ToFisheyeOutput))
             {
-                MessageBox.Show("Could not distort to fisheye.\nCheck Bash/ImageMagick is installed!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Could not distort to fisheye.\nCheck ImageMagick is installed!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 shouldStop = true;
                 downloadCount++;
                 UpdateDownloadCountText(downloadCount);
                 UpdateDownloadStatusText("failed on fisheye conversion stage!");
                 return null;
             }
-            
-            /*
-            UpdateDownloadStatusText("converting to fisheye...");
-            using (MagickImage image = new MagickImage(streetviewImage))
-            {
-                using (IMagickImage backgroundImg = image.Clone())
-                {
-                    backgroundImg.VirtualPixelMethod = VirtualPixelMethod.Background;
-                    backgroundImg.BackgroundColor = Color.Black;
-                    backgroundImg.Resize(4096, 4096);
-                    backgroundImg.Fx("xd=(i-2047); yd=(j-2047); rd=hypot(xd,yd); theta=atan2(yd,xd); phiang=asin(2*rd/4096); xs=4095+theta*1303.8; ys=4096-phiang*2607.59; (rd>2047)?white:v.p{xs,ys}");
-                    backgroundImg.Rotate(90);
-                    backgroundImg.Write("test.png");
-                }
-            }
-            return null;
-            */
+            if (File.Exists(File_FisheyeHDR)) File.Delete(File_FisheyeHDR);
+            File.Move(File_ToFisheyeOutput, File_FisheyeHDR);
 
             //Classify the processed image
             UpdateDownloadStatusText("classifying cloud formations...");
             if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
             if (File.Exists(File_ClassifierOutput)) File.Delete(File_ClassifierOutput);
-            File.Move(File_ToFisheyeOutput, File_ClassifierInput);
+            File.Copy(File_FisheyeHDR, File_ClassifierInput, true);
 
             processInfo = new ProcessStartInfo(Library_Classifier, "5 400 100 0 " + id + " " + id + "_classified");
             processInfo.WorkingDirectory = GetPathWithoutFilename(Library_Classifier);
@@ -497,6 +486,7 @@ namespace StreetviewRipper
                 return null;
             }
 
+#if false
             //Pull classified clouds from the image & save them
             UpdateDownloadStatusText("extracting classified clouds...");
             HDRImage hdrClassified = new HDRImage();
@@ -512,40 +502,8 @@ namespace StreetviewRipper
             cutoutCumulus.Save(Properties.Resources.Output_Images + id + "_classified_cumulus.png", System.Drawing.Imaging.ImageFormat.Png);
             cutoutCirrus.Save(Properties.Resources.Output_Images + id + "_classified_cirrus.png", System.Drawing.Imaging.ImageFormat.Png);
             cutoutClearSky.Save(Properties.Resources.Output_Images + id + "_classified_clearsky.png", System.Drawing.Imaging.ImageFormat.Png);
-
-            /*
-            //Convert HDR values to regular float values
-            UpdateDownloadStatusText("converting HDR output...");
-            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
-            File.Copy(Properties.Resources.Output_Images + id + ".hdr", "HDR2Float/streetview.hdr");
-
-            processInfo = new ProcessStartInfo(AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/HDR2Float.exe", "");
-            processInfo.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory + "/HDR2Float/";
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            if (File.Exists(Properties.Resources.Output_Images + id + ".bin")) File.Delete(Properties.Resources.Output_Images + id + ".bin");
-            if (File.Exists("HDR2Float/streetview.bin")) File.Copy("HDR2Float/streetview.bin", Properties.Resources.Output_Images + id + ".bin");
-            if (File.Exists("HDR2Float/streetview.bin")) File.Delete("HDR2Float/streetview.bin");
-            if (File.Exists("HDR2Float/streetview.hdr")) File.Delete("HDR2Float/streetview.hdr");
-
-            //Read in the converted float values from the HDR
-            BinaryReader binReader = new BinaryReader(File.OpenRead(Properties.Resources.Output_Images + id + ".bin"));
-            List<HDRPixelAsFloat> parsedPixels = new List<HDRPixelAsFloat>();
-            for (int i = 0; i < binReader.BaseStream.Length / sizeof(float) / 3; i++)
-            {
-                HDRPixelAsFloat newPixel = new HDRPixelAsFloat();
-                newPixel.R = binReader.ReadSingle();
-                newPixel.G = binReader.ReadSingle();
-                newPixel.B = binReader.ReadSingle();
-                parsedPixels.Add(newPixel);
-            }
-            binReader.Close();
-            */
-
+#endif
+            
             //Done!
             downloadCount++;
             UpdateDownloadCountText(downloadCount);
