@@ -1,4 +1,5 @@
 #include "Raytracer.h"
+#include <openvdb/openvdb.h>
 
 /* Initialise the raytracer, generate a scene, and render */
 int main(int argc, char **argv)
