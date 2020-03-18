@@ -1,3 +1,8 @@
 # MUST COPY THESE OUT FROM THE ZIP FOLDER TO BUILD THE RAYTRACER
 Debug/*
 Release/*
+
+
+# Also potentially of use:
+# vcpkg install openvdb:x64-windows
+# vcpkg integrate install

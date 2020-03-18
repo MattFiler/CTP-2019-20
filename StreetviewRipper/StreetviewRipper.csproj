@@ -63,6 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CloudCalculator.cs" />
     <Compile Include="HistogramTools.cs" />
     <Compile Include="StreetviewGUI.cs">
       <SubType>Form</SubType>
