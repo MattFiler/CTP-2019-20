@@ -35,8 +35,15 @@ namespace StreetviewRipper
             Color thisColour = originalSkyImage.GetPixel((int)point.x, (int)point.y);
             Color closeColour = originalSkyImage.GetPixel((int)closestPoint.x, (int)closestPoint.y);
 
-            //TODO IMPLEMENT FORMULA HERE ON VALUES
-            //float da = 
+            float sigma_s = GetSigmaFromClassified(point);
+
+            float La = GetLuma(thisColour);
+            float Lb = GetLuma(closeColour);
+
+            float Lsa = 0.0f; //TODO: what is this?
+            float Lsb = 0.0f; //TODO: what is this?
+
+            float da = (float)-Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
         }
         private Vector2 GetClosestColourNeighbour(int initialX, int initialY, int radius = 5)
         {
@@ -61,15 +68,29 @@ namespace StreetviewRipper
             }
             return closestMatchPos;
         }
-        private int ColourDiff(Color color1, Color color2)
+        private int ColourDiff(Color colour1, Color colour2)
         {
-            int r = color1.R - color2.R;
+            int r = colour1.R - colour2.R;
             if (r < 0) r *= -1;
-            int g = color1.G - color2.G;
+            int g = colour1.G - colour2.G;
             if (g < 0) g *= -1;
-            int b = color1.B - color2.B;
+            int b = colour1.B - colour2.B;
             if (b < 0) b *= -1;
             return r + g + b;
+        }
+        private float GetLuma(Color colour)
+        {
+            return (0.2126f * colour.R) + (0.7152f * colour.G) + (0.0722f * colour.B);
+        }
+
+        private float GetSigmaFromClassified(Vector2 point)
+        {
+            Color classifiedColour = classifiedSkyImage.GetPixel((int)point.x, (int)point.y);
+            if (classifiedColour == Color.Black) return 0.0f;
+
+            //TODO: match colour in LDR image and return sigma value from colour match
+
+            return 0.0f;
         }
     }
 }

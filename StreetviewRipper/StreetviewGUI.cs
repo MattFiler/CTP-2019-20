@@ -486,6 +486,14 @@ namespace StreetviewRipper
                 return null;
             }
 
+            //TODO: De-fisheye the classified fisheye
+
+            //TODO: Convert the de-fisheyed classifier to LDR
+
+            //TODO: Perform the inscattering equation on the de-fisheyed LDR
+            CloudCalculator inscatteringCalc = new CloudCalculator(null, null); //TODO: pass images here
+            inscatteringCalc.RunInscatteringFormula();
+
 #if false
             //Pull classified clouds from the image & save them
             UpdateDownloadStatusText("extracting classified clouds...");
