@@ -23,16 +23,18 @@ namespace StreetviewRipper
         public void RunInscatteringFormula()
         {
             //todo: do we really want to do this for every pixel?
+            Bitmap outputDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
             for (int x = 0; x < originalSkyImage.Width; x++) {
                 for (int y = 0; y < originalSkyImage.Height; y++)
                 {
-                    CalculateDaForPoint(new Vector2(x, y));
+                    outputDebug.SetPixel(x, y, Color.FromArgb((int)CalculateForPoint(new Vector2(x, y)) * 255, 0, 0, 0));
                 }
             }
+            outputDebug.Save("InscatteringCalcDebug.png");
         }
 
-        /* Calculate Da value to solve Li */
-        private double CalculateDaForPoint(Vector2 point)
+        /* Calculate light scattering value at point */
+        private double CalculateForPoint(Vector2 point)
         {
             Vector2 closestPoint = GetClosestColourNeighbour((int)point.x, (int)point.y);
             
@@ -49,7 +51,9 @@ namespace StreetviewRipper
             double Lsb = GetLuma(closeBG);
 
             double da = -Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
-            return da;
+            double Lia = La - (Lsa * Math.Exp(-da * sigma_s));
+
+            return Lia;
         }
 
         /* Get the closest colour value within a radius of a pixel */
