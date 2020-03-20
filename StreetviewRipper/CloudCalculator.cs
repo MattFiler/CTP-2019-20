@@ -11,40 +11,48 @@ namespace StreetviewRipper
     {
         private Bitmap originalSkyImage;
         private Bitmap classifiedSkyImage;
-        public CloudCalculator(Bitmap origImage, Bitmap classifiedImage)
+        private Bitmap backgroundSkyImage;
+        public CloudCalculator(Bitmap origImage, Bitmap classifiedImage, Bitmap hosekWilkieImage)
         {
             originalSkyImage = origImage;
             classifiedSkyImage = classifiedImage;
+            backgroundSkyImage = hosekWilkieImage;
         }
 
+        /* Run the calculations to calculate inscattering data */
         public void RunInscatteringFormula()
         {
             //todo: do we really want to do this for every pixel?
             for (int x = 0; x < originalSkyImage.Width; x++) {
                 for (int y = 0; y < originalSkyImage.Height; y++)
                 {
-                    CalculateFormulaForPoint(new Vector2(x, y));
+                    CalculateDaForPoint(new Vector2(x, y));
                 }
             }
         }
 
-        private void CalculateFormulaForPoint(Vector2 point)
+        /* Calculate Da value to solve Li */
+        private double CalculateDaForPoint(Vector2 point)
         {
             Vector2 closestPoint = GetClosestColourNeighbour((int)point.x, (int)point.y);
+            
+            double sigma_s = GetSigmaFromClassified(point);
 
             Color thisColour = originalSkyImage.GetPixel((int)point.x, (int)point.y);
             Color closeColour = originalSkyImage.GetPixel((int)closestPoint.x, (int)closestPoint.y);
+            double La = GetLuma(thisColour);
+            double Lb = GetLuma(closeColour);
 
-            float sigma_s = GetSigmaFromClassified(point);
+            Color thisBG = backgroundSkyImage.GetPixel((int)point.x, (int)point.y);
+            Color closeBG = backgroundSkyImage.GetPixel((int)closestPoint.x, (int)closestPoint.y);
+            double Lsa = GetLuma(thisBG);
+            double Lsb = GetLuma(closeBG);
 
-            float La = GetLuma(thisColour);
-            float Lb = GetLuma(closeColour);
-
-            float Lsa = 0.0f; //TODO: what is this?
-            float Lsb = 0.0f; //TODO: what is this?
-
-            float da = (float)-Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
+            double da = -Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
+            return da;
         }
+
+        /* Get the closest colour value within a radius of a pixel */
         private Vector2 GetClosestColourNeighbour(int initialX, int initialY, int radius = 5)
         {
             Color targetColour = originalSkyImage.GetPixel(initialX, initialY);
@@ -68,6 +76,8 @@ namespace StreetviewRipper
             }
             return closestMatchPos;
         }
+
+        /* Get the difference in colour values between two given colours */
         private int ColourDiff(Color colour1, Color colour2)
         {
             int r = colour1.R - colour2.R;
@@ -78,19 +88,28 @@ namespace StreetviewRipper
             if (b < 0) b *= -1;
             return r + g + b;
         }
-        private float GetLuma(Color colour)
+
+        /* Get the luma value for a given colour */
+        private double GetLuma(Color colour)
         {
-            return (0.2126f * colour.R) + (0.7152f * colour.G) + (0.0722f * colour.B);
+            return (0.2126 * colour.R) + (0.7152 * colour.G) + (0.0722 * colour.B);
         }
 
-        private float GetSigmaFromClassified(Vector2 point)
+        /* Calculate the sigma value from a given point using the de-warped classified image */
+        private double GetSigmaFromClassified(Vector2 point)
         {
             Color classifiedColour = classifiedSkyImage.GetPixel((int)point.x, (int)point.y);
-            if (classifiedColour == Color.Black) return 0.0f;
 
-            //TODO: match colour in LDR image and return sigma value from colour match
-
-            return 0.0f;
+            //NULL
+            if (classifiedColour == Color.Black) return 0.0;
+            //STRATOCUMULUS
+            else if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 255) return 0.1222340 + 0.0000000844671;
+            //CUMULUS
+            else if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 0) return 0.0814896 + 0.000000110804;
+            //CIRRUS
+            else if (classifiedColour.R == 0 && classifiedColour.G == 255 && classifiedColour.B == 0) return 0.1661800 + 0.000000001;
+            //CLEAR_SKY
+            else return 0.0; 
         }
     }
 }

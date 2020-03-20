@@ -130,6 +130,9 @@
   <data name="Library_EXR2LDR" xml:space="preserve">
     <value>Libraries/EXR2LDR/</value>
   </data>
+  <data name="Library_HDR2EXR" xml:space="preserve">
+    <value>Libraries/HDR2EXR/</value>
+  </data>
   <data name="Library_HDR2Float" xml:space="preserve">
     <value>Libraries/HDR2Float/</value>
   </data>

@@ -114,6 +114,15 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Libraries/HDR2EXR/.
+        /// </summary>
+        internal static string Library_HDR2EXR {
+            get {
+                return ResourceManager.GetString("Library_HDR2EXR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Libraries/HDR2Float/.
         /// </summary>
         internal static string Library_HDR2Float {

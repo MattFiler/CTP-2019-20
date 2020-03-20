@@ -1,4 +1,3 @@
-using ImageMagick;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -159,6 +158,8 @@ namespace StreetviewRipper
             string File_TrimmedHDR = Properties.Resources.Output_Images + id + "_upscaled_trim.hdr";
             string File_FisheyeHDR = Properties.Resources.Output_Images + id + "_fisheye.hdr";
             string File_ClassifiedHDR = Properties.Resources.Output_Images + id + "_fisheye_classified.hdr";
+            string File_ClassifiedDewarpedHDR = Properties.Resources.Output_Images + id + "_classified_dewarped.hdr";
+            string File_ClassifiedDewarpedLDR = Properties.Resources.Output_Images + id + "_classified_dewarped.png";
 
             string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
             string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
@@ -166,6 +167,8 @@ namespace StreetviewRipper
             string File_HDRUpscalerInputLDR = Properties.Resources.Library_HDRUpscaler + "input.jpg";
             string File_HDRUpscalerInputHDR = Properties.Resources.Library_HDRUpscaler + "input.hdr";
             string File_HDRUpscalerOutput = Properties.Resources.Library_HDRUpscaler + "output.hdr";
+            string File_HDR2EXRInput = Properties.Resources.Library_HDR2EXR + "input.hdr";
+            string File_HDR2EXROutput = Properties.Resources.Library_HDR2EXR + "output.exr";
             string File_ToFisheyeInput = Properties.Resources.Library_IM + "infile.hdr";
             string File_ToFisheyeOutput = Properties.Resources.Library_IM + "outfile.hdr";
             string File_ClassifierInput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + ".hdr";
@@ -175,6 +178,7 @@ namespace StreetviewRipper
             string Library_PBRT = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_PBRT + "imgtool.exe";
             string Library_EXR2LDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_EXR2LDR + "exr2ldr.exe";
             string Library_LDR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_LDR2HDR + "run.bat";
+            string Library_EXR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_EXR2HDR + "run.bat";
             string Library_Classifier = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_Classifier + "Classify.exe";
             string Library_HDRUpscaler = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRUpscaler /*+ "hdr_upscaler.m"*/;
             string Library_ToFisheye = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_IM + "tools/convert.exe";
@@ -304,7 +308,7 @@ namespace StreetviewRipper
             if (File.Exists(File_PBRTOutput)) File.Copy(File_PBRTOutput, File_SkyHDR, true);
             if (File.Exists(File_PBRTOutput)) File.Delete(File_PBRTOutput);
 
-            //Convert sky model to HDR from LDR
+            //Convert sky model to LDR from HDR
             UpdateDownloadStatusText("converting sky model...");
             processInfo = new ProcessStartInfo(Library_EXR2LDR, Path.GetFileName(File_SkyHDR) + " " + Path.GetFileName(File_SkyLDR));
             processInfo.WorkingDirectory = GetPathWithoutFilename(File_SkyHDR);
@@ -486,12 +490,47 @@ namespace StreetviewRipper
                 return null;
             }
 
+
             //TODO: De-fisheye the classified fisheye
+            //write as File_ClassifiedDewarpedHDR
 
-            //TODO: Convert the de-fisheyed classifier to LDR
 
-            //TODO: Perform the inscattering equation on the de-fisheyed LDR
-            CloudCalculator inscatteringCalc = new CloudCalculator(null, null); //TODO: pass images here
+            File.Copy(File_ClassifiedDewarpedHDR, File_HDR2EXRInput, true);
+
+            //Convert de-warped classified image to EXR from HDR
+            UpdateDownloadStatusText("converting classified to EXR...");
+            processInfo = new ProcessStartInfo(Library_EXR2LDR, Path.GetFileName(File_SkyHDR) + " " + Path.GetFileName(File_SkyLDR));
+            processInfo.WorkingDirectory = GetPathWithoutFilename(File_SkyHDR);
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            File.Delete(File_HDR2EXRInput);
+            string tempConvInput = Properties.Resources.Library_EXR2LDR + "/input.exr";
+            string tempConvOutput = Properties.Resources.Library_EXR2LDR + "/output.png";
+            File.Copy(File_HDR2EXROutput, tempConvInput, true);
+
+            //Convert de-warped classified image to LDR from EXR
+            UpdateDownloadStatusText("converting classified to LDR...");
+            processInfo = new ProcessStartInfo(Library_EXR2LDR, tempConvInput + " " + tempConvOutput);
+            processInfo.WorkingDirectory = GetPathWithoutFilename(File_SkyHDR);
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            File.Delete(tempConvInput);
+            if (File.Exists(File_ClassifiedDewarpedLDR)) File.Delete(File_ClassifiedDewarpedLDR);
+            File.Move(tempConvOutput, File_ClassifiedDewarpedLDR);
+            
+            Bitmap dewarpedClassifier = (Bitmap)Image.FromFile(File_ClassifiedDewarpedLDR);
+
+            //Perform the inscattering equation on the de-fisheyed LDR
+            UpdateDownloadStatusText("calculating cloud data...");
+            CloudCalculator inscatteringCalc = new CloudCalculator(streetviewImageTrim, dewarpedClassifier, skyModel); 
             inscatteringCalc.RunInscatteringFormula();
 
 #if false
