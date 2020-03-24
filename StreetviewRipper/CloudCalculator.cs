@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 
 namespace StreetviewRipper
 {
+    class CalculatedInscatter
+    {
+        public double da;
+        public Color Lia;
+    }
+
     class CloudCalculator
     {
         private Bitmap originalSkyImage;
@@ -27,46 +33,46 @@ namespace StreetviewRipper
             for (int x = 0; x < originalSkyImage.Width; x++) {
                 for (int y = 0; y < originalSkyImage.Height; y++)
                 {
-                    outputDebug.SetPixel(x, y, Color.FromArgb((int)CalculateForPoint(new Vector2(x, y)) * 255, 0, 0, 0));
+                    CalculatedInscatter returnedVal = CalculateForPoint(new Vector2(x, y));
+                    outputDebug.SetPixel(x, y, Color.FromArgb((int)(returnedVal.da * 255), returnedVal.Lia.R, returnedVal.Lia.G, returnedVal.Lia.B));
                 }
             }
             outputDebug.Save("InscatteringCalcDebug.png");
         }
 
         /* Calculate light scattering value at point */
-        private double CalculateForPoint(Vector2 point)
+        private CalculatedInscatter CalculateForPoint(Vector2 point)
         {
             Vector2 closestPoint = GetClosestColourNeighbour((int)point.x, (int)point.y);
-            
             double sigma_s = GetSigmaFromClassified(point);
 
             Color thisColour = originalSkyImage.GetPixel((int)point.x, (int)point.y);
             Color closeColour = originalSkyImage.GetPixel((int)closestPoint.x, (int)closestPoint.y);
-            double La = GetLuma(thisColour);
-            double Lb = GetLuma(closeColour);
-
             Color thisBG = backgroundSkyImage.GetPixel((int)point.x, (int)point.y);
             Color closeBG = backgroundSkyImage.GetPixel((int)closestPoint.x, (int)closestPoint.y);
-            double Lsa = GetLuma(thisBG);
-            double Lsb = GetLuma(closeBG);
 
-            Vector3 da = new Vector3(
-                (float)CalculateDaForColour(thisColour.R, closeColour.R, thisBG.R, closeBG.R, sigma_s),
-                (float)CalculateDaForColour(thisColour.G, closeColour.G, thisBG.G, closeBG.G, sigma_s),
-                (float)CalculateDaForColour(thisColour.B, closeColour.B, thisBG.B, closeBG.B, sigma_s)
+            CalculatedInscatter toReturn = new CalculatedInscatter();
+            toReturn.da = (
+                CalculateDaForColour(thisColour.R, closeColour.R, thisBG.R, closeBG.R, sigma_s) +
+                CalculateDaForColour(thisColour.G, closeColour.G, thisBG.G, closeBG.G, sigma_s) +
+                CalculateDaForColour(thisColour.B, closeColour.B, thisBG.B, closeBG.B, sigma_s)
+            ) / 3;
+            toReturn.Lia = Color.FromArgb(
+                (int)(CalculateLiaForColour(thisColour.R, thisBG.R, toReturn.da, sigma_s) * 255),
+                (int)(CalculateLiaForColour(thisColour.G, thisBG.G, toReturn.da, sigma_s) * 255),
+                (int)(CalculateLiaForColour(thisColour.B, thisBG.B, toReturn.da, sigma_s) * 255)
             );
-            Vector3 Lia = new Vector3(
-                (float)CalculateLiaForColour(thisColour.R, thisBG.R, da.x, sigma_s),
-                (float)CalculateLiaForColour(thisColour.G, thisBG.G, da.y, sigma_s),
-                (float)CalculateLiaForColour(thisColour.B, thisBG.B, da.z, sigma_s)
-            );
-            double Lia = La - (Lsa * Math.Exp(-da * sigma_s));
-
-            return Lia;
+            return toReturn;
         }
         private double CalculateDaForColour(double La, double Lb, double Lsa, double Lsb, double sigma_s)
         {
-            return -Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
+            double toReturn = 0.0;
+            try
+            {
+                toReturn = -Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
+            }
+            catch { }
+            return toReturn;
         }
         private double CalculateLiaForColour(double La, double Lsa, double da, double sigma_s)
         {
