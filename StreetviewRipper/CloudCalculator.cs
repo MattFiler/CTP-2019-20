@@ -50,10 +50,27 @@ namespace StreetviewRipper
             double Lsa = GetLuma(thisBG);
             double Lsb = GetLuma(closeBG);
 
-            double da = -Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
+            Vector3 da = new Vector3(
+                (float)CalculateDaForColour(thisColour.R, closeColour.R, thisBG.R, closeBG.R, sigma_s),
+                (float)CalculateDaForColour(thisColour.G, closeColour.G, thisBG.G, closeBG.G, sigma_s),
+                (float)CalculateDaForColour(thisColour.B, closeColour.B, thisBG.B, closeBG.B, sigma_s)
+            );
+            Vector3 Lia = new Vector3(
+                (float)CalculateLiaForColour(thisColour.R, thisBG.R, da.x, sigma_s),
+                (float)CalculateLiaForColour(thisColour.G, thisBG.G, da.y, sigma_s),
+                (float)CalculateLiaForColour(thisColour.B, thisBG.B, da.z, sigma_s)
+            );
             double Lia = La - (Lsa * Math.Exp(-da * sigma_s));
 
             return Lia;
+        }
+        private double CalculateDaForColour(double La, double Lb, double Lsa, double Lsb, double sigma_s)
+        {
+            return -Math.Log(Math.Abs((La - Lb) / (Lsa - Lsb))) / sigma_s;
+        }
+        private double CalculateLiaForColour(double La, double Lsa, double da, double sigma_s)
+        {
+            return La - (Lsa * Math.Exp(-da * sigma_s));
         }
 
         /* Get the closest colour value within a radius of a pixel */
