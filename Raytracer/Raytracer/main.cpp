@@ -1,3 +1,4 @@
+#pragma warning(disable:4996)
 #include "Raytracer.h"
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/ChangeBackground.h>
