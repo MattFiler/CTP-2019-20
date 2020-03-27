@@ -61,8 +61,8 @@ namespace StreetviewRipper
         }
         private void StartDownloading(List<string> ids)
         {
-            try
-            {
+            //try
+            //{
                 foreach (string id in ids)
                 {
                     if (id != "")
@@ -71,8 +71,8 @@ namespace StreetviewRipper
                         DownloadNeighbours(neighbours);
                     }
                 }
-            }
-            catch { }
+            //}
+            //catch { }
 
             //Downloads are done, re-enable UI
             stoppingText.Visible = false;
@@ -182,6 +182,7 @@ namespace StreetviewRipper
             string Library_Classifier = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_Classifier + "Classify.exe";
             string Library_HDRUpscaler = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRUpscaler /*+ "hdr_upscaler.m"*/;
             string Library_ToFisheye = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_IM + "tools/convert.exe";
+            string Library_HDR2EXR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDR2EXR /*+ "hdr2exr.py"*/;
 
             //Create any directories we'll need
             if (!Directory.Exists(Properties.Resources.Output_Images)) Directory.CreateDirectory(Properties.Resources.Output_Images);
@@ -490,17 +491,18 @@ namespace StreetviewRipper
                 return null;
             }
 
-
-            //TODO: De-fisheye the classified fisheye
-            //write as File_ClassifiedDewarpedHDR
-
-
+            //Dewarp the classified image
+            UpdateDownloadStatusText("dewarping classified image...");
+            HDRImage classifiedHDR = new HDRImage();
+            classifiedHDR.Open(File_ClassifiedHDR);
+            DewarpFisheyeHDR(classifiedHDR).Save(File_ClassifiedDewarpedHDR);
+            
             File.Copy(File_ClassifiedDewarpedHDR, File_HDR2EXRInput, true);
 
             //Convert de-warped classified image to EXR from HDR
             UpdateDownloadStatusText("converting classified to EXR...");
-            processInfo = new ProcessStartInfo(Library_EXR2LDR, Path.GetFileName(File_SkyHDR) + " " + Path.GetFileName(File_SkyLDR));
-            processInfo.WorkingDirectory = GetPathWithoutFilename(File_SkyHDR);
+            processInfo = new ProcessStartInfo("cmd.exe", "/c \"run.bat\"");
+            processInfo.WorkingDirectory = Library_HDR2EXR;
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
@@ -508,23 +510,22 @@ namespace StreetviewRipper
             process.Close();
 
             File.Delete(File_HDR2EXRInput);
-            string tempConvInput = Properties.Resources.Library_EXR2LDR + "/input.exr";
-            string tempConvOutput = Properties.Resources.Library_EXR2LDR + "/output.png";
-            File.Copy(File_HDR2EXROutput, tempConvInput, true);
+            File.Copy(File_HDR2EXROutput, GetPathWithoutFilename(Library_EXR2LDR) + "input.exr", true);
+            File.Delete(File_HDR2EXROutput);
 
             //Convert de-warped classified image to LDR from EXR
             UpdateDownloadStatusText("converting classified to LDR...");
-            processInfo = new ProcessStartInfo(Library_EXR2LDR, tempConvInput + " " + tempConvOutput);
-            processInfo.WorkingDirectory = GetPathWithoutFilename(File_SkyHDR);
+            processInfo = new ProcessStartInfo(Library_EXR2LDR, "input.exr output.png");
+            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_EXR2LDR);
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
 
-            File.Delete(tempConvInput);
+            File.Delete(GetPathWithoutFilename(Library_EXR2LDR) + "input.exr");
             if (File.Exists(File_ClassifiedDewarpedLDR)) File.Delete(File_ClassifiedDewarpedLDR);
-            File.Move(tempConvOutput, File_ClassifiedDewarpedLDR);
+            File.Move(GetPathWithoutFilename(Library_EXR2LDR) + "output.png", File_ClassifiedDewarpedLDR);
             
             Bitmap dewarpedClassifier = (Bitmap)Image.FromFile(File_ClassifiedDewarpedLDR);
 
@@ -556,6 +557,55 @@ namespace StreetviewRipper
             UpdateDownloadCountText(downloadCount);
             UpdateDownloadStatusText("finished!");
             return thisMeta["neighbours"].Value<JArray>();
+        }
+
+        /* Helper functions for dewarping fisheye in LDR or HDR (ref:https://github.com/crongjie/FisheyeToPanorama) */
+        private Bitmap DewarpFisheyeLDR(Bitmap fisheye)
+        {
+            int width = fisheye.Width * 2;
+            int height = fisheye.Height / 2;
+
+            Bitmap result_image = new Bitmap(width, height);
+            for (int w = 0; w < width; ++w)
+            {
+                for (int h = 0; h < height; ++h)
+                {
+                    double radius = height - h;
+                    double theta = Math.PI * 2 / width * w * -1;
+
+                    int x = Convert.ToInt32(radius * Math.Cos(theta) + height);
+                    int y = Convert.ToInt32(height - radius * Math.Sin(theta));
+                    if (x >= 0 && x < fisheye.Width && y >= 0 && y < fisheye.Height)
+                    {
+                        result_image.SetPixel(w, height - h - 1, fisheye.GetPixel(x, y));
+                    }
+                }
+            }
+            return result_image;
+        }
+        private HDRImage DewarpFisheyeHDR(HDRImage fisheye)
+        {
+            int width = fisheye.Width * 2;
+            int height = fisheye.Height / 2;
+
+            HDRImage result_image = new HDRImage();
+            result_image.SetResolution(width, height);
+            for (int w = 0; w < width; ++w)
+            {
+                for (int h = 0; h < height; ++h)
+                {
+                    double radius = height - h;
+                    double theta = Math.PI * 2 / width * w * -1;
+
+                    int x = Convert.ToInt32(radius * Math.Cos(theta) + height);
+                    int y = Convert.ToInt32(height - radius * Math.Sin(theta));
+                    if (x >= 0 && x < fisheye.Width && y >= 0 && y < fisheye.Height)
+                    {
+                        result_image.SetPixel(w, height - h - 1, fisheye.GetPixel(x, y));
+                    }
+                }
+            }
+            return result_image;
         }
 
         /* On load, validate our setup, and disable image processing options if external tools are unavailable. */

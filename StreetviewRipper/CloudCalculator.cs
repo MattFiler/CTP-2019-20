@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,13 +31,16 @@ namespace StreetviewRipper
         {
             //todo: do we really want to do this for every pixel?
             Bitmap outputDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
+            List<string> outputDebugText = new List<string>();
             for (int x = 0; x < originalSkyImage.Width; x++) {
                 for (int y = 0; y < originalSkyImage.Height; y++)
                 {
                     CalculatedInscatter returnedVal = CalculateForPoint(new Vector2(x, y));
+                    outputDebugText.Add("Returned - da(" + returnedVal.da + "), Lia(R:" + returnedVal.Lia.R + ",G:" + returnedVal.Lia.G + ",B:" + returnedVal.Lia.B + ")");
                     outputDebug.SetPixel(x, y, Color.FromArgb((int)(returnedVal.da * 255), returnedVal.Lia.R, returnedVal.Lia.G, returnedVal.Lia.B));
                 }
             }
+            File.WriteAllLines("InscatteringCalcDebug.txt", outputDebugText);
             outputDebug.Save("InscatteringCalcDebug.png");
         }
 
