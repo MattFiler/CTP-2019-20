@@ -24,25 +24,13 @@ hdrhist = hdrhist ./ (size(hdrlum, 1) * size(hdrlum, 2));
 ldrhist = ldrhist ./ (size(ldrlum, 1) * size(ldrlum, 2));    
 close all;    
 
-% Try and match both distributions
-leftover = zeros(1, 100);
-leftover_total = 0;
-leftover_total_historic = zeros(1, 100);
-for x = 1:100
-    leftover(1, x) = hdrhist(1, x) - ldrhist(1, x);
-    leftover_total = leftover_total + hdrhist(1, x);
-    leftover_total = leftover_total - ldrhist(1, x);
-    leftover_total_historic(1, x) = leftover_total;
-    
-    if leftover_total <= 0
-        break;
-    end
-end
-
 % Tweak LDR luma values to match the differences in histograms
 reshaped_hdr = zeros(size(ldrlum, 1), size(ldrlum, 2));
 for x = 1:size(ldrlum, 1)
     for y = 1:size(ldrlum, 2)
+        if ldrlum(x, y) <= 0
+            ldrlum(x, y) = 0.0001; % Hacky fix to disallow zero values
+        end
         % Find our value's index in the histogram
         graph_offset = -1;
         for i = 1:100
@@ -55,7 +43,7 @@ for x = 1:size(ldrlum, 1)
         end
         % Pull the histogram mapped HDR
         reshaped_hdr(x, y) = hdrhist_centres(1, graph_offset);
-        if reshaped_hdr(x, y) == 0
+        if reshaped_hdr(x, y) <= 0
            reshaped_hdr(x, y) = 0.0001; % Hacky fix to disallow zero values
         end
     end
@@ -63,10 +51,14 @@ end
 
 % Undo the normal LDR luma & re-do the histogram mapped luma
 ldrimage_hdr = zeros(size(ldrimage));
-ldrimage_hdr(:,:,1) = (single(ldrimage(:,:,1)) .* ldrlum) ./ reshaped_hdr;
-ldrimage_hdr(:,:,2) = (single(ldrimage(:,:,2)) .* ldrlum) ./ reshaped_hdr;
-ldrimage_hdr(:,:,3) = (single(ldrimage(:,:,3)) .* ldrlum) ./ reshaped_hdr;
+ldrimage_hdr(:,:,1) = (single(ldrimage(:,:,1)) ./ ldrlum) .* reshaped_hdr;
+ldrimage_hdr(:,:,2) = (single(ldrimage(:,:,2)) ./ ldrlum) .* reshaped_hdr;
+ldrimage_hdr(:,:,3) = (single(ldrimage(:,:,3)) ./ ldrlum) .* reshaped_hdr;
+
+% Bring into HDR float range, and "normalise" based on max of HDR
+img_to_write = single(single(ldrimage_hdr) ./ single(255));
+img_to_write = single(single(img_to_write) ./ single(max(max(reshaped_hdr))));
 
 % Write out the new HDR/LDR combo
-hdrwrite(single(single(ldrimage_hdr) / single(255)), 'output.hdr');
+hdrwrite(img_to_write, 'output.hdr');
 end
