@@ -43,16 +43,29 @@ namespace StreetviewRipper
             //todo: do we really want to do this for every pixel?
             Bitmap outputDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
             List<string> outputDebugText = new List<string>();
+            Bitmap daDebugImg = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
+            List<string> daDebug = new List<string>();
             for (int x = 0; x < originalSkyImage.Width; x++) {
                 for (int y = 0; y < originalSkyImage.Height; y++)
                 {
                     CalculatedInscatter returnedVal = CalculateForPoint(new Vector2(x, y));
                     outputDebugText.Add("Returned - da(" + returnedVal.da + "), Lia(R:" + returnedVal.Lia.R + ",G:" + returnedVal.Lia.G + ",B:" + returnedVal.Lia.B + ")");
+                    if (returnedVal.da != 0)
+                    {
+                        daDebugImg.SetPixel(x, y, Color.White);
+                        daDebug.Add("Value for da at (" + x + ", " + y + "): " + returnedVal.da);
+                    }
+                    else
+                    {
+                        daDebugImg.SetPixel(x, y, Color.Black);
+                    }
                     outputDebug.SetPixel(x, y, Color.FromArgb(/*(int)(returnedVal.da * 255),*/ returnedVal.Lia.R, returnedVal.Lia.G, returnedVal.Lia.B));
                 }
             }
             File.WriteAllLines("InscatteringCalcDebug.txt", outputDebugText);
             outputDebug.Save("InscatteringCalcDebug.png");
+            File.WriteAllLines("daDebugOut.txt", daDebug);
+            daDebugImg.Save("daDebugOut.png");
         }
 
         /* Calculate light scattering value at point */
@@ -153,11 +166,20 @@ namespace StreetviewRipper
             //NULL
             if (classifiedColour == Color.Black) return 0.0;
             //STRATOCUMULUS
-            else if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 255) return 0.1222340 + 0.0000000844671;
+            else if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 255)
+            {
+                return 0.1222340 + 0.0000000844671;
+            }
             //CUMULUS
-            else if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 0) return 0.0814896 + 0.000000110804;
+            else if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 0)
+            {
+                return 0.0814896 + 0.000000110804;
+            }
             //CIRRUS
-            else if (classifiedColour.R == 0 && classifiedColour.G == 255 && classifiedColour.B == 0) return 0.1661800 + 0.000000001;
+            else if (classifiedColour.R == 0 && classifiedColour.G == 255 && classifiedColour.B == 0)
+            {
+                return 0.1661800 + 0.000000001;
+            }
             //CLEAR_SKY
             else return 0.0; 
         }
