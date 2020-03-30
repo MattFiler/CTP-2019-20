@@ -51,6 +51,7 @@ namespace StreetviewRipper
         public int pos;
     }
 
+    /* A representation of a HDR image */
     class HDRImage
     {
         private int width;
@@ -92,9 +93,10 @@ namespace StreetviewRipper
         }
 
         /* Load in a HDR file */
-        public void Open(string filename, bool can_reparse = true)
+        public void Open(string filename, bool can_reparse_hdr = true, bool can_reparse_exr = true)
         {
-            if (Path.GetExtension(filename) != ".hdr")
+            //Check sanity of input
+            if (!(Path.GetExtension(filename) == ".hdr" || Path.GetExtension(filename) == ".exr"))
             {
                 throw new System.FormatException("Trying to load a non-HDR image!");
             }
@@ -102,8 +104,30 @@ namespace StreetviewRipper
             {
                 throw new System.FormatException("Requested to open a file that doesn't exist!");
             }
+
+            //If given an EXR, we need it in HDR format
+            if (Path.GetExtension(filename) == ".exr")
+            {
+                if (!can_reparse_exr) throw new System.FormatException("Failed to load HDR, incorrect format!");
+                string HDRConverterPath = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_EXR2HDR;
+                File.Copy(filename, HDRConverterPath + "input.exr", true);
+                ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + HDRConverterPath + "run.bat\"");
+                processInfo.WorkingDirectory = HDRConverterPath;
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+                Process process = Process.Start(processInfo);
+                process.WaitForExit();
+                process.Close();
+                File.Delete(HDRConverterPath + "input.exr");
+                if (!File.Exists(HDRConverterPath + "output.hdr")) throw new System.FormatException("Failed to convert EXR to correct format!");
+                Open(HDRConverterPath + "output.hdr", true, false);
+                File.Delete(HDRConverterPath + "output.hdr");
+                return;
+            }
+
             BinaryReader InFile = new BinaryReader(File.OpenRead(filename));
 
+            //Read the header
             string thisHeaderLine = "";
             while (true)
             {
@@ -137,7 +161,7 @@ namespace StreetviewRipper
             //Some HDRs use scanline compression - convert it for us, and try again
             if (InFile.BaseStream.Length < (width * height * 4))
             {
-                if (!can_reparse) throw new System.FormatException("Failed to load HDR, incorrect format!");
+                if (!can_reparse_hdr) throw new System.FormatException("Failed to load HDR, incorrect format!");
                 string HDRConverterPath = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRConverter;
                 File.Copy(filename, HDRConverterPath + "input.hdr", true);
                 ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + HDRConverterPath + "run.bat\"");
@@ -151,9 +175,11 @@ namespace StreetviewRipper
                 if (!File.Exists(HDRConverterPath + "output.hdr")) throw new System.FormatException("Failed to convert HDR to correct format!");
                 Open(HDRConverterPath + "output.hdr", false);
                 File.Delete(HDRConverterPath + "output.hdr");
+                InFile.Close();
                 return;
             }
 
+            //Read RGBE data
             for (int i = 0; i < (InFile.BaseStream.Length - headerLen) / 4; i++)
             {
                 HDRPixel newPixel = new HDRPixel();
@@ -189,6 +215,7 @@ namespace StreetviewRipper
         }
     }
 
+    /* An integer RGBE representation of a pixel in a HDR image */
     class HDRPixel
     {
         public int R;
@@ -212,8 +239,16 @@ namespace StreetviewRipper
             B = _b;
             E = _e;
         }
+
+        public HDRPixelFloat AsFloat()
+        {
+            HDRPixelFloat asFloat = new HDRPixelFloat();
+            asFloat.FromRGBE(R, G, B, E);
+            return asFloat;
+        }
     }
 
+    /* An RGB floating point representation of a pixel in a HDR image */
     class HDRPixelFloat
     {
         private float r;
