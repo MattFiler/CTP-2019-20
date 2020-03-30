@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -162,6 +164,8 @@ namespace StreetviewRipper
             string File_ClassifiedHDR = Properties.Resources.Output_Images + id + "_fisheye_classified.hdr";
             string File_ClassifiedDewarpedHDR = Properties.Resources.Output_Images + id + "_classified_dewarped.hdr";
             string File_ClassifiedDewarpedLDR = Properties.Resources.Output_Images + id + "_classified_dewarped.png";
+            string File_ClassifiedDewarpedLDRResize = Properties.Resources.Output_Images + id + "_classified_dewarped_resize.png";
+            string File_ClassifiedDewarpedLDRResizeCorrected = Properties.Resources.Output_Images + id + "_classified_dewarped_corrected.png";
 
             string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
             string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
@@ -401,7 +405,7 @@ namespace StreetviewRipper
             hdrCropped.Save(File_TrimmedHDR);
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
-            UpdateDownloadStatusText("converting streetview to fisheye HDR...");
+            UpdateDownloadStatusText("converting streetview to fisheye...");
             File.Copy(File_TrimmedHDR, File_ToFisheyeInput, true);
             
             string FisheyeFolder = GetPathWithoutFilename(Library_ToFisheye);
@@ -475,13 +479,59 @@ namespace StreetviewRipper
             HDRImage classifiedHDRDewarped = DewarpFisheyeHDR(classifiedHDR);
             classifiedHDRDewarped.Save(File_ClassifiedDewarpedHDR);
 
-            //TODO: Resize dewarped image to original sky trim size
-            
+            File.Copy(File_ClassifiedDewarpedHDR, File_HDR2EXRInput, true);
+
+            //Convert de-warped classified image to EXR from HDR
+            UpdateDownloadStatusText("converting classified to EXR...");
+            processInfo = new ProcessStartInfo("cmd.exe", "/c \"run.bat\"");
+            processInfo.WorkingDirectory = Library_HDR2EXR;
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            File.Delete(File_HDR2EXRInput);
+            File.Copy(File_HDR2EXROutput, GetPathWithoutFilename(Library_EXR2LDR) + "input.exr", true);
+            File.Delete(File_HDR2EXROutput);
+
+            //Convert de-warped classified image to LDR from EXR
+            UpdateDownloadStatusText("converting classified to LDR...");
+            processInfo = new ProcessStartInfo(Library_EXR2LDR, "input.exr output.png");
+            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_EXR2LDR);
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            File.Delete(GetPathWithoutFilename(Library_EXR2LDR) + "input.exr");
+            if (File.Exists(File_ClassifiedDewarpedLDR)) File.Delete(File_ClassifiedDewarpedLDR);
+            File.Move(GetPathWithoutFilename(Library_EXR2LDR) + "output.png", File_ClassifiedDewarpedLDR);
+
+            //Resize LDR classifier, and reduce compression/resize artifacting by matching closest colours
+            UpdateDownloadStatusText("resizing and correcting classified LDR...");
+            Bitmap dewarpedClassifier = ResizeImage(Image.FromFile(File_ClassifiedDewarpedLDR), hdrCropped.Width, hdrCropped.Height);
+            dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResize);
+            for (int x = 0; x < dewarpedClassifier.Width; x++)
+            {
+                for (int y = 0; y < dewarpedClassifier.Height; y++)
+                {
+                    dewarpedClassifier.SetPixel(x, y, RoundClassifierColourValue(dewarpedClassifier.GetPixel(x, y)));
+                }
+            }
+            dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResizeCorrected);
+
             //Perform the inscattering equation on the de-fisheyed LDR
             UpdateDownloadStatusText("calculating streetview cloud data...");
-            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, classifiedHDRDewarped, skyModelHDRTrim); 
-            inscatteringCalc.RunInscatteringFormula();
-            
+            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, dewarpedClassifier, skyModelHDRTrim); 
+            InscatteringResult inscatterResult = inscatteringCalc.RunInscatteringFormula();
+
+            //Output debug results from inscattering
+            inscatterResult.CloudDepthLocationDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.png");
+            inscatterResult.CloudInscatteringColourDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_colour_debug.png");
+            File.WriteAllLines(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.txt", inscatterResult.CloudDepthValueDebug);
+
             //Done!
             downloadCount++;
             UpdateDownloadCountText(downloadCount);
@@ -536,6 +586,91 @@ namespace StreetviewRipper
                 }
             }
             return result_image;
+        }
+
+        /* Work out what cloud value this pixel is closest to */
+        private Color RoundClassifierColourValue(Color pixel)
+        {
+            int stratocumulus_diff = LDRPixelColourDiff(Color.FromArgb(255, 0, 255), pixel);
+            int cumulus_diff = LDRPixelColourDiff(Color.FromArgb(255, 0, 0), pixel);
+            int cirrus_diff = LDRPixelColourDiff(Color.FromArgb(0, 255, 0), pixel);
+            int clearsky_diff = LDRPixelColourDiff(Color.FromArgb(0, 0, 255), pixel);
+            int null_diff = LDRPixelColourDiff(Color.FromArgb(0, 0, 0), pixel);
+
+            //STRATOCUMULUS
+            if (stratocumulus_diff < cumulus_diff &&
+                stratocumulus_diff < cirrus_diff &&
+                stratocumulus_diff < clearsky_diff &&
+                stratocumulus_diff < null_diff)
+            {
+                return Color.FromArgb(255, 0, 255);
+            }
+
+            //CUMULUS
+            if (cumulus_diff < stratocumulus_diff &&
+                cumulus_diff < cirrus_diff &&
+                cumulus_diff < clearsky_diff &&
+                cumulus_diff < null_diff)
+            {
+                return Color.FromArgb(255, 0, 0);
+            }
+
+            //CIRRUS
+            if (cirrus_diff < stratocumulus_diff &&
+                cirrus_diff < cumulus_diff &&
+                cirrus_diff < clearsky_diff &&
+                cirrus_diff < null_diff)
+            {
+                return Color.FromArgb(0, 255, 0);
+            }
+
+            //CLEAR_SKY
+            if (clearsky_diff < stratocumulus_diff &&
+                clearsky_diff < cumulus_diff &&
+                clearsky_diff < cirrus_diff &&
+                clearsky_diff < null_diff)
+            {
+                return Color.FromArgb(0, 0, 255);
+            }
+
+            //NULL
+            return Color.Black;
+        }
+        private int LDRPixelColourDiff(Color colour1, Color colour2)
+        {
+            int r = colour1.R - colour2.R;
+            if (r < 0) r *= -1;
+            int g = colour1.G - colour2.G;
+            if (g < 0) g *= -1;
+            int b = colour1.B - colour2.B;
+            if (b < 0) b *= -1;
+            return r + g + b;
+        }
+
+        /* Resize an LDR bitmap (thanks: https://stackoverflow.com/a/24199315) */
+        private Bitmap ResizeImage(Image image, int width, int height)
+        {
+            var destRect = new Rectangle(0, 0, width, height);
+            var destImage = new Bitmap(width, height);
+
+            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+            using (var graphics = Graphics.FromImage(destImage))
+            {
+                graphics.CompositingMode = CompositingMode.SourceCopy;
+                graphics.CompositingQuality = CompositingQuality.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode = SmoothingMode.HighQuality;
+                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                using (var wrapMode = new ImageAttributes())
+                {
+                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                }
+            }
+
+            return destImage;
         }
 
         /* On load, validate our setup, and disable image processing options if external tools are unavailable. */

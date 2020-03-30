@@ -14,21 +14,25 @@ namespace StreetviewRipper
         public Vector3 Lia;
     }
 
+    class InscatteringResult
+    {
+        public Bitmap CloudDepthLocationDebug;
+        public List<string> CloudDepthValueDebug;
+        public Bitmap CloudInscatteringColourDebug;
+    }
+
     class CloudCalculator
     {
         private HDRImage originalSkyImage;
-        private HDRImage classifiedSkyImage;
+        private Bitmap classifiedSkyImage;
         private HDRImage backgroundSkyImage;
-        public CloudCalculator(HDRImage origImage, HDRImage classifiedImage, HDRImage hosekWilkieImage)
+        public CloudCalculator(HDRImage origImage, Bitmap classifiedImage, HDRImage hosekWilkieImage)
         {
-            /*
             if (!(((origImage.Width == classifiedImage.Width) && (classifiedImage.Width == hosekWilkieImage.Width)) &&
                 ((origImage.Height == classifiedImage.Height) && (classifiedImage.Height == hosekWilkieImage.Height))))
             {
                 throw new System.FormatException("Image sizes do not match as expected!");
             }
-            */
-            //TODO: ^ only enable above when classifiedImage is fixed
 
             originalSkyImage = origImage;
             classifiedSkyImage = classifiedImage;
@@ -36,41 +40,42 @@ namespace StreetviewRipper
         }
 
         /* Run the calculations to calculate inscattering data */
-        public void RunInscatteringFormula()
+        public InscatteringResult RunInscatteringFormula()
         {
-            //todo: do we really want to do this for every pixel?
-            Bitmap outputDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
-            List<string> outputDebugText = new List<string>();
-            Bitmap daDebugImg = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
-            List<string> daDebug = new List<string>();
+            InscatteringResult toReturn = new InscatteringResult();
+            toReturn.CloudDepthLocationDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
+            toReturn.CloudInscatteringColourDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
+            toReturn.CloudDepthValueDebug = new List<string>();
+
             for (int x = 0; x < originalSkyImage.Width; x++)
             {
                 for (int y = 0; y < originalSkyImage.Height; y++)
                 {
                     CalculatedInscatter returnedVal = CalculateForPoint(new Vector2(x, y));
-                    outputDebugText.Add("Returned - da(" + returnedVal.da + "), Lia(R:" + returnedVal.Lia.x + ",G:" + returnedVal.Lia.y + ",B:" + returnedVal.Lia.z + ")");
+
+                    //Depth value debug output
                     if (returnedVal.da != 0)
                     {
-                        daDebugImg.SetPixel(x, y, Color.White);
-                        daDebug.Add("Value for da at (" + x + ", " + y + "): " + returnedVal.da);
+                        toReturn.CloudDepthLocationDebug.SetPixel(x, y, Color.White);
+                        toReturn.CloudDepthValueDebug.Add("Value for da at (" + x + ", " + y + "): " + returnedVal.da);
                     }
                     else
                     {
-                        daDebugImg.SetPixel(x, y, Color.Black);
+                        toReturn.CloudDepthLocationDebug.SetPixel(x, y, Color.Black);
                     }
-                    int final_r = (int)(255 * returnedVal.Lia.x);
+
+                    //Inscattering colour debug output
+                    int final_r = (int)(255.0f * returnedVal.Lia.x);
                     if (final_r > 255) final_r = 255;
-                    int final_g = (int)(255 * returnedVal.Lia.y);
+                    int final_g = (int)(255.0f * returnedVal.Lia.y);
                     if (final_g > 255) final_g = 255;
-                    int final_b = (int)(255 * returnedVal.Lia.z);
+                    int final_b = (int)(255.0f * returnedVal.Lia.z);
                     if (final_b > 255) final_b = 255;
-                    outputDebug.SetPixel(x, y, Color.FromArgb(/*(int)(returnedVal.da * 255),*/ final_r, final_g, final_b));
+                    toReturn.CloudInscatteringColourDebug.SetPixel(x, y, Color.FromArgb(/*(int)(returnedVal.da * 255),*/ final_r, final_g, final_b));
                 }
             }
-            File.WriteAllLines("InscatteringCalcDebug.txt", outputDebugText);
-            outputDebug.Save("InscatteringCalcDebug.png");
-            File.WriteAllLines("daDebugOut.txt", daDebug);
-            daDebugImg.Save("daDebugOut.png");
+
+            return toReturn;
         }
 
         /* Calculate light scattering value at point */
@@ -92,9 +97,9 @@ namespace StreetviewRipper
 
             toReturn.da = (da_r + da_g + da_b) / 3;
 
-            float Lia_r = CalculateLiaForColour(thisColour.R, thisBG.R, toReturn.da, sigma_s);
-            float Lia_g = CalculateLiaForColour(thisColour.G, thisBG.G, toReturn.da, sigma_s);
-            float Lia_b = CalculateLiaForColour(thisColour.B, thisBG.B, toReturn.da, sigma_s);
+            float Lia_r = (float)CalculateLiaForColour(thisColour.R, thisBG.R, toReturn.da, sigma_s);
+            float Lia_g = (float)CalculateLiaForColour(thisColour.G, thisBG.G, toReturn.da, sigma_s);
+            float Lia_b = (float)CalculateLiaForColour(thisColour.B, thisBG.B, toReturn.da, sigma_s);
 
             toReturn.Lia = new Vector3(Lia_r, Lia_g, Lia_b);
 
@@ -112,9 +117,9 @@ namespace StreetviewRipper
             if (double.IsInfinity(toReturn)) return 0.0f;
             return toReturn;
         }
-        private float CalculateLiaForColour(double La, double Lsa, double da, double sigma_s)
+        private double CalculateLiaForColour(double La, double Lsa, double da, double sigma_s)
         {
-            int toReturn = (int)(La - (Lsa * Math.Exp(-da * sigma_s)));
+            double toReturn = La - (Lsa * Math.Exp(-da * sigma_s));
             if (toReturn < 0) toReturn = 0;
             //if (toReturn > 255) toReturn = 255;
             return toReturn;
@@ -168,12 +173,12 @@ namespace StreetviewRipper
         /* Calculate the sigma value from a given point using the de-warped classified image */
         private double GetSigmaFromClassified(Vector2 point)
         {
-            return 0.1222340 + 0.0000000844671; //TODO: SKY CLASSIFIED DEWARP NEEDS TO BE SIZE OF OTHERS
-            /*
-            HDRPixelFloat classifiedColour = classifiedSkyImage.GetPixel((int)point.x, (int)point.y).AsFloat();
-            
+            Color classifiedColour = classifiedSkyImage.GetPixel((int)point.x, (int)point.y);
+
+            //NULL
+            if (classifiedColour == Color.Black) return 0.0; 
             //STRATOCUMULUS
-            if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 255)
+            else if (classifiedColour.R == 255 && classifiedColour.G == 0 && classifiedColour.B == 255)
             {
                 return 0.1222340 + 0.0000000844671;
             }
@@ -187,9 +192,8 @@ namespace StreetviewRipper
             {
                 return 0.1661800 + 0.000000001;
             }
-            //CLEAR_SKY or NULL
+            //CLEAR_SKY
             else return 0.0;
-            */
         }
     }
 }
