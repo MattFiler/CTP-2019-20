@@ -144,14 +144,16 @@ namespace StreetviewRipper
         {
             UpdateDownloadStatusText("finished!");
             if (shouldStop) return null;
-            UpdateDownloadStatusText("downloading LDR image...");
+            UpdateDownloadStatusText("downloading streetview image...");
 
             //First up, here are all the files we'll be creating/dealing with
             string File_InitialLDR = Properties.Resources.Output_Images + id + ".jpg";
             string File_ShiftedLDR = Properties.Resources.Output_Images + id + "_shifted.jpg";
+            string File_ShiftedLDRTrim = Properties.Resources.Output_Images + id + "_shifted_trim.jpg";
             string File_DownscaledLDR = Properties.Resources.Output_Images + id + "_downscaled.jpg";
             string File_Metadata = Properties.Resources.Output_Images + id + ".json";
             string File_SkyHDR = Properties.Resources.Output_Images + id + "_sky.exr";
+            string File_SkyHDRTrim = Properties.Resources.Output_Images + id + "_sky_trim.exr";
             string File_SkyLDR = Properties.Resources.Output_Images + id + "_sky.png";
             string File_SkyExtracted = Properties.Resources.Output_Images + id + "_removedsky.png";
             string File_ConvertedHDR = Properties.Resources.Output_Images + id + ".hdr";
@@ -178,7 +180,6 @@ namespace StreetviewRipper
             string Library_PBRT = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_PBRT + "imgtool.exe";
             string Library_EXR2LDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_EXR2LDR + "exr2ldr.exe";
             string Library_LDR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_LDR2HDR + "run.bat";
-            string Library_EXR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_EXR2HDR + "run.bat";
             string Library_Classifier = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_Classifier + "Classify.exe";
             string Library_HDRUpscaler = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRUpscaler /*+ "hdr_upscaler.m"*/;
             string Library_ToFisheye = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_IM + "tools/convert.exe";
@@ -253,7 +254,7 @@ namespace StreetviewRipper
             }
 
             //Calculate metadata
-            UpdateDownloadStatusText("calculating metadata...");
+            UpdateDownloadStatusText("calculating streetview metadata...");
             StreetviewImageProcessor processor = new StreetviewImageProcessor();
             List<GroundInfo> groundPositions = processor.GuessGroundPositions(streetviewImage, (selectedQuality * 5) + 15, true, (StraightLineBias)selectedBias);
             int groundY = (int)groundPositions[0].position.y; //We only have [0] and [1] when using straight line cutting, both have the same Y
@@ -274,13 +275,13 @@ namespace StreetviewRipper
             File.WriteAllText(File_Metadata, localMeta.ToString(Formatting.Indented));
 
             //Shift the image to match Hosek-Wilkie sun position
-            UpdateDownloadStatusText("adjusting LDR image...");
+            UpdateDownloadStatusText("adjusting streetview image...");
             int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
             streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
             streetviewImage.Save(File_ShiftedLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Trim the ground from the adjusted image
-            UpdateDownloadStatusText("cropping LDR image...");
+            UpdateDownloadStatusText("cropping streetview image...");
             Bitmap streetviewImageTrim = new Bitmap(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
             for (int x = 0; x < streetviewImageTrim.Width; x++)
             {
@@ -289,6 +290,7 @@ namespace StreetviewRipper
                     streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
                 }
             }
+            streetviewImageTrim.Save(File_ShiftedLDRTrim);
 
             //Create Hosek-Wilkie sky model for background
             UpdateDownloadStatusText("calculating sky model...");
@@ -309,48 +311,23 @@ namespace StreetviewRipper
             if (File.Exists(File_PBRTOutput)) File.Copy(File_PBRTOutput, File_SkyHDR, true);
             if (File.Exists(File_PBRTOutput)) File.Delete(File_PBRTOutput);
 
-            //Convert sky model to LDR from HDR
-            UpdateDownloadStatusText("converting sky model...");
-            processInfo = new ProcessStartInfo(Library_EXR2LDR, Path.GetFileName(File_SkyHDR) + " " + Path.GetFileName(File_SkyLDR));
-            processInfo.WorkingDirectory = GetPathWithoutFilename(File_SkyHDR);
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            //Cut the sky model out of the original LDR image
-            UpdateDownloadStatusText("removing sky model from LDR...");
-            Bitmap skyModel = (Bitmap)Image.FromFile(File_SkyLDR);
-            Bitmap streetviewNoSky = new Bitmap(streetviewImageTrim.Width, streetviewImageTrim.Height);
-            for (int x = 0; x < streetviewImageTrim.Width; x++)
+            //Trim sky model to match sky image height
+            UpdateDownloadStatusText("cropping sky model...");
+            HDRImage skyModelHDR = new HDRImage();
+            skyModelHDR.Open(File_SkyHDR);
+            HDRImage skyModelHDRTrim = new HDRImage();
+            skyModelHDRTrim.SetResolution(skyModelHDR.Width, groundY);
+            for (int x = 0; x < skyModelHDRTrim.Width; x++)
             {
-                for (int y = 0; y < streetviewImageTrim.Height; y++)
+                for (int y = 0; y < skyModelHDRTrim.Height; y++)
                 {
-                    Color skyPixel = skyModel.GetPixel(x, y);
-                    Color originalPixel = streetviewImageTrim.GetPixel(x, y);
-
-                    float newR = (float)(originalPixel.R - skyPixel.R) / 255.0f;
-                    if (newR < 0) newR = 0;
-                    float newG = (float)(originalPixel.G - skyPixel.G) / 255.0f;
-                    if (newG < 0) newG = 0;
-                    float newB = (float)(originalPixel.B - skyPixel.B) / 255.0f;
-                    if (newB < 0) newB = 0;
-
-                    float newA = (newR * 0.2126f) + (newG * 0.7152f) + (newB * 0.0722f);
-                    int newAFinal = ((int)(newA * 255) - 255) * -1;
-                    if (newAFinal < 0) newAFinal = 0;
-                    if (newAFinal > 255) newAFinal = 255;
-                    //int grayScale = (int)((originalPixel.R * .3) + (originalPixel.G * .59) + (originalPixel.B * .11));
-                    Color newColor = Color.FromArgb(newAFinal, originalPixel.R, originalPixel.G, originalPixel.B);
-
-                    streetviewNoSky.SetPixel(x, y, newColor);
+                    skyModelHDRTrim.SetPixel(x, y, skyModelHDR.GetPixel(x, y));
                 }
             }
-            streetviewNoSky.Save(File_SkyExtracted, System.Drawing.Imaging.ImageFormat.Png);
+            skyModelHDRTrim.Save(File_SkyHDRTrim);
 
             //Convert to HDR image
-            UpdateDownloadStatusText("converting to HDR...");
+            UpdateDownloadStatusText("converting streetview to HDR...");
             streetviewImage.Save(File_LDR2HDRInput, System.Drawing.Imaging.ImageFormat.Jpeg);
             if (File.Exists(File_LDR2HDROutput)) File.Delete(File_LDR2HDROutput);
 
@@ -378,7 +355,7 @@ namespace StreetviewRipper
             }
 
             //Upscale the HDR output from LDR2HDR
-            UpdateDownloadStatusText("upscaling HDR...");
+            UpdateDownloadStatusText("upscaling streetview HDR...");
             if (File.Exists(File_HDRUpscalerInputHDR)) File.Delete(File_HDRUpscalerInputHDR);
             File.Copy(File_ConvertedHDR, File_HDRUpscalerInputHDR);
             streetviewImage.Save(File_HDRUpscalerInputLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
@@ -406,12 +383,12 @@ namespace StreetviewRipper
             File.Move(File_HDRUpscalerOutput, File_ConvertedHDR);
 
             //Read in HDR values
-            UpdateDownloadStatusText("reading HDR...");
+            UpdateDownloadStatusText("reading streetview HDR...");
             HDRImage hdrImage = new HDRImage();
             hdrImage.Open(File_ConvertedHDR);
 
             //Re-write the HDR image without the ground
-            UpdateDownloadStatusText("cropping HDR...");
+            UpdateDownloadStatusText("cropping streetview HDR...");
             HDRImage hdrCropped = new HDRImage();
             hdrCropped.SetResolution(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
             for (int x = 0; x < hdrCropped.Width; x++)
@@ -424,7 +401,7 @@ namespace StreetviewRipper
             hdrCropped.Save(File_TrimmedHDR);
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
-            UpdateDownloadStatusText("converting to fisheye HDR...");
+            UpdateDownloadStatusText("converting streetview to fisheye HDR...");
             File.Copy(File_TrimmedHDR, File_ToFisheyeInput, true);
             
             string FisheyeFolder = GetPathWithoutFilename(Library_ToFisheye);
@@ -492,65 +469,18 @@ namespace StreetviewRipper
             }
 
             //Dewarp the classified image
-            UpdateDownloadStatusText("dewarping classified image...");
+            UpdateDownloadStatusText("dewarping classified streetview image...");
             HDRImage classifiedHDR = new HDRImage();
             classifiedHDR.Open(File_ClassifiedHDR);
-            DewarpFisheyeHDR(classifiedHDR).Save(File_ClassifiedDewarpedHDR);
+            HDRImage classifiedHDRDewarped = DewarpFisheyeHDR(classifiedHDR);
+            classifiedHDRDewarped.Save(File_ClassifiedDewarpedHDR);
+
+            //TODO: Resize dewarped image to original sky trim size
             
-            File.Copy(File_ClassifiedDewarpedHDR, File_HDR2EXRInput, true);
-
-            //Convert de-warped classified image to EXR from HDR
-            UpdateDownloadStatusText("converting classified to EXR...");
-            processInfo = new ProcessStartInfo("cmd.exe", "/c \"run.bat\"");
-            processInfo.WorkingDirectory = Library_HDR2EXR;
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            File.Delete(File_HDR2EXRInput);
-            File.Copy(File_HDR2EXROutput, GetPathWithoutFilename(Library_EXR2LDR) + "input.exr", true);
-            File.Delete(File_HDR2EXROutput);
-
-            //Convert de-warped classified image to LDR from EXR
-            UpdateDownloadStatusText("converting classified to LDR...");
-            processInfo = new ProcessStartInfo(Library_EXR2LDR, "input.exr output.png");
-            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_EXR2LDR);
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            File.Delete(GetPathWithoutFilename(Library_EXR2LDR) + "input.exr");
-            if (File.Exists(File_ClassifiedDewarpedLDR)) File.Delete(File_ClassifiedDewarpedLDR);
-            File.Move(GetPathWithoutFilename(Library_EXR2LDR) + "output.png", File_ClassifiedDewarpedLDR);
-            
-            Bitmap dewarpedClassifier = (Bitmap)Image.FromFile(File_ClassifiedDewarpedLDR);
-
             //Perform the inscattering equation on the de-fisheyed LDR
-            UpdateDownloadStatusText("calculating cloud data...");
-            CloudCalculator inscatteringCalc = new CloudCalculator(streetviewImageTrim, dewarpedClassifier, skyModel); 
+            UpdateDownloadStatusText("calculating streetview cloud data...");
+            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, classifiedHDRDewarped, skyModelHDRTrim); 
             inscatteringCalc.RunInscatteringFormula();
-
-#if false
-            //Pull classified clouds from the image & save them
-            UpdateDownloadStatusText("extracting classified clouds...");
-            HDRImage hdrClassified = new HDRImage();
-            hdrClassified.Open(File_ClassifiedHDR);
-
-            HDRUtilities hdrUtils = new HDRUtilities();
-            Bitmap cutoutStratocumulus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.STRATOCUMULUS);
-            Bitmap cutoutCumulus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CUMULUS);
-            Bitmap cutoutCirrus = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CIRRUS);
-            Bitmap cutoutClearSky = hdrUtils.PullCloudType(hdrClassified, streetviewImageTrim, HDRUtilities.CloudTypes.CLEAR_SKY);
-
-            cutoutStratocumulus.Save(Properties.Resources.Output_Images + id + "_classified_stratocumulus.png", System.Drawing.Imaging.ImageFormat.Png);
-            cutoutCumulus.Save(Properties.Resources.Output_Images + id + "_classified_cumulus.png", System.Drawing.Imaging.ImageFormat.Png);
-            cutoutCirrus.Save(Properties.Resources.Output_Images + id + "_classified_cirrus.png", System.Drawing.Imaging.ImageFormat.Png);
-            cutoutClearSky.Save(Properties.Resources.Output_Images + id + "_classified_clearsky.png", System.Drawing.Imaging.ImageFormat.Png);
-#endif
             
             //Done!
             downloadCount++;
