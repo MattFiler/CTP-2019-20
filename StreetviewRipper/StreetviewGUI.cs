@@ -162,10 +162,11 @@ namespace StreetviewRipper
             string File_TrimmedHDR = Properties.Resources.Output_Images + id + "_upscaled_trim.hdr";
             string File_FisheyeHDR = Properties.Resources.Output_Images + id + "_fisheye.hdr";
             string File_ClassifiedHDR = Properties.Resources.Output_Images + id + "_fisheye_classified.hdr";
-            string File_ClassifiedDewarpedHDR = Properties.Resources.Output_Images + id + "_classified_dewarped.hdr";
-            string File_ClassifiedDewarpedLDR = Properties.Resources.Output_Images + id + "_classified_dewarped.png";
-            string File_ClassifiedDewarpedLDRResize = Properties.Resources.Output_Images + id + "_classified_dewarped_resize.png";
-            string File_ClassifiedDewarpedLDRResizeCorrected = Properties.Resources.Output_Images + id + "_classified_dewarped_corrected.png";
+            string File_ClassifiedDewarpedHDR = Properties.Resources.Output_Images + id + "_classified_1_dewarped.hdr";
+            string File_ClassifiedDewarpedLDR = Properties.Resources.Output_Images + id + "_classified_1_dewarped.png";
+            string File_ClassifiedDewarpedLDRResize = Properties.Resources.Output_Images + id + "_classified_2_resize.png";
+            string File_ClassifiedDewarpedLDRResizeCorrected = Properties.Resources.Output_Images + id + "_classified_3_corrected.png";
+            string File_ClassifiedDewarpedLDRResizeAdjusted = Properties.Resources.Output_Images + id + "_classified_4_adjusted.png";
 
             string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
             string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
@@ -510,9 +511,10 @@ namespace StreetviewRipper
             File.Move(GetPathWithoutFilename(Library_EXR2LDR) + "output.png", File_ClassifiedDewarpedLDR);
 
             //Resize LDR classifier, and reduce compression/resize artifacting by matching closest colours
-            UpdateDownloadStatusText("resizing and correcting classified LDR...");
+            UpdateDownloadStatusText("resizing classified LDR...");
             Bitmap dewarpedClassifier = ResizeImage(Image.FromFile(File_ClassifiedDewarpedLDR), hdrCropped.Width, hdrCropped.Height);
             dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResize);
+            UpdateDownloadStatusText("cleaning classified LDR...");
             for (int x = 0; x < dewarpedClassifier.Width; x++)
             {
                 for (int y = 0; y < dewarpedClassifier.Height; y++)
@@ -521,6 +523,10 @@ namespace StreetviewRipper
                 }
             }
             dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResizeCorrected);
+            UpdateDownloadStatusText("adjusting classified LDR...");
+            shiftDist = (int)(dewarpedClassifier.Width / 4);
+            dewarpedClassifier = processor.ShiftImageLeft(dewarpedClassifier, shiftDist);
+            dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResizeAdjusted);
 
             //Perform the inscattering equation on the de-fisheyed LDR
             UpdateDownloadStatusText("calculating streetview cloud data...");
