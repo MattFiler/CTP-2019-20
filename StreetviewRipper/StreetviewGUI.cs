@@ -8,6 +8,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -167,6 +168,7 @@ namespace StreetviewRipper
             string File_ClassifiedDewarpedLDRResize = Properties.Resources.Output_Images + id + "_classified_2_resize.png";
             string File_ClassifiedDewarpedLDRResizeCorrected = Properties.Resources.Output_Images + id + "_classified_3_corrected.png";
             string File_ClassifiedDewarpedLDRResizeAdjusted = Properties.Resources.Output_Images + id + "_classified_4_adjusted.png";
+            string File_ClassifiedExtended = Properties.Resources.Output_Images + id + "_classified_5_extended.png";
 
             string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
             string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
@@ -528,9 +530,61 @@ namespace StreetviewRipper
             dewarpedClassifier = processor.ShiftImageLeft(dewarpedClassifier, shiftDist);
             dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResizeAdjusted);
 
+            //Extra classifier step: try and guess stratocumulus clouds based on red/blue division
+            UpdateDownloadStatusText("performing additional classifier...");
+            Bitmap classifierOverlay = new Bitmap(hdrCropped.Width, hdrCropped.Height);
+            float avgRBDiv = 0.0f;
+            for (int x = 0; x < classifierOverlay.Width; x++)
+            {
+                for (int y = 0; y < classifierOverlay.Height; y++)
+                {
+                    HDRPixelFloat thisSkyPixel = hdrCropped.GetPixel(x, y).AsFloat();
+                    avgRBDiv += thisSkyPixel.R / thisSkyPixel.B;
+                }
+            }
+            avgRBDiv /= (classifierOverlay.Width * classifierOverlay.Height);
+            for (int x = 0; x < classifierOverlay.Width; x++)
+            {
+                for (int y = 0; y < classifierOverlay.Height; y++)
+                {
+                    HDRPixelFloat thisSkyPixel = hdrCropped.GetPixel(x, y).AsFloat();
+                    float redBlueDiv = thisSkyPixel.R / thisSkyPixel.B;
+
+                    if (redBlueDiv > (avgRBDiv + (avgRBDiv / 6.5f)))
+                    {
+                        classifierOverlay.SetPixel(x, y, Color.FromArgb(255, 0, 255)); //STRATOCUMULUS
+                    }
+                    else
+                    {
+                        classifierOverlay.SetPixel(x, y, Color.Transparent);
+                    }
+                }
+            }
+            FloodFill(classifierOverlay, classifierOverlay.Width / 4, (int)sunPos.y, Color.Transparent);
+
+            //Apply the extra classification ontop of the original classifier output
+            UpdateDownloadStatusText("applying extra classification...");
+            Bitmap finalClassifier = new Bitmap(classifierOverlay.Width, classifierOverlay.Height);
+            for (int x = 0; x < finalClassifier.Width; x++)
+            {
+                for (int y = 0; y < finalClassifier.Height; y++)
+                {
+                    Color thisColour = classifierOverlay.GetPixel(x, y);
+                    if (thisColour.A == 0) //Transparent = nothing
+                    {
+                        finalClassifier.SetPixel(x, y, dewarpedClassifier.GetPixel(x, y));
+                    }
+                    else
+                    {
+                        finalClassifier.SetPixel(x, y, thisColour);
+                    }
+                }
+            }
+            finalClassifier.Save(File_ClassifiedExtended);
+
             //Perform the inscattering equation on the de-fisheyed LDR
             UpdateDownloadStatusText("calculating streetview cloud data...");
-            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, dewarpedClassifier, skyModelHDRTrim); 
+            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, finalClassifier, skyModelHDRTrim); 
             InscatteringResult inscatterResult = inscatteringCalc.RunInscatteringFormula();
 
             //Output debug results from inscattering
@@ -563,7 +617,7 @@ namespace StreetviewRipper
                     int y = Convert.ToInt32(height - radius * Math.Sin(theta));
                     if (x >= 0 && x < fisheye.Width && y >= 0 && y < fisheye.Height)
                     {
-                        result_image.SetPixel(w, height - h - 1, fisheye.GetPixel(x, y));
+                        result_image.SetPixel(width - w - 1, height - h - 1, fisheye.GetPixel(x, y));
                     }
                 }
             }
@@ -587,11 +641,56 @@ namespace StreetviewRipper
                     int y = Convert.ToInt32(height - radius * Math.Sin(theta));
                     if (x >= 0 && x < fisheye.Width && y >= 0 && y < fisheye.Height)
                     {
-                        result_image.SetPixel(w, height - h - 1, fisheye.GetPixel(x, y));
+                        result_image.SetPixel(width - w - 1, height - h - 1, fisheye.GetPixel(x, y));
                     }
                 }
             }
             return result_image;
+        }
+
+        /* Fill a region of colour in a bitmap (thanks: https://stackoverflow.com/a/14897412) */
+        private void FloodFill(Bitmap bitmap, int x, int y, Color color)
+        {
+            BitmapData data = bitmap.LockBits(
+                new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            int[] bits = new int[data.Stride / 4 * data.Height];
+            Marshal.Copy(data.Scan0, bits, 0, bits.Length);
+
+            LinkedList<Point> check = new LinkedList<Point>();
+            int floodTo = color.ToArgb();
+            int floodFrom = bits[x + y * data.Stride / 4];
+            bits[x + y * data.Stride / 4] = floodTo;
+
+            if (floodFrom != floodTo)
+            {
+                check.AddLast(new Point(x, y));
+                while (check.Count > 0)
+                {
+                    Point cur = check.First.Value;
+                    check.RemoveFirst();
+
+                    foreach (Point off in new Point[] {
+                new Point(0, -1), new Point(0, 1),
+                new Point(-1, 0), new Point(1, 0)})
+                    {
+                        Point next = new Point(cur.X + off.X, cur.Y + off.Y);
+                        if (next.X >= 0 && next.Y >= 0 &&
+                            next.X < data.Width &&
+                            next.Y < data.Height)
+                        {
+                            if (bits[next.X + next.Y * data.Stride / 4] == floodFrom)
+                            {
+                                check.AddLast(next);
+                                bits[next.X + next.Y * data.Stride / 4] = floodTo;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Marshal.Copy(bits, 0, data.Scan0, bits.Length);
+            bitmap.UnlockBits(data);
         }
 
         /* Work out what cloud value this pixel is closest to */
