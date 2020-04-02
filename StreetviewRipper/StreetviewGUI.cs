@@ -147,7 +147,7 @@ namespace StreetviewRipper
         {
             UpdateDownloadStatusText("finished!");
             if (shouldStop) return null;
-            UpdateDownloadStatusText("downloading streetview image...");
+            UpdateDownloadStatusText("downloading streetview image LDR...");
 
             //First up, here are all the files we'll be creating/dealing with
             string File_InitialLDR = Properties.Resources.Output_Images + id + ".jpg";
@@ -283,13 +283,13 @@ namespace StreetviewRipper
             File.WriteAllText(File_Metadata, localMeta.ToString(Formatting.Indented));
 
             //Shift the image to match Hosek-Wilkie sun position
-            UpdateDownloadStatusText("adjusting streetview image...");
+            UpdateDownloadStatusText("adjusting streetview image LDR...");
             int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
             streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
             streetviewImage.Save(File_ShiftedLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Trim the ground from the adjusted image
-            UpdateDownloadStatusText("cropping streetview image...");
+            UpdateDownloadStatusText("cropping streetview image LDR...");
             Bitmap streetviewImageTrim = new Bitmap(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
             for (int x = 0; x < streetviewImageTrim.Width; x++)
             {
@@ -300,50 +300,16 @@ namespace StreetviewRipper
             }
             streetviewImageTrim.Save(File_ShiftedLDRTrim);
 
-            //Create Hosek-Wilkie sky model for background
-            UpdateDownloadStatusText("calculating sky model...");
-            if (File.Exists(File_PBRTOutput)) File.Delete(File_PBRTOutput);
-
-            float groundAlbedo = 0.5f; //TODO: set this between 0-1
-            float sunElevation = (sunPos.y / groundY) * 90;
-            float skyTurbidity = 3.0f; //TODO: set this between 1.7-10
-
-            ProcessStartInfo processInfo = new ProcessStartInfo(Library_PBRT, "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>() / 2));
-            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_PBRT);
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            Process process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            if (File.Exists(File_PBRTOutput)) File.Copy(File_PBRTOutput, File_SkyHDR, true);
-            if (File.Exists(File_PBRTOutput)) File.Delete(File_PBRTOutput);
-
-            //Trim sky model to match sky image height
-            UpdateDownloadStatusText("cropping sky model...");
-            HDRImage skyModelHDR = new HDRImage();
-            skyModelHDR.Open(File_SkyHDR);
-            HDRImage skyModelHDRTrim = new HDRImage();
-            skyModelHDRTrim.SetResolution(skyModelHDR.Width, groundY);
-            for (int x = 0; x < skyModelHDRTrim.Width; x++)
-            {
-                for (int y = 0; y < skyModelHDRTrim.Height; y++)
-                {
-                    skyModelHDRTrim.SetPixel(x, y, skyModelHDR.GetPixel(x, y));
-                }
-            }
-            skyModelHDRTrim.Save(File_SkyHDRTrim);
-
             //Convert to HDR image
             UpdateDownloadStatusText("converting streetview to HDR...");
             streetviewImage.Save(File_LDR2HDRInput, System.Drawing.Imaging.ImageFormat.Jpeg);
             if (File.Exists(File_LDR2HDROutput)) File.Delete(File_LDR2HDROutput);
 
-            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + Library_LDR2HDR + "\"");
+            ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + Library_LDR2HDR + "\"");
             processInfo.WorkingDirectory = GetPathWithoutFilename(Library_LDR2HDR);
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
+            Process process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
 
@@ -407,6 +373,86 @@ namespace StreetviewRipper
                 }
             }
             hdrCropped.Save(File_TrimmedHDR);
+
+            //Work out our average blue value to match with Hosek Wilkie
+            UpdateDownloadStatusText("calculating average HDR blue...");
+            float avgBlue = 0.0f;
+            for (int x = 0; x < hdrCropped.Width; x++)
+            {
+                for (int y = 0; y < hdrCropped.Height; y++)
+                {
+                    avgBlue += hdrCropped.GetPixel(x, y).AsFloat().B;
+                }
+            }
+            avgBlue /= (hdrCropped.Width * hdrCropped.Height);
+
+            //Create a bunch of Hosek Wilkie sky models, and we'll pick the closest to that blue value
+            float turbidity02 = CreateAndEvaluateHosekWilkie(id, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), sunPos.y, groundY, 2.0f, 0.5f);
+            float turbidity04 = CreateAndEvaluateHosekWilkie(id, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), sunPos.y, groundY, 4.0f, 0.5f);
+            float turbidity06 = CreateAndEvaluateHosekWilkie(id, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), sunPos.y, groundY, 6.0f, 0.5f);
+            float turbidity08 = CreateAndEvaluateHosekWilkie(id, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), sunPos.y, groundY, 8.0f, 0.5f);
+            float turbidity10 = CreateAndEvaluateHosekWilkie(id, thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), sunPos.y, groundY, 10.0f, 0.5f);
+
+            //Pick the closest
+            UpdateDownloadStatusText("picking closest sky model...");
+            float diff_turb02 = turbidity02 - avgBlue;
+            if (diff_turb02 < 0) diff_turb02 *= -1;
+            float diff_turb04 = turbidity04 - avgBlue;
+            if (diff_turb04 < 0) diff_turb04 *= -1;
+            float diff_turb06 = turbidity06 - avgBlue;
+            if (diff_turb06 < 0) diff_turb06 *= -1;
+            float diff_turb08 = turbidity08 - avgBlue;
+            if (diff_turb08 < 0) diff_turb08 *= -1;
+            float diff_turb10 = turbidity10 - avgBlue;
+            if (diff_turb10 < 0) diff_turb10 *= -1;
+            
+            if (diff_turb02 < diff_turb04 &&
+                diff_turb02 < diff_turb06 &&
+                diff_turb02 < diff_turb08 &&
+                diff_turb02 < diff_turb10)
+            {
+                File.Copy(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_2_0.5.exr", File_SkyHDR, true);
+            }
+            else if (diff_turb04 < diff_turb02 &&
+                     diff_turb04 < diff_turb06 &&
+                     diff_turb04 < diff_turb08 &&
+                     diff_turb04 < diff_turb10)
+            {
+                File.Copy(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_4_0.5.exr", File_SkyHDR, true);
+            }
+            else if (diff_turb06 < diff_turb02 &&
+                     diff_turb06 < diff_turb04 &&
+                     diff_turb06 < diff_turb08 &&
+                     diff_turb06 < diff_turb10)
+            {
+                File.Copy(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_6_0.5.exr", File_SkyHDR, true);
+            }
+            else if (diff_turb08 < diff_turb02 &&
+                     diff_turb08 < diff_turb04 &&
+                     diff_turb08 < diff_turb06 &&
+                     diff_turb08 < diff_turb10)
+            {
+                File.Copy(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_8_0.5.exr", File_SkyHDR, true);
+            }
+            else
+            {
+                File.Copy(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_10_0.5.exr", File_SkyHDR, true);
+            }
+
+            //Trim sky model to match sky image height
+            UpdateDownloadStatusText("cropping sky model...");
+            HDRImage skyModelHDR = new HDRImage();
+            skyModelHDR.Open(File_SkyHDR);
+            HDRImage skyModelHDRTrim = new HDRImage();
+            skyModelHDRTrim.SetResolution(skyModelHDR.Width, groundY);
+            for (int x = 0; x < skyModelHDRTrim.Width; x++)
+            {
+                for (int y = 0; y < skyModelHDRTrim.Height; y++)
+                {
+                    skyModelHDRTrim.SetPixel(x, y, skyModelHDR.GetPixel(x, y));
+                }
+            }
+            skyModelHDRTrim.Save(File_SkyHDRTrim);
 
             //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
             UpdateDownloadStatusText("converting streetview to fisheye...");
@@ -599,6 +645,45 @@ namespace StreetviewRipper
             UpdateDownloadCountText(downloadCount);
             UpdateDownloadStatusText("finished!");
             return thisMeta["neighbours"].Value<JArray>();
+        }
+        
+        /* Produce a Hosek Wilkie sky model (TURBIDITY CAN BE 1.7-10, ALBEDO CAN BE 0-1) and return average blue value */
+        private float CreateAndEvaluateHosekWilkie(string id, int qualityX, float sunPosY, float groundY, float skyTurbidity, float groundAlbedo = 0.5f)
+        {
+            string Library_PBRT = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_PBRT + "imgtool.exe";
+            string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
+            string File_SkyHDR = Properties.Resources.Output_Images + id + "_sky_" + skyTurbidity + "_" + groundAlbedo + ".exr";
+            float sunElevation = (sunPosY / groundY) * 90;
+
+            UpdateDownloadStatusText("calculating sky model (T:" + skyTurbidity + ", A:" + groundAlbedo + ")...");
+            if (File.Exists(File_PBRTOutput)) File.Delete(File_PBRTOutput);
+
+            ProcessStartInfo processInfo = new ProcessStartInfo(Library_PBRT, "makesky --albedo " + groundAlbedo + " --elevation " + sunElevation + " --outfile " + id + ".exr --turbidity " + skyTurbidity + " --resolution " + (int)(qualityX / 2));
+            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_PBRT);
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            Process process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
+
+            if (!File.Exists(File_PBRTOutput)) return 0.0f;
+            File.Copy(File_PBRTOutput, File_SkyHDR, true);
+            File.Delete(File_PBRTOutput);
+
+            //We evaluate here so the garbage collector knows the image is out of scope :)
+            UpdateDownloadStatusText("evaluating sky model (T:" + skyTurbidity + ", A:" + groundAlbedo + ")...");
+            HDRImage hosekWilkie = new HDRImage();
+            hosekWilkie.Open(File_SkyHDR);
+            float avgBlue = 0.0f;
+            for (int x = 0; x < hosekWilkie.Width; x++)
+            {
+                for (int y = 0; y < groundY; y++) //Don't use Hosek Wilkie height here, since we don't work below the horizon
+                {
+                    avgBlue += hosekWilkie.GetPixel(x, y).AsFloat().B;
+                }
+            }
+            avgBlue /= (hosekWilkie.Width * hosekWilkie.Height);
+            return avgBlue;
         }
 
         /* Helper functions for dewarping fisheye in LDR or HDR (ref:https://github.com/crongjie/FisheyeToPanorama) */
