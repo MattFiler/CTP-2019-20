@@ -115,7 +115,7 @@ namespace StreetviewRipper
             catch { return 0.0f; }
             if (double.IsNaN(toReturn)) return 0.0f;
             if (double.IsInfinity(toReturn)) return 0.0f;
-            return toReturn;
+            return toReturn * -1;
         }
         private double CalculateLiaForColour(double La, double Lsa, double da, double sigma_s)
         {

@@ -183,10 +183,11 @@ namespace StreetviewRipper
             for (int i = 0; i < (InFile.BaseStream.Length - headerLen) / 4; i++)
             {
                 HDRPixel newPixel = new HDRPixel();
-                newPixel.R = (int)InFile.ReadByte();
-                newPixel.G = (int)InFile.ReadByte();
-                newPixel.B = (int)InFile.ReadByte();
-                newPixel.E = (int)InFile.ReadByte();
+                byte[] values = InFile.ReadBytes(4);
+                newPixel.R = (int)values[0];
+                newPixel.G = (int)values[1];
+                newPixel.B = (int)values[2];
+                newPixel.E = (int)values[3];
                 pixels[i] = newPixel;
             }
 

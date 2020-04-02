@@ -169,6 +169,7 @@ namespace StreetviewRipper
             string File_ClassifiedDewarpedLDRResizeCorrected = Properties.Resources.Output_Images + id + "_classified_3_corrected.png";
             string File_ClassifiedDewarpedLDRResizeAdjusted = Properties.Resources.Output_Images + id + "_classified_4_adjusted.png";
             string File_ClassifiedExtended = Properties.Resources.Output_Images + id + "_classified_5_extended.png";
+            string File_ClassifiedExtendedMix = Properties.Resources.Output_Images + id + "_classified_6_mixed.png";
 
             string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
             string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
@@ -561,6 +562,7 @@ namespace StreetviewRipper
                 }
             }
             FloodFill(classifierOverlay, classifierOverlay.Width / 4, (int)sunPos.y, Color.Transparent);
+            classifierOverlay.Save(File_ClassifiedExtended);
 
             //Apply the extra classification ontop of the original classifier output
             UpdateDownloadStatusText("applying extra classification...");
@@ -580,7 +582,7 @@ namespace StreetviewRipper
                     }
                 }
             }
-            finalClassifier.Save(File_ClassifiedExtended);
+            finalClassifier.Save(File_ClassifiedExtendedMix);
 
             //Perform the inscattering equation on the de-fisheyed LDR
             UpdateDownloadStatusText("calculating streetview cloud data...");
