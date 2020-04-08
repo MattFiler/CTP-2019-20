@@ -47,6 +47,7 @@ namespace StreetviewRipper
             toReturn.CloudDepthLocationDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
             toReturn.CloudInscatteringColourDebug = new Bitmap(originalSkyImage.Width, originalSkyImage.Height);
             toReturn.CloudDepthValueDebug = new List<string>();
+            toReturn.CloudDepthValueDebugActual = new List<float>();
 
             for (int x = 0; x < originalSkyImage.Width; x++)
             {
