@@ -18,6 +18,7 @@ namespace StreetviewRipper
     {
         public Bitmap CloudDepthLocationDebug;
         public List<string> CloudDepthValueDebug;
+        public List<float> CloudDepthValueDebugActual;
         public Bitmap CloudInscatteringColourDebug;
     }
 
@@ -54,6 +55,7 @@ namespace StreetviewRipper
                     CalculatedInscatter returnedVal = CalculateForPoint(new Vector2(x, y));
 
                     //Depth value debug output
+                    toReturn.CloudDepthValueDebugActual.Add((float)returnedVal.da);
                     if (returnedVal.da != 0)
                     {
                         toReturn.CloudDepthLocationDebug.SetPixel(x, y, Color.White);

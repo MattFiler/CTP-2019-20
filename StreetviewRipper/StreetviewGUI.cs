@@ -149,6 +149,8 @@ namespace StreetviewRipper
             if (shouldStop) return null;
             UpdateDownloadStatusText("downloading streetview image LDR...");
 
+            float LARGE_DEPTH_VALUE = 40.0f; //This is used as a default for zero depth values in a cloud
+
             //First up, here are all the files we'll be creating/dealing with
             string File_InitialLDR = Properties.Resources.Output_Images + id + ".jpg";
             string File_ShiftedLDR = Properties.Resources.Output_Images + id + "_shifted.jpg";
@@ -170,6 +172,9 @@ namespace StreetviewRipper
             string File_ClassifiedDewarpedLDRResizeAdjusted = Properties.Resources.Output_Images + id + "_classified_4_adjusted.png";
             string File_ClassifiedExtended = Properties.Resources.Output_Images + id + "_classified_5_extended.png";
             string File_ClassifiedExtendedMix = Properties.Resources.Output_Images + id + "_classified_6_mixed.png";
+
+            string File_CloudMapBinary = Properties.Resources.Output_Images + id + "_cloudmap.bin";
+            string File_DepthValueBinary = Properties.Resources.Output_Images + id + "_depth.bin";
 
             string File_PBRTOutput = Properties.Resources.Library_PBRT + id + ".exr";
             string File_LDR2HDRInput = Properties.Resources.Library_LDR2HDR + "streetview.jpg";
@@ -613,6 +618,11 @@ namespace StreetviewRipper
             //Apply the extra classification ontop of the original classifier output
             UpdateDownloadStatusText("applying extra classification...");
             Bitmap finalClassifier = new Bitmap(classifierOverlay.Width, classifierOverlay.Height);
+            List<byte> binMapForUs = new List<byte>();
+            BinaryWriter outputBinMap = new BinaryWriter(File.OpenWrite(File_CloudMapBinary));
+            outputBinMap.BaseStream.SetLength(0);
+            outputBinMap.Write(finalClassifier.Width);
+            outputBinMap.Write(finalClassifier.Height);
             for (int x = 0; x < finalClassifier.Width; x++)
             {
                 for (int y = 0; y < finalClassifier.Height; y++)
@@ -621,13 +631,18 @@ namespace StreetviewRipper
                     if (thisColour.A == 0) //Transparent = nothing
                     {
                         finalClassifier.SetPixel(x, y, dewarpedClassifier.GetPixel(x, y));
+                        outputBinMap.Write((byte)0);
+                        binMapForUs.Add((byte)0);
                     }
                     else
                     {
                         finalClassifier.SetPixel(x, y, thisColour);
+                        outputBinMap.Write((byte)1);
+                        binMapForUs.Add((byte)1);
                     }
                 }
             }
+            outputBinMap.Close();
             finalClassifier.Save(File_ClassifiedExtendedMix);
 
             //Perform the inscattering equation on the de-fisheyed LDR
@@ -639,6 +654,30 @@ namespace StreetviewRipper
             inscatterResult.CloudDepthLocationDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.png");
             inscatterResult.CloudInscatteringColourDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_colour_debug.png");
             File.WriteAllLines(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.txt", inscatterResult.CloudDepthValueDebug);
+            if (!(finalClassifier.Width == inscatterResult.CloudDepthLocationDebug.Width && finalClassifier.Height == inscatterResult.CloudDepthLocationDebug.Height))
+            {
+                //Don't think this should ever happen
+                MessageBox.Show("Failed to calculate inscattering!", "Image size error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                shouldStop = true;
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                UpdateDownloadStatusText("failed on inscatter final stage!");
+                return null;
+            }
+            BinaryWriter outputDepthBin = new BinaryWriter(File.OpenWrite(File_DepthValueBinary));
+            outputDepthBin.BaseStream.SetLength(0);
+            outputDepthBin.Write(inscatterResult.CloudDepthLocationDebug.Width);
+            outputDepthBin.Write(inscatterResult.CloudDepthLocationDebug.Height);
+            for (int i = 0; i < inscatterResult.CloudDepthValueDebugActual.Count; i++)
+            {
+                float thisVal = inscatterResult.CloudDepthValueDebugActual[i];
+                if (thisVal == 0 && binMapForUs[i] == (byte)1)
+                {
+                    thisVal = LARGE_DEPTH_VALUE; //We're in a cloud - it can't be zero
+                }
+                outputDepthBin.Write(thisVal);
+            }
+            outputDepthBin.Close();
 
             //Done!
             downloadCount++;
