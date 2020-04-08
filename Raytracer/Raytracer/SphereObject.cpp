@@ -1,4 +1,4 @@
-#include "Sphere.h"
+#include "SphereObject.h"
 
 /* Check to see if a ray intersects with us */
 bool Sphere::intersect(const Vec3f & orig, const Vec3f & dir, float & t) const

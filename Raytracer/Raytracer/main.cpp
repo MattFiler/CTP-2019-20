@@ -1,79 +1,18 @@
 #pragma warning(disable:4996)
 #include "Raytracer.h"
-#include <openvdb/openvdb.h>
-#include <openvdb/tools/ChangeBackground.h>
 #include "OrthoNormalBasis.h"
+#include "VDBLoader.h"
 
 /* Initialise the raytracer, generate a scene, and render */
 int main(int argc, char **argv)
 {
-	openvdb::initialize();
+	VDBLoader loader = VDBLoader("D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb");
 
-    float _densityScale = 1.0f;
-    bool _normalizeSize = false;
-
-	//Read the density grid from our VDB file
-	openvdb::io::File file("D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb");
-	file.open();
-	openvdb::GridBase::Ptr ptr;
-	for (openvdb::io::File::NameIterator nameIter = file.beginName(); nameIter != file.endName(); ++nameIter)
-	{
-		if (nameIter.gridName() == "density") {
-			ptr = file.readGrid(nameIter.gridName());
-		}
-	}
-	file.close();
-
-	openvdb::FloatGrid::Ptr _densityGrid = openvdb::gridPtrCast<openvdb::FloatGrid>(ptr);
-
-    auto accessor = _densityGrid->getAccessor();
-    for (openvdb::FloatGrid::ValueOnIter iter = _densityGrid->beginValueOn(); iter.test(); ++iter)
-        iter.setValue((*iter) * _densityScale);
-
-    Vec3d densityCenter(*ptr->transform().indexToWorld(openvdb::Vec3d(0, 0, 0)).asPointer());
-    Vec3d densitySpacing(*ptr->transform().indexToWorld(openvdb::Vec3d(1, 1, 1)).asPointer());
-    densitySpacing = densitySpacing - densityCenter;
-
-    openvdb::CoordBBox bbox = _densityGrid->evalActiveVoxelBoundingBox();
-    Vec3i minP = Vec3i(bbox.min().x(), bbox.min().y(), bbox.min().z());
-    Vec3i maxP = Vec3i(bbox.max().x(), bbox.max().y(), bbox.max().z()) + 1;
-    Vec3f diag = Vec3f(maxP.x, maxP.y, maxP.z) - Vec3f(minP.x, minP.y, minP.z);
-
-    //Work out scale to use
-    float scale;
-    Vec3f center;
-    if (_normalizeSize) {
-        scale = 1.0f / diag.max();
-        diag *= scale;
-        center = Vec3f(minP.x, minP.y, minP.z) * scale + Vec3f(diag.x, 0.0f, diag.z) * 0.5f;
-    }
-    else {
-        scale = densitySpacing.min();
-        center = -Vec3f(densityCenter.x, densityCenter.y, densityCenter.z);
-    }
-
-    /*
-    if (_integrationMethod == IntegrationMethod::ResidualRatio)
-        generateSuperGrid();
-
-    _transform = Mat4f::translate(-center) * Mat4f::scale(Vec3f(scale));
-    _invTransform = Mat4f::scale(Vec3f(1.0f / scale)) * Mat4f::translate(center);
-    _bounds = Box3f(Vec3f(minP), Vec3f(maxP));
-
-    if (_sampleMethod == SampleMethod::ExactLinear || _integrationMethod == IntegrationMethod::ExactLinear) {
-        auto accessor = _densityGrid->getAccessor();
-        for (openvdb::FloatGrid::ValueOnCIter iter = _densityGrid->cbeginValueOn(); iter.test(); ++iter) {
-            if (*iter != 0.0f)
-                for (int z = -1; z <= 1; ++z)
-                    for (int y = -1; y <= 1; ++y)
-                        for (int x = -1; x <= 1; ++x)
-                            accessor.setValueOn(iter.getCoord() + openvdb::Coord(x, y, z));
-            _bounds = Box3f(Vec3f(minP - 1), Vec3f(maxP + 1));
-        }
-    }
-
-    _invConfigTransform = _configTransform.invert();
-    */
+	std::cout << loader.density(Vec3f(0, 0, 0)) << std::endl;
+	std::cout << loader.density(Vec3f(10, 0, 0)) << std::endl;
+	std::cout << loader.density(Vec3f(-10, 0, 0)) << std::endl;
+	std::cout << loader.density(Vec3f(-20, 0, 0)) << std::endl;
+	std::cout << loader.density(Vec3f(20, 0, 0)) << std::endl;
 
 	std::string test;
 	std::cin >> test;
@@ -109,3 +48,4 @@ int main(int argc, char **argv)
     return 0;
 	*/
 }
+

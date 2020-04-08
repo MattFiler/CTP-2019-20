@@ -17,8 +17,44 @@
 #include "spectrum.h"
 
 /*
-	Maths functions, nabbed from PBRT and Scratchapixel - thanks!
+	Maths functions, nabbed from PBRT, Tungsten, and Scratchapixel - thanks!
 */
+
+template<typename T>
+T min(const T& a, const T& b)
+{
+	return a < b ? a : b;
+}
+
+template<typename T, typename... Ts>
+T min(const T& a, const T& b, const Ts&... ts)
+{
+	return min(min(a, b), ts...);
+}
+
+template<typename T>
+T max(const T& a, const T& b)
+{
+	return a > b ? a : b;
+}
+
+template<typename T, typename... Ts>
+T max(const T& a, const T& b, const Ts&... ts)
+{
+	return max(max(a, b), ts...);
+}
+
+template<typename T>
+T cube(T val)
+{
+	return val * val * val;
+}
+
+inline int roundDown(int a, int b)
+{
+	int c = a >> 31;
+	return c ^ ((c ^ a) / b);
+}
 
 inline
 float clamp(const float &lo, const float &hi, const float &v)

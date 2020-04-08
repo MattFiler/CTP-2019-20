@@ -1,8 +1,8 @@
 #pragma once
 #include "math.h"
 #include "Object.h"
-#include "Sphere.h"
-#include "Box.h"
+#include "SphereObject.h"
+#include "BoxObject.h"
 //using namespace pbrt;
 
 struct Options
