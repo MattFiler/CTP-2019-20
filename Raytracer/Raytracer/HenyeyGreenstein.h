@@ -1,7 +1,7 @@
 #include "math.h"
 #include "OrthoNormalBasis.h"
 
-class HenleyGreenstein {
+class HenyeyGreenstein {
 public:
 	float eval(const Vec3f& wo, const Vec3f& wi, float c)
 	{
@@ -11,7 +11,6 @@ public:
 	float sample(float s1, float s2, const Vec3f& wo, Vec3f& wi, float& _pdf, float c)
 	{
 		float costheta;
-		float g = 0.8f; //[-1 to 1]
 		if (g < EPSILON)
 		{
 			costheta = 1.0f - (2.0f * s1);
@@ -44,5 +43,6 @@ public:
 	}
 
 private:
+	float g = 0.8f; //[-1 to 1]
 	float EPSILON = 0.0f; //DUNNO WHAT THIS SHOULD BE
 };

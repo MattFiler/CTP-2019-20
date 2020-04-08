@@ -121,6 +121,17 @@ public:
         return *this;
     }
 
+    T max() {
+        if (x > y && x > z) return x;
+        else if (y > x && y > z) return y;
+        else return z;
+    }
+    T min() {
+        if (x < y && x < z) return x;
+        else if (y < x && y < z) return y;
+        else return z;
+    }
+
     friend Vec3 operator * (const T &r, const Vec3 &v)
     { return Vec3<T>(v.x * r, v.y * r, v.z * r); }
     friend Vec3 operator / (const T &r, const Vec3 &v)
@@ -138,6 +149,7 @@ public:
 // Now you can specialize the class. We are just showing two examples here. In your code
 // you can declare a vector either that way: Vec3<float> a, or that way: Vec3f a
 //[/comment]
+typedef Vec3<double> Vec3d;
 typedef Vec3<float> Vec3f;
 typedef Vec3<int> Vec3i;
 

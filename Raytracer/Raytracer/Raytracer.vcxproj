@@ -94,6 +94,10 @@
     <Link>
       <AdditionalDependencies>$(ProjectDir)../../Libraries/OpenVDB/Debug/libopenvdb.lib;$(ProjectDir)../../Libraries/OpenVDB/Debug/openvdb.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -125,6 +129,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(ProjectDir)../../Libraries/OpenVDB/Release/libopenvdb.lib;$(ProjectDir)../../Libraries/OpenVDB/Release/openvdb.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ArHosekSkyModel.h" />
@@ -135,6 +143,7 @@
     <ClInclude Include="geometry.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="OrthoNormalBasis.h" />
     <ClInclude Include="Raytracer.h" />
     <ClInclude Include="spectrum.h" />
     <ClInclude Include="Sphere.h" />
@@ -142,7 +151,9 @@
   <ItemGroup>
     <ClCompile Include="ArHosekSkyModel.cpp" />
     <ClCompile Include="Box.cpp" />
+    <ClCompile Include="HenyeyGreenstein.h" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="OrthoNormalBasis.cpp" />
     <ClCompile Include="Raytracer.cpp" />
     <ClCompile Include="spectrum.cpp" />
     <ClCompile Include="Sphere.cpp" />

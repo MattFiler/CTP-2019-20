@@ -8,50 +8,72 @@
 int main(int argc, char **argv)
 {
 	openvdb::initialize();
-	// Create a VDB file object.
-	openvdb::io::File file("C:\\Users\\mattf\\Downloads\\wdas_cloud\\wdas_cloud\\wdas_cloud.vdb");
-	// Open the file.  This reads the file header, but not any grids.
+
+    float _densityScale = 1.0f;
+    bool _normalizeSize = false;
+
+	//Read the density grid from our VDB file
+	openvdb::io::File file("D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb");
 	file.open();
-	// Loop over all grids in the file and retrieve a shared pointer
-	// to the one named "LevelSetSphere".  (This can also be done
-	// more simply by calling file.readGrid("LevelSetSphere").)
-	openvdb::GridBase::Ptr baseGrid;
-	for (openvdb::io::File::NameIterator nameIter = file.beginName();
-		nameIter != file.endName(); ++nameIter)
+	openvdb::GridBase::Ptr ptr;
+	for (openvdb::io::File::NameIterator nameIter = file.beginName(); nameIter != file.endName(); ++nameIter)
 	{
-		// Read in only the grid we are interested in.
 		if (nameIter.gridName() == "density") {
-			baseGrid = file.readGrid(nameIter.gridName());
-		}
-		else {
-			std::cout << "skipping grid " << nameIter.gridName() << std::endl;
+			ptr = file.readGrid(nameIter.gridName());
 		}
 	}
 	file.close();
-	// From the example above, "LevelSetSphere" is known to be a FloatGrid,
-	// so cast the generic grid pointer to a FloatGrid pointer.
-	openvdb::FloatGrid::Ptr grid = openvdb::gridPtrCast<openvdb::FloatGrid>(baseGrid);
-	// Convert the level set sphere to a narrow-band fog volume, in which
-	// interior voxels have value 1, exterior voxels have value 0, and
-	// narrow-band voxels have values varying linearly from 0 to 1.
-	const float outside = grid->background();
-	const float width = 2.0 * outside;
-	// Visit and update all of the grid's active values, which correspond to
-	// voxels on the narrow band.
-	for (openvdb::FloatGrid::ValueOnIter iter = grid->beginValueOn(); iter; ++iter) {
-		float dist = iter.getValue();
-		iter.setValue((outside - dist) / width);
-	}
-	// Visit all of the grid's inactive tile and voxel values and update the values
-	// that correspond to the interior region.
-	for (openvdb::FloatGrid::ValueOffIter iter = grid->beginValueOff(); iter; ++iter) {
-		if (iter.getValue() < 0.0) {
-			iter.setValue(1.0);
-			iter.setValueOff();
-		}
-	}
-	// Set exterior voxels to 0.
-	openvdb::tools::changeBackground(grid->tree(), 0.0);
+
+	openvdb::FloatGrid::Ptr _densityGrid = openvdb::gridPtrCast<openvdb::FloatGrid>(ptr);
+
+    auto accessor = _densityGrid->getAccessor();
+    for (openvdb::FloatGrid::ValueOnIter iter = _densityGrid->beginValueOn(); iter.test(); ++iter)
+        iter.setValue((*iter) * _densityScale);
+
+    Vec3d densityCenter(*ptr->transform().indexToWorld(openvdb::Vec3d(0, 0, 0)).asPointer());
+    Vec3d densitySpacing(*ptr->transform().indexToWorld(openvdb::Vec3d(1, 1, 1)).asPointer());
+    densitySpacing = densitySpacing - densityCenter;
+
+    openvdb::CoordBBox bbox = _densityGrid->evalActiveVoxelBoundingBox();
+    Vec3i minP = Vec3i(bbox.min().x(), bbox.min().y(), bbox.min().z());
+    Vec3i maxP = Vec3i(bbox.max().x(), bbox.max().y(), bbox.max().z()) + 1;
+    Vec3f diag = Vec3f(maxP.x, maxP.y, maxP.z) - Vec3f(minP.x, minP.y, minP.z);
+
+    //Work out scale to use
+    float scale;
+    Vec3f center;
+    if (_normalizeSize) {
+        scale = 1.0f / diag.max();
+        diag *= scale;
+        center = Vec3f(minP.x, minP.y, minP.z) * scale + Vec3f(diag.x, 0.0f, diag.z) * 0.5f;
+    }
+    else {
+        scale = densitySpacing.min();
+        center = -Vec3f(densityCenter.x, densityCenter.y, densityCenter.z);
+    }
+
+    /*
+    if (_integrationMethod == IntegrationMethod::ResidualRatio)
+        generateSuperGrid();
+
+    _transform = Mat4f::translate(-center) * Mat4f::scale(Vec3f(scale));
+    _invTransform = Mat4f::scale(Vec3f(1.0f / scale)) * Mat4f::translate(center);
+    _bounds = Box3f(Vec3f(minP), Vec3f(maxP));
+
+    if (_sampleMethod == SampleMethod::ExactLinear || _integrationMethod == IntegrationMethod::ExactLinear) {
+        auto accessor = _densityGrid->getAccessor();
+        for (openvdb::FloatGrid::ValueOnCIter iter = _densityGrid->cbeginValueOn(); iter.test(); ++iter) {
+            if (*iter != 0.0f)
+                for (int z = -1; z <= 1; ++z)
+                    for (int y = -1; y <= 1; ++y)
+                        for (int x = -1; x <= 1; ++x)
+                            accessor.setValueOn(iter.getCoord() + openvdb::Coord(x, y, z));
+            _bounds = Box3f(Vec3f(minP - 1), Vec3f(maxP + 1));
+        }
+    }
+
+    _invConfigTransform = _configTransform.invert();
+    */
 
 	std::string test;
 	std::cin >> test;

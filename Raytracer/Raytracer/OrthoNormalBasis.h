@@ -17,12 +17,12 @@ public:
 
     SF_Vector3()
     {
-        if (COS_THETA.size == 0)
+        if (COS_THETA.size() == 0)
         {
-            COS_THETA.capacity = 256;
-            SIN_THETA.capacity = 256;
-            COS_PHI.capacity = 256;
-            SIN_PHI.capacity = 256;
+            COS_THETA.reserve(256);
+            SIN_THETA.reserve(256);
+            COS_PHI.reserve(256);
+            SIN_PHI.reserve(256);
             for (int i = 0; i < 256; i++)
             {
                 double angle = (i * M_PI) / 256.0;

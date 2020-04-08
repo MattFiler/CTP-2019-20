@@ -60,6 +60,9 @@
     <ClInclude Include="Box.h">
       <Filter>Header Files\Objects</Filter>
     </ClInclude>
+    <ClInclude Include="OrthoNormalBasis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="spectrum.cpp">
@@ -79,6 +82,12 @@
     </ClCompile>
     <ClCompile Include="Box.cpp">
       <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="OrthoNormalBasis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HenyeyGreenstein.h">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
