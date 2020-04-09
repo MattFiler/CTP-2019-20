@@ -149,6 +149,7 @@
     <ClInclude Include="spectrum.h" />
     <ClInclude Include="SphereObject.h" />
     <ClInclude Include="VDBLoader.h" />
+    <ClInclude Include="VolumetricObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArHosekSkyModel.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="spectrum.cpp" />
     <ClCompile Include="SphereObject.cpp" />
     <ClCompile Include="VDBLoader.cpp" />
+    <ClCompile Include="VolumetricObject.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

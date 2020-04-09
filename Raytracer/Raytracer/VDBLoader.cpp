@@ -1,7 +1,13 @@
 #include "VDBLoader.h"
 
-VDBLoader::VDBLoader(std::string filename)
+VDBLoader::VDBLoader(const std::string filename, bool normalizeSize, float densityScale, IntegrationMethod integrationMethod, SampleMethod sampleMethod, int supergridSubsample)
 {
+    _normalizeSize = normalizeSize;
+    _densityScale = densityScale;
+    _integrationMethod = integrationMethod;
+    _sampleMethod = sampleMethod;
+    _supergridSubsample = supergridSubsample;
+
     openvdb::initialize();
 
     //Read the density grid from our VDB file
@@ -27,12 +33,10 @@ VDBLoader::VDBLoader(std::string filename)
     densitySpacing = densitySpacing - densityCenter;
 
     openvdb::CoordBBox bbox = _densityGrid->evalActiveVoxelBoundingBox();
-    Vec3i minP = Vec3i(bbox.min().x(), bbox.min().y(), bbox.min().z());
-    Vec3i maxP = Vec3i(bbox.max().x(), bbox.max().y(), bbox.max().z()) + 1;
-    Vec3f diag = Vec3f(maxP.x, maxP.y, maxP.z) - Vec3f(minP.x, minP.y, minP.z);
+    minP = Vec3i(bbox.min().x(), bbox.min().y(), bbox.min().z());
+    maxP = Vec3i(bbox.max().x(), bbox.max().y(), bbox.max().z()) + 1;
+    diag = Vec3f(maxP.x, maxP.y, maxP.z) - Vec3f(minP.x, minP.y, minP.z);
 
-    //Work out scale to use
-    Vec3f center;
     if (_normalizeSize) {
         scale = 1.0f / diag.max();
         diag *= scale;
@@ -48,7 +52,7 @@ VDBLoader::VDBLoader(std::string filename)
 
     //_transform = Mat4f::translate(-center) * Mat4f::scale(Vec3f(scale));
     //_invTransform = Mat4f::scale(Vec3f(1.0f / scale)) * Mat4f::translate(center);
-    Box3f _bounds = Box3f(Vec3f(minP.x, minP.y, minP.z), Vec3f(maxP.x, maxP.y, maxP.z));
+    _bounds = Box3f(Vec3f(minP.x, minP.y, minP.z), Vec3f(maxP.x, maxP.y, maxP.z));
 
     if (_sampleMethod == SampleMethod::ExactLinear || _integrationMethod == IntegrationMethod::ExactLinear) {
         auto accessor = _densityGrid->getAccessor();

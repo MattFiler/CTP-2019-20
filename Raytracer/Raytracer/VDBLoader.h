@@ -25,18 +25,32 @@ enum class SampleMethod
 
 class VDBLoader {
 public:
-	VDBLoader(std::string filename);
+	VDBLoader(const std::string filename, bool normalizeSize = false, float densityScale = 1.0f, IntegrationMethod integrationMethod = IntegrationMethod::ExactLinear, SampleMethod sampleMethod = SampleMethod::ExactLinear, int supergridSubsample = 10);
+
     float density(Vec3f p) const;
+
+    Vec3i GetMin() { return minP; }
+    Vec3i GetMax() { return maxP; }
+    Vec3f GetDiag() { return diag; }
+    Vec3f GetCenter() { return center; }
+    Box3f GetBounds() { return _bounds; }
+    float GetScale() { return scale; }
 
 private:
     void GenerateSuperGrid();
 
-    float _densityScale = 1.0f;
-    bool _normalizeSize = false;
-    IntegrationMethod _integrationMethod = IntegrationMethod::ExactLinear;
-    SampleMethod _sampleMethod = SampleMethod::ExactLinear;
-    int _supergridSubsample = 10;
+    float _densityScale;
+    bool _normalizeSize;
+    IntegrationMethod _integrationMethod;
+    SampleMethod _sampleMethod;
+    int _supergridSubsample;
 
     openvdb::FloatGrid::Ptr _densityGrid;
+
+    Vec3i minP;
+    Vec3i maxP;
+    Vec3f diag;
+    Vec3f center;
+    Box3f _bounds;
     float scale;
 };

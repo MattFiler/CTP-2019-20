@@ -3,7 +3,7 @@
 #include "Object.h"
 #include "SphereObject.h"
 #include "BoxObject.h"
-//using namespace pbrt;
+#include "VolumetricObject.h"
 
 struct Options
 {

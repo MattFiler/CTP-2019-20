@@ -104,6 +104,7 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects)
 			bool hit = false;
 			Vec3f col = castRay(orig, dir, objects, hit);
 			if (!hit) {
+				//If we didn't hit, take the background sky colour
 				col = Vec3f(img[3 * j * i] / 10, img[(3 * j * i) + 1] / 10, img[(3 * j * i) + 2] / 10);
 			}
 			*(pix++) = col;
