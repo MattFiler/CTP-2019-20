@@ -47,9 +47,6 @@ bool VolumetricObject::intersect(const Vec3f& orig, const Vec3f& dir, float& t)
 /* Get the density along the given ray */
 float VolumetricObject::density(const Vec3f& orig, const Vec3f& dir, float &t)
 {
-	/* sampler.Get1D() replaced with 0.5f */
-	/* sigma_t replaced with 2.6f */
-
 	float total_density = 0;
 	HenyeyGreenstein greenstein = HenyeyGreenstein();
 	float this_t = t;
