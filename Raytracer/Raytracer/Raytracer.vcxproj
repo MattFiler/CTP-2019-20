@@ -143,6 +143,7 @@
     <ClInclude Include="BoxObject.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="math.h" />
+    <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="OrthoNormalBasis.h" />
     <ClInclude Include="Raytracer.h" />

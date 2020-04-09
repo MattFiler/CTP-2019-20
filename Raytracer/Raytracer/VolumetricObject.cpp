@@ -45,22 +45,13 @@ bool VolumetricObject::intersect(const Vec3f& orig, const Vec3f& dir, float& t)
 }
 
 /* Get the density along the given ray */
-float VolumetricObject::density(const Vec3f& orig, const Vec3f& dir, float &t)
+float VolumetricObject::density(const Vec3f& orig, const Vec3f& dir, float t)
 {
-	float total_density = 0;
-	HenyeyGreenstein greenstein = HenyeyGreenstein();
-	float this_t = t;
+	float totalD = 0;
 	while (true) {
-		Vec3f density_pos = orig + (dir * this_t);
-		float density = thisVDB->density(density_pos);
-		total_density += density;
-		this_t++;
-		if (this_t > tmax) {
-			break;
-		}
+		totalD += thisVDB->density(orig + (dir * t));
+		t++;
+		if (t > tmax) break;
 	}
-	if (total_density != 0) {
-		std::string fdgdfgf = "";
-	}
-	return total_density;
+	return totalD;
 }

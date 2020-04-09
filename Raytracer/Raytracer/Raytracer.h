@@ -5,19 +5,14 @@
 #include "BoxObject.h"
 #include "VolumetricObject.h"
 
-struct Options
-{
-	uint32_t width;
-	uint32_t height;
-	float fov;
-	Matrix44f cameraToWorld;
-};
-
 class Raytracer {
 public:
 	Raytracer() = delete;
-	Raytracer(const Options &_options) {
-		options = _options;
+	Raytracer(float _width, float _height, float _fov, Matrix44f& _cameraToWorld) {
+		width = _width;
+		height = _height;
+		fov = _fov;
+		cameraToWorld = _cameraToWorld;
 	}
 	~Raytracer() = default;
 
@@ -30,7 +25,10 @@ private:
 	const float kInfinity = std::numeric_limits<float>::max();
 	std::random_device rd;
 
-	Options options;
+	float width;
+	float height;
+	float fov;
+	Matrix44f cameraToWorld;
 
 	float albedo = 0.5;
 	float turbidity = 3.;

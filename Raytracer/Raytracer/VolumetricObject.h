@@ -2,6 +2,8 @@
 #include "VDBLoader.h"
 #include "Object.h"
 
+
+//todo: add the ability to transform this object's position (shift all queries by a given transform)
 class VolumetricObject : public Object
 {
 public:
@@ -21,7 +23,7 @@ public:
 
 	bool intersect(const Vec3f& orig, const Vec3f& dir, float& t);
 	void getSurfaceData(const Vec3f& Phit, Vec3f& Nhit, Vec2f& tex) {} //not in use atm
-	float density(const Vec3f& orig, const Vec3f& dir, float& t);
+	float density(const Vec3f& orig, const Vec3f& dir, float t);
 
 private:
 	VDBLoader* thisVDB = nullptr;

@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Objects">
       <UniqueIdentifier>{d2fa5d82-7180-4b46-b6b4-04657f3a1cef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\nlohmann">
+      <UniqueIdentifier>{cf755578-b542-4cc4-9a96-1e33752f3f65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="spectrum.h">
@@ -71,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="VolumetricObject.h">
       <Filter>Header Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="nlohmann\json.hpp">
+      <Filter>Header Files\nlohmann</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

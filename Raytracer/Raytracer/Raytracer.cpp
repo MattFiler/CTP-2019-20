@@ -30,10 +30,10 @@ Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vecto
 	float t; // this is the intersection distance from the ray origin to the hit point
 	if (trace(orig, dir, objects, t, hitObject)) {
 		if (dynamic_cast<VolumetricObject*>(hitObject)) {
-			//Volumetric shape (scatter inside)
+			//Volumetric shape
 			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
 			float transmittence = obj->density(orig, dir, t);
-			hitColor = Vec3f(transmittence, transmittence, transmittence); //temp for now, debug output
+			hitColor = Vec3f(transmittence, transmittence, transmittence); //temp debug output
 		}
 		else {
 			//Regular shape
@@ -95,19 +95,19 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 		}
 	}
 
-	Vec3f *framebuffer = new Vec3f[options.width * options.height];
+	Vec3f *framebuffer = new Vec3f[width * height];
 	Vec3f *pix = framebuffer;
-	float scale = tan(deg2rad(options.fov * 0.5));
-	float imageAspectRatio = options.width / (float)options.height;
+	float scale = tan(deg2rad(fov * 0.5));
+	float imageAspectRatio = width / (float)height;
 	Vec3f orig;
-	options.cameraToWorld.multVecMatrix(Vec3f(0), orig);
-	for (uint32_t j = 0; j < options.height; ++j) {
-		for (uint32_t i = 0; i < options.width; ++i) {
-			float x = (2 * (i + 0.5) / (float)options.width - 1) * imageAspectRatio * scale;
-			float y = (1 - 2 * (j + 0.5) / (float)options.height) * scale;
+	cameraToWorld.multVecMatrix(Vec3f(0), orig);
+	for (uint32_t j = 0; j < height; ++j) {
+		for (uint32_t i = 0; i < width; ++i) {
+			float x = (2 * (i + 0.5) / (float)width - 1) * imageAspectRatio * scale;
+			float y = (1 - 2 * (j + 0.5) / (float)height) * scale;
 
 			Vec3f dir;
-			options.cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
+			cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
 			dir.normalize();
 
 			bool hit = false;
@@ -125,8 +125,8 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 	if (!asHDR) 
 	{
 		std::ofstream ofs("out.ppm", std::ios::out | std::ios::binary);
-		ofs << "P6\n" << options.width << " " << options.height << "\n255\n";
-		for (uint32_t i = 0; i < options.height * options.width; ++i) {
+		ofs << "P6\n" << width << " " << height << "\n255\n";
+		for (uint32_t i = 0; i < height * width; ++i) {
 			char r = (char)(255 * clamp(0, 1, framebuffer[i].x));
 			char g = (char)(255 * clamp(0, 1, framebuffer[i].y));
 			char b = (char)(255 * clamp(0, 1, framebuffer[i].z));
@@ -138,8 +138,8 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 	else 
 	{
 		std::ofstream ofs("out.pfm", std::ios::out | std::ios::binary);
-		ofs << "PF\n" << options.width << " " << options.height << "\n-1.0\n";
-		for (uint32_t i = 0; i < options.height * options.width; ++i) {
+		ofs << "PF\n" << width << " " << height << "\n-1.0\n";
+		for (uint32_t i = 0; i < height * width; ++i) {
 			ofs.write(reinterpret_cast<const char*>(&framebuffer[i].x), sizeof(float));
 			ofs.write(reinterpret_cast<const char*>(&framebuffer[i].y), sizeof(float));
 			ofs.write(reinterpret_cast<const char*>(&framebuffer[i].z), sizeof(float));

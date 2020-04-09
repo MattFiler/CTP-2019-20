@@ -1,0 +1,18 @@
+{
+	"render_resolution": {
+		"width": 640,
+		"height": 480
+	},
+	"camera_fov": 51.52,
+	"camera_position": {
+		"x": 48.594778,
+		"y": 130.266709,
+		"z": -147.801858
+	},
+	"camera_rotation": {
+		"x": -39.938353,
+		"y": 161.8,
+		"z": 0
+	},
+	"temp_vdb": "D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb"
+}
