@@ -45,11 +45,6 @@ Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vecto
 /* Render the scene */
 void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects)
 {
-	float albedo = 0.5;
-	float turbidity = 3.;
-	float elevation = Radians(10);
-	int resolution = 2048;
-
 	const int num_channels = 9;
 	// Three wavelengths around red, three around green, and three around blue.
 	double lambda[num_channels] = { 630, 680, 710, 500, 530, 560, 460, 480, 490 };

@@ -31,4 +31,9 @@ private:
 	std::random_device rd;
 
 	Options options;
+
+	float albedo = 0.5;
+	float turbidity = 3.;
+	float elevation = Radians(10);
+	int resolution = 2048;
 };

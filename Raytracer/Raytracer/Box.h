@@ -1,6 +1,8 @@
 #pragma once
 #include "math.h"
 
+/* Taken from Tungsten: https://github.com/tunabrain/tungsten */
+
 template<typename T> class RangeIterator;
 
 template<typename T>

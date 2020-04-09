@@ -2,22 +2,28 @@
 #include "Raytracer.h"
 #include "OrthoNormalBasis.h"
 #include "VDBLoader.h"
+#include "HenyeyGreenstein.h"
 
 /* Initialise the raytracer, generate a scene, and render */
 int main(int argc, char **argv)
 {
-	VDBLoader loader = VDBLoader("D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb");
-
-	std::cout << loader.density(Vec3f(0, 0, 0)) << std::endl;
-	std::cout << loader.density(Vec3f(10, 0, 0)) << std::endl;
-	std::cout << loader.density(Vec3f(-10, 0, 0)) << std::endl;
-	std::cout << loader.density(Vec3f(-20, 0, 0)) << std::endl;
-	std::cout << loader.density(Vec3f(20, 0, 0)) << std::endl;
-
-	std::string test;
-	std::cin >> test;
+	//VDBLoader loader = VDBLoader("D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb");
 
 	/*
+	for (int x = -60; x < 60; x++) {
+		for (int y = -60; y < 60; y++) {
+			for (int z = -60; z < 60; z++) {
+				std::cout << loader.density(Vec3f(x,y,z)) << std::endl;
+			}
+		}
+	}
+	*/
+
+	//HenyeyGreenstein greenstein = HenyeyGreenstein();
+
+	//std::string test;
+	//std::cin >> test;
+
 	//Set up the scene rendering parameters
 	Options options;
 	options.width = 640;
@@ -39,13 +45,12 @@ int main(int argc, char **argv)
     for (uint32_t i = 0; i < numSpheres + numBoxes; ++i) {
         Vec3f randPos((0.5 - dis(gen)) * 10, (0.5 - dis(gen)) * 10, (0.5 + dis(gen) * 10));
         float randRadius = (0.5 + dis(gen) * 0.5);
-		if (i >= numSpheres) objects.push_back(std::unique_ptr<Object>(new Box(randPos, (randPos + randRadius), Vec3f(dis(gen), dis(gen), dis(gen)))));
+		if (i >= numSpheres) objects.push_back(std::unique_ptr<Object>(new BoxObject(randPos, (randPos + randRadius), Vec3f(dis(gen), dis(gen), dis(gen)))));
 		else objects.push_back(std::unique_ptr<Object>(new Sphere(randPos, randRadius, Vec3f(dis(gen), dis(gen), dis(gen)))));
     }
 
 	//Render the scene
     thisTracer->render(objects);
     return 0;
-	*/
 }
 
