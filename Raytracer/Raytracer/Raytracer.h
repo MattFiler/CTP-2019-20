@@ -21,7 +21,7 @@ public:
 	}
 	~Raytracer() = default;
 
-	void render(const std::vector<std::unique_ptr<Object>> &objects);
+	void render(const std::vector<std::unique_ptr<Object>> &objects, bool asHDR = true);
 
 private:
 	bool trace(const Vec3f &orig, const Vec3f &dir, const std::vector<std::unique_ptr<Object>> &objects, float &tNear, const Object *&hitObject);

@@ -43,7 +43,7 @@ Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vecto
 }
 
 /* Render the scene */
-void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects)
+void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool asHDR)
 {
 	const int num_channels = 9;
 	// Three wavelengths around red, three around green, and three around blue.
@@ -111,17 +111,31 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects)
 		}
 	}
 
-	// Save result to a PPM image (keep these flags if you compile under Windows)
-	std::ofstream ofs("./out.ppm", std::ios::out | std::ios::binary);
-	ofs << "P6\n" << options.width << " " << options.height << "\n255\n";
-	for (uint32_t i = 0; i < options.height * options.width; ++i) {
-		char r = (char)(255 * clamp(0, 1, framebuffer[i].x));
-		char g = (char)(255 * clamp(0, 1, framebuffer[i].y));
-		char b = (char)(255 * clamp(0, 1, framebuffer[i].z));
-		ofs << r << g << b;
+	//Output as LDR
+	if (!asHDR) 
+	{
+		std::ofstream ofs("out.ppm", std::ios::out | std::ios::binary);
+		ofs << "P6\n" << options.width << " " << options.height << "\n255\n";
+		for (uint32_t i = 0; i < options.height * options.width; ++i) {
+			char r = (char)(255 * clamp(0, 1, framebuffer[i].x));
+			char g = (char)(255 * clamp(0, 1, framebuffer[i].y));
+			char b = (char)(255 * clamp(0, 1, framebuffer[i].z));
+			ofs << r << g << b;
+		}
+		ofs.close();
 	}
-
-	ofs.close();
+	//Output as HDR
+	else 
+	{
+		std::ofstream ofs("out.pfm", std::ios::out | std::ios::binary);
+		ofs << "PF\n" << options.width << " " << options.height << "\n-1.0\n";
+		for (uint32_t i = 0; i < options.height * options.width; ++i) {
+			ofs.write(reinterpret_cast<const char*>(&framebuffer[i].x), sizeof(float));
+			ofs.write(reinterpret_cast<const char*>(&framebuffer[i].y), sizeof(float));
+			ofs.write(reinterpret_cast<const char*>(&framebuffer[i].z), sizeof(float));
+		}
+		ofs.close();
+	}
 
 	delete[] framebuffer;
 }
