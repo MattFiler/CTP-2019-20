@@ -11,8 +11,8 @@ public:
 		center = c;
 	}
 
-	bool intersect(const Vec3f &orig, const Vec3f &dir, float &t) const;
-	void getSurfaceData(const Vec3f &Phit, Vec3f &Nhit, Vec2f &tex) const;
+	bool intersect(const Vec3f &orig, const Vec3f &dir, float &t);
+	void getSurfaceData(const Vec3f &Phit, Vec3f &Nhit, Vec2f &tex);
 
 private:
 	float radius, radius2;

@@ -1,15 +1,14 @@
 #include "VolumetricObject.h"
+#include "HenyeyGreenstein.h"
 
-/* Check to see if a ray intersects with us */
-bool VolumetricObject::intersect(const Vec3f& orig, const Vec3f& dir, float& t) const
+/* Check to see if a ray intersects with our bounding box */
+bool VolumetricObject::intersect(const Vec3f& orig, const Vec3f& dir, float& t)
 {
 	Vec3f invdir = 1 / dir;
 	int sign[3];
 	sign[0] = (invdir.x < 0);
 	sign[1] = (invdir.y < 0);
 	sign[2] = (invdir.z < 0);
-
-	float tmin, tmax, tymin, tymax, tzmin, tzmax;
 
 	tmin = (bounds[sign[0]].x - orig.x) * invdir.x;
 	tmax = (bounds[1 - sign[0]].x - orig.x) * invdir.x;
@@ -45,11 +44,26 @@ bool VolumetricObject::intersect(const Vec3f& orig, const Vec3f& dir, float& t) 
 	return true;
 }
 
-/* Get the box's surface data */
-void VolumetricObject::getSurfaceData(const Vec3f& Phit, Vec3f& Nhit, Vec2f& tex) const
+/* Get the density along the given ray */
+float VolumetricObject::density(const Vec3f& orig, const Vec3f& dir, float &t)
 {
-	Nhit = Phit - center;
-	Nhit.normalize();
-	tex.x = 1;
-	tex.y = 1;
+	/* sampler.Get1D() replaced with 0.5f */
+	/* sigma_t replaced with 2.6f */
+
+	float total_density = 0;
+	HenyeyGreenstein greenstein = HenyeyGreenstein();
+	float this_t = t;
+	while (true) {
+		Vec3f density_pos = orig + (dir * this_t);
+		float density = thisVDB->density(density_pos);
+		total_density += density;
+		this_t++;
+		if (this_t > tmax) {
+			break;
+		}
+	}
+	if (total_density != 0) {
+		std::string fdgdfgf = "";
+	}
+	return total_density;
 }

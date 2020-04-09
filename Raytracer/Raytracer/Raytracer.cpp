@@ -6,7 +6,7 @@
 */
 
 /* Trace a ray */
-bool Raytracer::trace(const Vec3f & orig, const Vec3f & dir, const std::vector<std::unique_ptr<Object>>& objects, float & tNear, const Object *& hitObject)
+bool Raytracer::trace(const Vec3f & orig, const Vec3f & dir, const std::vector<std::unique_ptr<Object>>& objects, float & tNear, Object *& hitObject)
 {
 	tNear = kInfinity;
 	std::vector<std::unique_ptr<Object>>::const_iterator iter = objects.begin();
@@ -26,16 +26,25 @@ Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vecto
 {
 	hit = false;
 	Vec3f hitColor = 0;
-	const Object *hitObject = nullptr; // this is a pointer to the hit object
+	Object *hitObject = nullptr; // this is a pointer to the hit object
 	float t; // this is the intersection distance from the ray origin to the hit point
 	if (trace(orig, dir, objects, t, hitObject)) {
-		Vec3f Phit = orig + dir * t;
-		Vec3f Nhit;
-		Vec2f tex;
-		hitObject->getSurfaceData(Phit, Nhit, tex);
-		float scale = 4;
-		float pattern = (fmodf(tex.x * scale, 1) > 0.5) ^ (fmodf(tex.y * scale, 1) > 0.5);
-		hitColor = std::max(0.f, Nhit.dotProduct(-dir)) * mix(hitObject->colour, hitObject->colour * 0.8, pattern);
+		if (dynamic_cast<VolumetricObject*>(hitObject)) {
+			//Volumetric shape (scatter inside)
+			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
+			float transmittence = obj->density(orig, dir, t);
+			hitColor = Vec3f(transmittence, transmittence, transmittence); //temp for now, debug output
+		}
+		else {
+			//Regular shape
+			Vec3f Phit = orig + dir * t;
+			Vec3f Nhit;
+			Vec2f tex;
+			hitObject->getSurfaceData(Phit, Nhit, tex);
+			float scale = 4;
+			float pattern = (fmodf(tex.x * scale, 1) > 0.5) ^ (fmodf(tex.y * scale, 1) > 0.5);
+			hitColor = std::max(0.f, Nhit.dotProduct(-dir)) * mix(hitObject->colour, hitObject->colour * 0.8, pattern);
+		}
 		hit = true;
 	}
 
@@ -104,8 +113,9 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 			bool hit = false;
 			Vec3f col = castRay(orig, dir, objects, hit);
 			if (!hit) {
-				//If we didn't hit, take the background sky colour
-				col = Vec3f(img[3 * j * i] / 10, img[(3 * j * i) + 1] / 10, img[(3 * j * i) + 2] / 10);
+				//If we didn't hit, take the background sky colour (TODO: FIX THIS!)
+				//col = Vec3f(((img[3 * j * i] / 10) / 2) / 255, ((img[(3 * j * i) + 1] / 10) / 2) / 255, ((img[(3 * j * i) + 2] / 10) / 2) / 255);
+				col = Vec3f(0, 0, 0);
 			}
 			*(pix++) = col;
 		}

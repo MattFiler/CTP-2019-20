@@ -28,6 +28,8 @@ VDBLoader::VDBLoader(const std::string filename, bool normalizeSize, float densi
     for (openvdb::FloatGrid::ValueOnIter iter = _densityGrid->beginValueOn(); iter.test(); ++iter)
         iter.setValue((*iter) * _densityScale);
 
+    _densityGrid->evalMinMax(minDensity, maxDensity);
+
     Vec3d densityCenter(*ptr->transform().indexToWorld(openvdb::Vec3d(0, 0, 0)).asPointer());
     Vec3d densitySpacing(*ptr->transform().indexToWorld(openvdb::Vec3d(1, 1, 1)).asPointer());
     densitySpacing = densitySpacing - densityCenter;

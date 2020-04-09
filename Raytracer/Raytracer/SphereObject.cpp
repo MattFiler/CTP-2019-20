@@ -1,7 +1,7 @@
 #include "SphereObject.h"
 
 /* Check to see if a ray intersects with us */
-bool Sphere::intersect(const Vec3f & orig, const Vec3f & dir, float & t) const
+bool Sphere::intersect(const Vec3f & orig, const Vec3f & dir, float & t)
 {
 	float t0, t1;
 	Vec3f L = orig - center;
@@ -22,7 +22,7 @@ bool Sphere::intersect(const Vec3f & orig, const Vec3f & dir, float & t) const
 }
 
 /* Get the sphere's surface data */
-void Sphere::getSurfaceData(const Vec3f & Phit, Vec3f & Nhit, Vec2f & tex) const
+void Sphere::getSurfaceData(const Vec3f & Phit, Vec3f & Nhit, Vec2f & tex)
 {
 	Nhit = Phit - center;
 	Nhit.normalize();

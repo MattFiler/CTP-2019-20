@@ -24,7 +24,7 @@ public:
 	void render(const std::vector<std::unique_ptr<Object>> &objects, bool asHDR = true);
 
 private:
-	bool trace(const Vec3f &orig, const Vec3f &dir, const std::vector<std::unique_ptr<Object>> &objects, float &tNear, const Object *&hitObject);
+	bool trace(const Vec3f &orig, const Vec3f &dir, const std::vector<std::unique_ptr<Object>> &objects, float &tNear, Object *&hitObject);
 	Vec3f castRay(const Vec3f &orig, const Vec3f &dir, const std::vector<std::unique_ptr<Object>> &objects, bool &hit);
 
 	const float kInfinity = std::numeric_limits<float>::max();

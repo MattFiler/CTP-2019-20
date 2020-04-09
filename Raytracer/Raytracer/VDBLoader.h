@@ -29,8 +29,10 @@ public:
 
     float density(Vec3f p) const;
 
-    Vec3i GetMin() { return minP; }
-    Vec3i GetMax() { return maxP; }
+    float GetMinDensity() { return minDensity; }
+    float GetMaxDensity() { return maxDensity; }
+    Vec3i GetMinPos() { return minP; }
+    Vec3i GetMaxPos() { return maxP; }
     Vec3f GetDiag() { return diag; }
     Vec3f GetCenter() { return center; }
     Box3f GetBounds() { return _bounds; }
@@ -46,6 +48,9 @@ private:
     int _supergridSubsample;
 
     openvdb::FloatGrid::Ptr _densityGrid;
+
+    float minDensity;
+    float maxDensity;
 
     Vec3i minP;
     Vec3i maxP;

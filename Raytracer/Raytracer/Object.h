@@ -11,8 +11,8 @@ public:
 	}
 	virtual ~Object() {}
 
-	virtual bool intersect(const Vec3f &, const Vec3f &, float &) const = 0;
-	virtual void getSurfaceData(const Vec3f &, Vec3f &, Vec2f &) const = 0;
+	virtual bool intersect(const Vec3f &, const Vec3f &, float &) = 0;
+	virtual void getSurfaceData(const Vec3f &, Vec3f &, Vec2f &) = 0;
 
 	Vec3f colour;
 };

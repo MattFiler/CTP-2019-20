@@ -1,7 +1,7 @@
 #include "BoxObject.h"
 
 /* Check to see if a ray intersects with us */
-bool BoxObject::intersect(const Vec3f & orig, const Vec3f & dir, float & t) const
+bool BoxObject::intersect(const Vec3f & orig, const Vec3f & dir, float & t)
 {
 	Vec3f invdir = 1 / dir;
 	int sign[3];
@@ -46,7 +46,7 @@ bool BoxObject::intersect(const Vec3f & orig, const Vec3f & dir, float & t) cons
 }
 
 /* Get the box's surface data */
-void BoxObject::getSurfaceData(const Vec3f & Phit, Vec3f & Nhit, Vec2f & tex) const
+void BoxObject::getSurfaceData(const Vec3f & Phit, Vec3f & Nhit, Vec2f & tex)
 {
 	Nhit = Phit - center;
 	Nhit.normalize();

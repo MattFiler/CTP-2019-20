@@ -7,32 +7,15 @@
 /* Initialise the raytracer, generate a scene, and render */
 int main(int argc, char **argv)
 {
-	//VDBLoader loader = VDBLoader("D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb");
-
-	/*
-	for (int x = -60; x < 60; x++) {
-		for (int y = -60; y < 60; y++) {
-			for (int z = -60; z < 60; z++) {
-				std::cout << loader.density(Vec3f(x,y,z)) << std::endl;
-			}
-		}
-	}
-	*/
-
-	//HenyeyGreenstein greenstein = HenyeyGreenstein();
-
-	//std::string test;
-	//std::cin >> test;
-
 	//Set up the scene rendering parameters
 	Options options;
 	options.width = 640;
 	options.height = 480;
 	options.fov = 51.52;
-	options.cameraToWorld = Matrix44f(0.707107, 0, -0.707107, 0, -0.331295, 0.883452, -0.331295, 0, 0.624695, 0.468521, 0.624695, 0, 372.77259, 279.579442, 372.77259, 1);
-
+	options.cameraToWorld = Matrix44f(-0.949972, 0, -0.312335, 0, -0.200507, 0.766736, 0.609847, 0, 0.239478, 0.641963, -0.728377, 0, 92.824173, 248.831252, -282.326327, 1);
 	//0.945519, 0, -0.325569, 0, -0.179534, 0.834209, -0.521403, 0, 0.271593, 0.551447, 0.78876, 0, 4.208271, 8.374532, 17.932925, 1
 	//0.707107, 0, - 0.707107, 0, - 0.331295, 0.883452, - 0.331295, 0, 0.624695, 0.468521, 0.624695, 0, 372.77259, 279.579442, 372.77259, 1
+	//-0.949972, 0, -0.312335, 0, -0.200507, 0.766736, 0.609847, 0, 0.239478, 0.641963, -0.728377, 0, 92.824173, 248.831252, -282.326327, 1
 
 	//Initialise random
 	std::random_device rd;
