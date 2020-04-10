@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
 	//Create our raytracer object
 	Raytracer* thisTracer = new Raytracer(
-	(float)config["render_resolution"]["width"],
+		(float)config["render_resolution"]["width"],
 		(float)config["render_resolution"]["height"],
 		(float)config["camera_fov"],
 		cameraToWorld);

@@ -158,7 +158,7 @@ namespace StreetviewRipper
             string File_DownscaledLDR = Properties.Resources.Output_Images + id + "_downscaled.jpg";
             string File_Metadata = Properties.Resources.Output_Images + id + ".json";
             string File_SkyHDR = Properties.Resources.Output_Images + id + "_sky.exr";
-            string File_SkyHDRTrim = Properties.Resources.Output_Images + id + "_sky_trim.exr";
+            string File_SkyHDRTrim = Properties.Resources.Output_Images + id + "_sky_trim.hdr";
             string File_SkyLDR = Properties.Resources.Output_Images + id + "_sky.png";
             string File_SkyExtracted = Properties.Resources.Output_Images + id + "_removedsky.png";
             string File_ConvertedHDR = Properties.Resources.Output_Images + id + ".hdr";
