@@ -585,34 +585,50 @@ namespace StreetviewRipper
             //Extra classifier step: try and guess stratocumulus clouds based on red/blue division
             UpdateDownloadStatusText("performing additional classifier...");
             Bitmap classifierOverlay = new Bitmap(hdrCropped.Width, hdrCropped.Height);
-            float avgRBDiv = 0.0f;
+            avgBlue = 0.0f; float avgRed = 0.0f; float avgGreen = 0.0f; float avgBright = 0.0f; float avgRBDiv = 0.0f;
+            int divMod = 0;
             for (int x = 0; x < classifierOverlay.Width; x++)
             {
                 for (int y = 0; y < classifierOverlay.Height; y++)
                 {
-                    HDRPixelFloat thisSkyPixel = hdrCropped.GetPixel(x, y).AsFloat();
-                    avgRBDiv += thisSkyPixel.R / thisSkyPixel.B;
+                    Color thisSkyPixel = streetviewImage.GetPixel(x, y);
+                    avgBlue += thisSkyPixel.B;
+                    avgRed += thisSkyPixel.R;
+                    avgGreen += thisSkyPixel.G;
+                    avgBright += thisSkyPixel.GetBrightness();
+                    if (thisSkyPixel.B == 0) continue;
+                    avgRBDiv += (float)thisSkyPixel.R / (float)thisSkyPixel.B;
+                    divMod++;
                 }
             }
-            avgRBDiv /= (classifierOverlay.Width * classifierOverlay.Height);
+            avgBlue /= (float)(classifierOverlay.Width * classifierOverlay.Height);
+            avgRed /= (float)(classifierOverlay.Width * classifierOverlay.Height);
+            avgGreen /= (float)(classifierOverlay.Width * classifierOverlay.Height);
+            avgBright /= (float)(classifierOverlay.Width * classifierOverlay.Height);
+            avgRBDiv /= (float)(divMod);
             for (int x = 0; x < classifierOverlay.Width; x++)
             {
                 for (int y = 0; y < classifierOverlay.Height; y++)
                 {
-                    HDRPixelFloat thisSkyPixel = hdrCropped.GetPixel(x, y).AsFloat();
-                    float redBlueDiv = thisSkyPixel.R / thisSkyPixel.B;
+                    Color thisSkyPixel = streetviewImage.GetPixel(x, y);
+                    float redBlueDiv = 0.0f;
+                    if (thisSkyPixel.B != 0) redBlueDiv = (float)thisSkyPixel.R / (float)thisSkyPixel.B;
 
-                    if (redBlueDiv > (avgRBDiv + (avgRBDiv / 6.5f)))
+                    bool check1 = thisSkyPixel.R > avgRed && thisSkyPixel.G > avgGreen && thisSkyPixel.B > avgBlue;
+                    bool check2 = (redBlueDiv > (avgRBDiv + (avgRBDiv / 6.5f)));
+                    bool check3 = thisSkyPixel.B > thisSkyPixel.G && thisSkyPixel.B > thisSkyPixel.R;
+
+                    if (check2 || (check1 && !check3))
                     {
-                        classifierOverlay.SetPixel(x, y, Color.FromArgb(255, 0, 255)); //STRATOCUMULUS
+                        classifierOverlay.SetPixel(x, y, Color.White);
                     }
                     else
                     {
-                        classifierOverlay.SetPixel(x, y, Color.Transparent);
+                        classifierOverlay.SetPixel(x, y, Color.Black);
                     }
                 }
             }
-            FloodFill(classifierOverlay, classifierOverlay.Width / 4, (int)sunPos.y, Color.Transparent);
+            //FloodFill(classifierOverlay, classifierOverlay.Width / 4, (int)sunPos.y, Color.Black);
             classifierOverlay.Save(File_ClassifiedExtended);
 
             //Apply the extra classification ontop of the original classifier output
@@ -628,7 +644,7 @@ namespace StreetviewRipper
                 for (int y = 0; y < finalClassifier.Height; y++)
                 {
                     Color thisColour = classifierOverlay.GetPixel(x, y);
-                    if (thisColour.A == 0) //Transparent = nothing
+                    if (thisColour.R == 0 && thisColour.G == 0 && thisColour.B == 0) 
                     {
                         finalClassifier.SetPixel(x, y, dewarpedClassifier.GetPixel(x, y));
                         outputBinMap.Write((byte)0);
