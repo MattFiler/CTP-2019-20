@@ -15,6 +15,9 @@ int main(int argc, char **argv)
 	std::fstream config_file("config.json");
 	config_file >> config;
 
+	//Global configs
+	Globals::sunDirection = Vec3f(config["sun_direction"]["x"], config["sun_direction"]["y"], config["sun_direction"]["z"]);
+
 	//Work out camera to world matrix
 	DirectX::XMFLOAT3 rotation = DirectX::XMFLOAT3(
 		DirectX::XMConvertToRadians(config["camera_rotation"]["x"]), 
@@ -57,7 +60,7 @@ int main(int argc, char **argv)
     //for (uint32_t i = 0; i < numSpheres + numBoxes; ++i) {
         //Vec3f randPos((0.5 - dis(gen)) * 10, (0.5 - dis(gen)) * 10, (0.5 + dis(gen) * 10));
         //float randRadius = (0.5 + dis(gen) * 0.5);
-		objects.push_back(std::unique_ptr<Object>(new VolumetricObject(config["temp_vdb"], Vec3f(0, 0, 0))));
+		//////objects.push_back(std::unique_ptr<Object>(new VolumetricObject(config["temp_vdb"], Vec3f(0, 0, 0))));
 		//if (i >= numSpheres) objects.push_back(std::unique_ptr<Object>(new BoxObject(randPos, (randPos + randRadius), Vec3f(dis(gen), dis(gen), dis(gen)))));
 		//else objects.push_back(std::unique_ptr<Object>(new Sphere(randPos, randRadius, Vec3f(dis(gen), dis(gen), dis(gen)))));
     //}

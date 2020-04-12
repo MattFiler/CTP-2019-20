@@ -32,8 +32,8 @@ Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vecto
 		if (dynamic_cast<VolumetricObject*>(hitObject)) {
 			//Volumetric shape
 			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
-			float transmittence = obj->density(orig, dir, t);
-			hitColor = Vec3f(transmittence, transmittence, transmittence); //temp debug output
+			float tempColour = obj->density(orig, dir, t);
+			hitColor = Vec3f(tempColour, tempColour, tempColour); //temp debug output
 		}
 		else {
 			//Regular shape
@@ -68,7 +68,7 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 	// horizon--not the zenith, as it is elsewhere in pbrt.
 	Vec3f sunDir(0., std::sin(elevation), std::cos(elevation));
 
-	int nTheta = resolution, nPhi = 2 * nTheta;
+	int nTheta = height, nPhi = 2 * nTheta;
 	std::vector<float> img(3 * nTheta * nPhi, 0.f);
 
 	for (int t = 0; t < nTheta; t++) {
@@ -113,9 +113,11 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 			bool hit = false;
 			Vec3f col = castRay(orig, dir, objects, hit);
 			if (!hit) {
-				//If we didn't hit, take the background sky colour (TODO: FIX THIS!)
-				//col = Vec3f(((img[3 * j * i] / 10) / 2) / 255, ((img[(3 * j * i) + 1] / 10) / 2) / 255, ((img[(3 * j * i) + 2] / 10) / 2) / 255);
-				col = Vec3f(0, 0, 0);
+				//If we didn't hit, take the background sky colour (this is slightly off on array positions)
+				col = Vec3f(
+					img[(3 * (j * i)) + 0], 
+					img[(3 * (j * i)) + 1], 
+					img[(3 * (j * i)) + 2]);
 			}
 			*(pix++) = col;
 		}

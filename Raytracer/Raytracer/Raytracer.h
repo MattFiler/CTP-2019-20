@@ -8,11 +8,14 @@
 class Raytracer {
 public:
 	Raytracer() = delete;
-	Raytracer(float _width, float _height, float _fov, Matrix44f& _cameraToWorld) {
+	Raytracer(float _width, float _height, float _fov, Matrix44f& _cameraToWorld, float groundAlbedo = 0.5f, float skyTurbidity = 3.0f, float sunElevation = Radians(10)) {
 		width = _width;
 		height = _height;
 		fov = _fov;
 		cameraToWorld = _cameraToWorld;
+		albedo = groundAlbedo;
+		turbidity = skyTurbidity;
+		elevation = sunElevation;
 	}
 	~Raytracer() = default;
 
@@ -30,8 +33,7 @@ private:
 	float fov;
 	Matrix44f cameraToWorld;
 
-	float albedo = 0.5;
-	float turbidity = 3.;
-	float elevation = Radians(10);
-	int resolution = 2048;
+	float albedo;
+	float turbidity;
+	float elevation;
 };

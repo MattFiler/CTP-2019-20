@@ -47,11 +47,15 @@ bool VolumetricObject::intersect(const Vec3f& orig, const Vec3f& dir, float& t)
 /* Get the density along the given ray */
 float VolumetricObject::density(const Vec3f& orig, const Vec3f& dir, float t)
 {
-	float totalD = 0;
+	float totalD = 0.0f;
+	float thisDToSun = 0.0f;
 	while (true) {
 		totalD += thisVDB->density(orig + (dir * t));
+		thisDToSun = densityToSun(orig + (dir * t)) / 500;
+		totalD -= thisDToSun;
 		t++;
 		if (t > tmax) break;
 	}
+	if (totalD < 0) totalD = 0.0f;
 	return totalD;
 }

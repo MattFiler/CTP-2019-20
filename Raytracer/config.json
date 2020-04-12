@@ -14,5 +14,10 @@
 		"y": 161.8,
 		"z": 0
 	},
+	"sun_direction": {
+		"x": 0.1,
+		"y": 0.1,
+		"z": 0.1
+	},
 	"temp_vdb": "D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb"
 }

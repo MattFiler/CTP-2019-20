@@ -142,6 +142,7 @@
     <ClInclude Include="Box.h" />
     <ClInclude Include="BoxObject.h" />
     <ClInclude Include="geometry.h" />
+    <ClInclude Include="globals.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="Object.h" />
@@ -155,6 +156,7 @@
   <ItemGroup>
     <ClCompile Include="ArHosekSkyModel.cpp" />
     <ClCompile Include="BoxObject.cpp" />
+    <ClCompile Include="globals.cpp" />
     <ClCompile Include="HenyeyGreenstein.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OrthoNormalBasis.cpp" />
