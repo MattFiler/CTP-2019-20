@@ -22,21 +22,14 @@ bool Raytracer::trace(const Vec3f & orig, const Vec3f & dir, const std::vector<s
 }
 
 /* Cast a ray to the scene */
-Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vector<std::unique_ptr<Object>>& objects, bool & hit)
+Vec3f Raytracer::castRaySolid(const Vec3f & orig, const Vec3f & dir, const std::vector<std::unique_ptr<Object>>& objects, bool & hit)
 {
 	hit = false;
 	Vec3f hitColor = 0;
 	Object *hitObject = nullptr; // this is a pointer to the hit object
 	float t; // this is the intersection distance from the ray origin to the hit point
 	if (trace(orig, dir, objects, t, hitObject)) {
-		if (dynamic_cast<VolumetricObject*>(hitObject)) {
-			//Volumetric shape
-			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
-			float tempColour = obj->density(orig, dir, t);
-			hitColor = Vec3f(tempColour, tempColour, tempColour); //temp debug output
-		}
-		else {
-			//Regular shape
+		if (!dynamic_cast<VolumetricObject*>(hitObject)) {
 			Vec3f Phit = orig + dir * t;
 			Vec3f Nhit;
 			Vec2f tex;
@@ -44,8 +37,27 @@ Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vecto
 			float scale = 4;
 			float pattern = (fmodf(tex.x * scale, 1) > 0.5) ^ (fmodf(tex.y * scale, 1) > 0.5);
 			hitColor = std::max(0.f, Nhit.dotProduct(-dir)) * mix(hitObject->colour, hitObject->colour * 0.8, pattern);
+
+			hit = true;
 		}
-		hit = true;
+	}
+
+	return hitColor;
+}
+Vec3f Raytracer::castRayAdditive(const Vec3f& orig, const Vec3f& dir, const std::vector<std::unique_ptr<Object>>& objects, bool& hit)
+{
+	hit = false;
+	Vec3f hitColor = 0;
+	Object* hitObject = nullptr; // this is a pointer to the hit object
+	float t; // this is the intersection distance from the ray origin to the hit point
+	if (trace(orig, dir, objects, t, hitObject)) {
+		if (dynamic_cast<VolumetricObject*>(hitObject)) {
+			//Volumetric shape
+			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
+			float tempColour = obj->density(orig, dir, t) / 40; //magic number to make test set work with hosek-wilkie brightness
+			hitColor = Vec3f(tempColour, tempColour, tempColour); //temp debug output
+			hit = (hitColor.x != 0.0f); //temp
+		}
 	}
 
 	return hitColor;
@@ -122,11 +134,13 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 			cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
 			dir.normalize();
 
-			bool hit = false;
-			Vec3f col = castRay(orig, dir, objects, hit);
-			if (!hit) {
-				//If we didn't hit, take the background sky colour (this is slightly off on array positions)
-				col = Vec3f(
+			bool hitSolid = false;
+			bool hitAdditive = false;
+			Vec3f col = castRaySolid(orig, dir, objects, hitSolid);
+			col = col + castRayAdditive(orig, dir, objects, hitAdditive);
+			if (!hitSolid) {
+				//If we didn't hit a solid object, take the background sky colour - adds to our additive, or blank if hit none
+				col = col + Vec3f(
 					img[(3 * ((j * nPhi) + i)) + 0],
 					img[(3 * ((j * nPhi) + i)) + 1],
 					img[(3 * ((j * nPhi) + i)) + 2]);
