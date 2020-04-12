@@ -92,6 +92,7 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 		}
 	}
 
+	/*
 	std::ifstream ofs0("image.bin", std::ios::in | std::ios::binary);
 	std::vector<float> img_test = std::vector<float>();
 	for (int x = 0; x < width; x++) {
@@ -104,6 +105,7 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 		}
 	}
 	ofs0.close();
+	*/
 
 	Vec3f *framebuffer = new Vec3f[width * height];
 	Vec3f *pix = framebuffer;
@@ -122,7 +124,6 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 
 			bool hit = false;
 			Vec3f col = castRay(orig, dir, objects, hit);
-			hit = false;
 			if (!hit) {
 				//If we didn't hit, take the background sky colour (this is slightly off on array positions)
 				col = Vec3f(
