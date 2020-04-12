@@ -15,9 +15,14 @@
 		"z": 0
 	},
 	"sun_direction": {
-		"x": 0.1,
-		"y": 0.1,
-		"z": 0.1
+		"x": 0.0,
+		"y": 0.5,
+		"z": 0.5
 	},
+	"sky_model": {
+		"ground_albedo": 0.5,
+		"turbidity": 3.0,
+		"sun_elevation": 10
+	}
 	"temp_vdb": "D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb"
 }

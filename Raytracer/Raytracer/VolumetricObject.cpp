@@ -51,7 +51,7 @@ float VolumetricObject::density(const Vec3f& orig, const Vec3f& dir, float t)
 	float thisDToSun = 0.0f;
 	while (true) {
 		totalD += thisVDB->density(orig + (dir * t));
-		thisDToSun = densityToSun(orig + (dir * t)) / 500;
+		thisDToSun = densityToSun(orig + (dir * t)) / 300;
 		totalD -= thisDToSun;
 		t++;
 		if (t > tmax) break;

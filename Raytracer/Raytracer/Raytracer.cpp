@@ -68,7 +68,7 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 	// horizon--not the zenith, as it is elsewhere in pbrt.
 	Vec3f sunDir(0., std::sin(elevation), std::cos(elevation));
 
-	int nTheta = height, nPhi = 2 * nTheta;
+	int nTheta = height*2, nPhi = 2 * nTheta; /*SETTING HEIGHT TO BE *2 SO WE DONT GET BLACK VALUES BELOW ZENITH IN FINAL*/
 	std::vector<float> img(3 * nTheta * nPhi, 0.f);
 
 	for (int t = 0; t < nTheta; t++) {
@@ -87,13 +87,23 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 			for (int c = 0; c < num_channels; ++c) {
 				float val = arhosekskymodel_solar_radiance(
 					skymodel_state[c], theta, gamma, lambda[c]);
-				// For each of red, green, and blue, average the three
-				// values for the three wavelengths for the color.
-				// TODO: do a better spectral->RGB conversion.
 				img[3 * (t * nPhi + p) + c / 3] += val / 3.f;
 			}
 		}
 	}
+
+	std::ifstream ofs0("image.bin", std::ios::in | std::ios::binary);
+	std::vector<float> img_test = std::vector<float>();
+	for (int x = 0; x < width; x++) {
+		for (int y = 0; y < height; y++) {
+			for (int i = 0; i < 3; i++) {
+				float thisColour;
+				ofs0.read(reinterpret_cast<char*>(&thisColour), sizeof(float));
+				img_test.push_back(thisColour);
+			}
+		}
+	}
+	ofs0.close();
 
 	Vec3f *framebuffer = new Vec3f[width * height];
 	Vec3f *pix = framebuffer;
@@ -112,12 +122,19 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 
 			bool hit = false;
 			Vec3f col = castRay(orig, dir, objects, hit);
+			hit = false;
 			if (!hit) {
 				//If we didn't hit, take the background sky colour (this is slightly off on array positions)
 				col = Vec3f(
-					img[(3 * (j * i)) + 0], 
-					img[(3 * (j * i)) + 1], 
-					img[(3 * (j * i)) + 2]);
+					img[(3 * ((j * nPhi) + i)) + 0],
+					img[(3 * ((j * nPhi) + i)) + 1],
+					img[(3 * ((j * nPhi) + i)) + 2]);
+				/*
+				col = Vec3f(
+					img_test[(3 * ((i * height) + j)) + 0],
+					img_test[(3 * ((i * height) + j)) + 1],
+					img_test[(3 * ((i * height) + j)) + 2]);
+					*/
 			}
 			*(pix++) = col;
 		}

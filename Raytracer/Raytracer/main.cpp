@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 	config_file >> config;
 
 	//Global configs
-	Globals::sunDirection = Vec3f(config["sun_direction"]["x"], config["sun_direction"]["y"], config["sun_direction"]["z"]);
+	Globals::sunDirection = Vec3f(config["sun_direction"]["x"], config["sun_direction"]["y"], config["sun_direction"]["z"]); //todo: pull this together with sky model?
 
 	//Work out camera to world matrix
 	DirectX::XMFLOAT3 rotation = DirectX::XMFLOAT3(
@@ -45,7 +45,10 @@ int main(int argc, char **argv)
 		(float)config["render_resolution"]["width"],
 		(float)config["render_resolution"]["height"],
 		(float)config["camera_fov"],
-		cameraToWorld);
+		cameraToWorld,
+		(float)config["sky_model"]["ground_albedo"],
+		(float)config["sky_model"]["turbidity"],
+		Radians((float)config["sky_model"]["sun_elevation"]));
 
 	//Initialise random
 	std::random_device rd;
@@ -60,7 +63,7 @@ int main(int argc, char **argv)
     //for (uint32_t i = 0; i < numSpheres + numBoxes; ++i) {
         //Vec3f randPos((0.5 - dis(gen)) * 10, (0.5 - dis(gen)) * 10, (0.5 + dis(gen) * 10));
         //float randRadius = (0.5 + dis(gen) * 0.5);
-		//////objects.push_back(std::unique_ptr<Object>(new VolumetricObject(config["temp_vdb"], Vec3f(0, 0, 0))));
+		objects.push_back(std::unique_ptr<Object>(new VolumetricObject(config["temp_vdb"], Vec3f(0, 0, 0))));
 		//if (i >= numSpheres) objects.push_back(std::unique_ptr<Object>(new BoxObject(randPos, (randPos + randRadius), Vec3f(dis(gen), dis(gen), dis(gen)))));
 		//else objects.push_back(std::unique_ptr<Object>(new Sphere(randPos, randRadius, Vec3f(dis(gen), dis(gen), dis(gen)))));
     //}
