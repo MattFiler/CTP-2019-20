@@ -64,8 +64,8 @@ namespace StreetviewRipper
         }
         private void StartDownloading(List<string> ids)
         {
-            //try
-            //{
+            try
+            {
                 foreach (string id in ids)
                 {
                     if (id != "")
@@ -74,8 +74,8 @@ namespace StreetviewRipper
                         DownloadNeighbours(neighbours);
                     }
                 }
-            //}
-            //catch { }
+            }
+            catch { }
 
             //Downloads are done, re-enable UI
             stoppingText.Visible = false;
