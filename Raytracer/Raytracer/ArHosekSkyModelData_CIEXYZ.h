@@ -4,17 +4,17 @@ This source is published under the following 3-clause BSD license.
 Copyright (c) 2012 - 2013, Lukas Hosek and Alexander Wilkie
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * None of the names of the contributors may be used to endorse or promote 
-      products derived from this software without specific prior written 
-      permission.
+	* Redistributions of source code must retain the above copyright
+	  notice, this list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright
+	  notice, this list of conditions and the following disclaimer in the
+	  documentation and/or other materials provided with the distribution.
+	* None of the names of the contributors may be used to endorse or promote
+	  products derived from this software without specific prior written
+	  permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,56 +35,56 @@ This file is part of a sample implementation of the analytical skylight and
 solar radiance models presented in the SIGGRAPH 2012 paper
 
 
-           "An Analytic Model for Full Spectral Sky-Dome Radiance"
+		   "An Analytic Model for Full Spectral Sky-Dome Radiance"
 
 and the 2013 IEEE CG&A paper
 
-       "Adding a Solar Radiance Function to the Hosek Skylight Model"
+	   "Adding a Solar Radiance Function to the Hosek Skylight Model"
 
-                                   both by 
+								   both by
 
-                       Lukas Hosek and Alexander Wilkie
-                Charles University in Prague, Czech Republic
+					   Lukas Hosek and Alexander Wilkie
+				Charles University in Prague, Czech Republic
 
 
-                        Version: 1.4a, February 22nd, 2013
-                        
+						Version: 1.4a, February 22nd, 2013
+
 Version history:
 
 1.4a  February 22nd, 2013
-      Removed unnecessary and counter-intuitive solar radius parameters 
-      from the interface of the colourspace sky dome initialisation functions.
+	  Removed unnecessary and counter-intuitive solar radius parameters
+	  from the interface of the colourspace sky dome initialisation functions.
 
 1.4   February 11th, 2013
-      Fixed a bug which caused the relative brightness of the solar disc
-      and the sky dome to be off by a factor of about 6. The sun was too 
-      bright: this affected both normal and alien sun scenarios. The 
-      coefficients of the solar radiance function were changed to fix this.
+	  Fixed a bug which caused the relative brightness of the solar disc
+	  and the sky dome to be off by a factor of about 6. The sun was too
+	  bright: this affected both normal and alien sun scenarios. The
+	  coefficients of the solar radiance function were changed to fix this.
 
 1.3   January 21st, 2013 (not released to the public)
-      Added support for solar discs that are not exactly the same size as
-      the terrestrial sun. Also added support for suns with a different
-      emission spectrum ("Alien World" functionality).
+	  Added support for solar discs that are not exactly the same size as
+	  the terrestrial sun. Also added support for suns with a different
+	  emission spectrum ("Alien World" functionality).
 
 1.2a  December 18th, 2012
-      Fixed a mistake and some inaccuracies in the solar radiance function
-      explanations found in ArHosekSkyModel.h. The actual source code is
-      unchanged compared to version 1.2.
+	  Fixed a mistake and some inaccuracies in the solar radiance function
+	  explanations found in ArHosekSkyModel.h. The actual source code is
+	  unchanged compared to version 1.2.
 
 1.2   December 17th, 2012
-      Native RGB data and a solar radiance function that matches the turbidity
-      conditions were added.
+	  Native RGB data and a solar radiance function that matches the turbidity
+	  conditions were added.
 
 1.1   September 2012
-      The coefficients of the spectral model are now scaled so that the output
-      is given in physical units: W / (m^-2 * sr * nm). Also, the output of the
-      XYZ model is now no longer scaled to the range [0...1]. Instead, it is
-      the result of a simple conversion from spectral data via the CIE 2 degree
-      standard observer matching functions. Therefore, after multiplication
-      with 683 lm / W, the Y channel now corresponds to luminance in lm.
-     
+	  The coefficients of the spectral model are now scaled so that the output
+	  is given in physical units: W / (m^-2 * sr * nm). Also, the output of the
+	  XYZ model is now no longer scaled to the range [0...1]. Instead, it is
+	  the result of a simple conversion from spectral data via the CIE 2 degree
+	  standard observer matching functions. Therefore, after multiplication
+	  with 683 lm / W, the Y channel now corresponds to luminance in lm.
+
 1.0   May 11th, 2012
-      Initial release.
+	  Initial release.
 
 
 Please visit http://cgg.mff.cuni.cz/projects/SkylightModelling/ to check if
@@ -95,14 +95,14 @@ an updated version of this code has been published!
 
 /*
 
-This file contains the coefficient data for the XYZ colour space version of 
+This file contains the coefficient data for the XYZ colour space version of
 the model.
 
 */
 
 // Uses Sep 9 pattern / Aug 23 mean dataset
 
-double datasetXYZ1[] = 
+double datasetXYZ1[] =
 {
 	// albedo 0, turbidity 1
 	-1.117001e+000,
@@ -1206,7 +1206,7 @@ double datasetXYZ1[] =
 	6.232887e-001,
 };
 
-double datasetXYZRad1[] = 
+double datasetXYZRad1[] =
 {
 	// albedo 0, turbidity 1
 	1.560219e+000,
@@ -1350,7 +1350,7 @@ double datasetXYZRad1[] =
 	2.523432e+001,
 };
 
-double datasetXYZ2[] = 
+double datasetXYZ2[] =
 {
 	// albedo 0, turbidity 1
 	-1.127942e+000,
@@ -2454,7 +2454,7 @@ double datasetXYZ2[] =
 	6.118645e-001,
 };
 
-double datasetXYZRad2[] = 
+double datasetXYZRad2[] =
 {
 	// albedo 0, turbidity 1
 	1.632341e+000,
@@ -2598,7 +2598,7 @@ double datasetXYZRad2[] =
 	2.641780e+001,
 };
 
-double datasetXYZ3[] = 
+double datasetXYZ3[] =
 {
 	// albedo 0, turbidity 1
 	-1.310023e+000,
@@ -3702,7 +3702,7 @@ double datasetXYZ3[] =
 	6.791814e-001,
 };
 
-double datasetXYZRad3[] = 
+double datasetXYZRad3[] =
 {
 	// albedo 0, turbidity 1
 	1.168084e+000,

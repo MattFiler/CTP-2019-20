@@ -4,17 +4,17 @@ This source is published under the following 3-clause BSD license.
 Copyright (c) 2012 - 2013, Lukas Hosek and Alexander Wilkie
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * None of the names of the contributors may be used to endorse or promote 
-      products derived from this software without specific prior written 
-      permission.
+	* Redistributions of source code must retain the above copyright
+	  notice, this list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright
+	  notice, this list of conditions and the following disclaimer in the
+	  documentation and/or other materials provided with the distribution.
+	* None of the names of the contributors may be used to endorse or promote
+	  products derived from this software without specific prior written
+	  permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,56 +35,56 @@ This file is part of a sample implementation of the analytical skylight and
 solar radiance models presented in the SIGGRAPH 2012 paper
 
 
-           "An Analytic Model for Full Spectral Sky-Dome Radiance"
+		   "An Analytic Model for Full Spectral Sky-Dome Radiance"
 
 and the 2013 IEEE CG&A paper
 
-       "Adding a Solar Radiance Function to the Hosek Skylight Model"
+	   "Adding a Solar Radiance Function to the Hosek Skylight Model"
 
-                                   both by 
+								   both by
 
-                       Lukas Hosek and Alexander Wilkie
-                Charles University in Prague, Czech Republic
+					   Lukas Hosek and Alexander Wilkie
+				Charles University in Prague, Czech Republic
 
 
-                        Version: 1.4a, February 22nd, 2013
-                        
+						Version: 1.4a, February 22nd, 2013
+
 Version history:
 
 1.4a  February 22nd, 2013
-      Removed unnecessary and counter-intuitive solar radius parameters 
-      from the interface of the colourspace sky dome initialisation functions.
+	  Removed unnecessary and counter-intuitive solar radius parameters
+	  from the interface of the colourspace sky dome initialisation functions.
 
 1.4   February 11th, 2013
-      Fixed a bug which caused the relative brightness of the solar disc
-      and the sky dome to be off by a factor of about 6. The sun was too 
-      bright: this affected both normal and alien sun scenarios. The 
-      coefficients of the solar radiance function were changed to fix this.
+	  Fixed a bug which caused the relative brightness of the solar disc
+	  and the sky dome to be off by a factor of about 6. The sun was too
+	  bright: this affected both normal and alien sun scenarios. The
+	  coefficients of the solar radiance function were changed to fix this.
 
 1.3   January 21st, 2013 (not released to the public)
-      Added support for solar discs that are not exactly the same size as
-      the terrestrial sun. Also added support for suns with a different
-      emission spectrum ("Alien World" functionality).
+	  Added support for solar discs that are not exactly the same size as
+	  the terrestrial sun. Also added support for suns with a different
+	  emission spectrum ("Alien World" functionality).
 
 1.2a  December 18th, 2012
-      Fixed a mistake and some inaccuracies in the solar radiance function
-      explanations found in ArHosekSkyModel.h. The actual source code is
-      unchanged compared to version 1.2.
+	  Fixed a mistake and some inaccuracies in the solar radiance function
+	  explanations found in ArHosekSkyModel.h. The actual source code is
+	  unchanged compared to version 1.2.
 
 1.2   December 17th, 2012
-      Native RGB data and a solar radiance function that matches the turbidity
-      conditions were added.
+	  Native RGB data and a solar radiance function that matches the turbidity
+	  conditions were added.
 
 1.1   September 2012
-      The coefficients of the spectral model are now scaled so that the output
-      is given in physical units: W / (m^-2 * sr * nm). Also, the output of the
-      XYZ model is now no longer scaled to the range [0...1]. Instead, it is
-      the result of a simple conversion from spectral data via the CIE 2 degree
-      standard observer matching functions. Therefore, after multiplication
-      with 683 lm / W, the Y channel now corresponds to luminance in lm.
-     
+	  The coefficients of the spectral model are now scaled so that the output
+	  is given in physical units: W / (m^-2 * sr * nm). Also, the output of the
+	  XYZ model is now no longer scaled to the range [0...1]. Instead, it is
+	  the result of a simple conversion from spectral data via the CIE 2 degree
+	  standard observer matching functions. Therefore, after multiplication
+	  with 683 lm / W, the Y channel now corresponds to luminance in lm.
+
 1.0   May 11th, 2012
-      Initial release.
+	  Initial release.
 
 
 Please visit http://cgg.mff.cuni.cz/projects/SkylightModelling/ to check if
@@ -101,7 +101,7 @@ This file contains the coefficient data for the spectral version of the model.
 
 // uses Apr 26 dataset
 
-double dataset320[] = 
+double dataset320[] =
 {
 	// albedo 0, turbidity 1
 	-1.341049e+001,
@@ -1205,7 +1205,7 @@ double dataset320[] =
 	6.227585e-001,
 };
 
-double datasetRad320[] = 
+double datasetRad320[] =
 {
 	// albedo 0, turbidity 1
 	9.282016e-004,
@@ -1349,7 +1349,7 @@ double datasetRad320[] =
 	8.244103e-002,
 };
 
-double dataset360[] = 
+double dataset360[] =
 {
 	// albedo 0, turbidity 1
 	-2.974290e+000,
@@ -2453,7 +2453,7 @@ double dataset360[] =
 	7.279518e-001,
 };
 
-double datasetRad360[] = 
+double datasetRad360[] =
 {
 	// albedo 0, turbidity 1
 	2.494129e-003,
@@ -2597,7 +2597,7 @@ double datasetRad360[] =
 	1.427310e-001,
 };
 
-double dataset400[] = 
+double dataset400[] =
 {
 	// albedo 0, turbidity 1
 	-1.869600e+000,
@@ -3701,7 +3701,7 @@ double dataset400[] =
 	7.086504e-001,
 };
 
-double datasetRad400[] = 
+double datasetRad400[] =
 {
 	// albedo 0, turbidity 1
 	5.767645e-003,
@@ -3845,7 +3845,7 @@ double datasetRad400[] =
 	2.328116e-001,
 };
 
-double dataset440[] = 
+double dataset440[] =
 {
 	// albedo 0, turbidity 1
 	-1.397312e+000,
@@ -4949,7 +4949,7 @@ double dataset440[] =
 	6.840186e-001,
 };
 
-double datasetRad440[] = 
+double datasetRad440[] =
 {
 	// albedo 0, turbidity 1
 	9.406889e-003,
@@ -5093,7 +5093,7 @@ double datasetRad440[] =
 	2.803810e-001,
 };
 
-double dataset480[] = 
+double dataset480[] =
 {
 	// albedo 0, turbidity 1
 	-1.255072e+000,
@@ -6197,7 +6197,7 @@ double dataset480[] =
 	6.747408e-001,
 };
 
-double datasetRad480[] = 
+double datasetRad480[] =
 {
 	// albedo 0, turbidity 1
 	1.367487e-002,
@@ -6341,7 +6341,7 @@ double datasetRad480[] =
 	3.053035e-001,
 };
 
-double dataset520[] = 
+double dataset520[] =
 {
 	// albedo 0, turbidity 1
 	-1.171338e+000,
@@ -7445,7 +7445,7 @@ double dataset520[] =
 	6.713422e-001,
 };
 
-double datasetRad520[] = 
+double datasetRad520[] =
 {
 	// albedo 0, turbidity 1
 	1.459826e-002,
@@ -7589,7 +7589,7 @@ double datasetRad520[] =
 	2.692918e-001,
 };
 
-double dataset560[] = 
+double dataset560[] =
 {
 	// albedo 0, turbidity 1
 	-1.121223e+000,
@@ -8693,7 +8693,7 @@ double dataset560[] =
 	5.872694e-001,
 };
 
-double datasetRad560[] = 
+double datasetRad560[] =
 {
 	// albedo 0, turbidity 1
 	1.518543e-002,
@@ -8837,7 +8837,7 @@ double datasetRad560[] =
 	2.394514e-001,
 };
 
-double dataset600[] = 
+double dataset600[] =
 {
 	// albedo 0, turbidity 1
 	-1.120756e+000,
@@ -9941,7 +9941,7 @@ double dataset600[] =
 	6.545784e-001,
 };
 
-double datasetRad600[] = 
+double datasetRad600[] =
 {
 	// albedo 0, turbidity 1
 	1.605147e-002,
@@ -10085,7 +10085,7 @@ double datasetRad600[] =
 	2.260782e-001,
 };
 
-double dataset640[] = 
+double dataset640[] =
 {
 	// albedo 0, turbidity 1
 	-1.113346e+000,
@@ -11189,7 +11189,7 @@ double dataset640[] =
 	6.650112e-001,
 };
 
-double datasetRad640[] = 
+double datasetRad640[] =
 {
 	// albedo 0, turbidity 1
 	1.479989e-002,
@@ -11333,7 +11333,7 @@ double datasetRad640[] =
 	2.043633e-001,
 };
 
-double dataset680[] = 
+double dataset680[] =
 {
 	// albedo 0, turbidity 1
 	-1.112655e+000,
@@ -12437,7 +12437,7 @@ double dataset680[] =
 	6.710888e-001,
 };
 
-double datasetRad680[] = 
+double datasetRad680[] =
 {
 	// albedo 0, turbidity 1
 	1.320908e-002,
@@ -12581,7 +12581,7 @@ double datasetRad680[] =
 	1.851691e-001,
 };
 
-double dataset720[] = 
+double dataset720[] =
 {
 	// albedo 0, turbidity 1
 	-1.110553e+000,
@@ -13685,7 +13685,7 @@ double dataset720[] =
 	6.917938e-001,
 };
 
-double datasetRad720[] = 
+double datasetRad720[] =
 {
 	// albedo 0, turbidity 1
 	1.130152e-002,
@@ -13841,7 +13841,7 @@ double* datasets[] =
 	dataset600,
 	dataset640,
 	dataset680,
-    dataset720
+	dataset720
 };
 
 double* datasetsRad[] =
@@ -13856,11 +13856,11 @@ double* datasetsRad[] =
 	datasetRad600,
 	datasetRad640,
 	datasetRad680,
-    datasetRad720
+	datasetRad720
 };
 
 // Uses Feb 9 dataset
-double solarDataset320[] = 
+double solarDataset320[] =
 {
 	0,
 	0,
@@ -15664,7 +15664,7 @@ double solarDataset320[] =
 	1.715997e+03,
 };
 
-double solarDataset360[] = 
+double solarDataset360[] =
 {
 	0,
 	0,
@@ -17468,7 +17468,7 @@ double solarDataset360[] =
 	4.337093e+03,
 };
 
-double solarDataset400[] = 
+double solarDataset400[] =
 {
 	1.117129e+12,
 	-1.629427e+07,
@@ -19272,7 +19272,7 @@ double solarDataset400[] =
 	8.894396e+03,
 };
 
-double solarDataset440[] = 
+double solarDataset440[] =
 {
 	-6.439155e+11,
 	7.682264e+06,
@@ -21076,7 +21076,7 @@ double solarDataset440[] =
 	1.258462e+04,
 };
 
-double solarDataset480[] = 
+double solarDataset480[] =
 {
 	-2.547404e+13,
 	3.635631e+08,
@@ -22880,7 +22880,7 @@ double solarDataset480[] =
 	1.549771e+04,
 };
 
-double solarDataset520[] = 
+double solarDataset520[] =
 {
 	3.441260e+12,
 	4.257012e+05,
@@ -24684,7 +24684,7 @@ double solarDataset520[] =
 	1.483566e+04,
 };
 
-double solarDataset560[] = 
+double solarDataset560[] =
 {
 	9.427478e+12,
 	-2.974054e+07,
@@ -26488,7 +26488,7 @@ double solarDataset560[] =
 	1.425796e+04,
 };
 
-double solarDataset600[] = 
+double solarDataset600[] =
 {
 	1.454828e+13,
 	-1.753873e+07,
@@ -28292,7 +28292,7 @@ double solarDataset600[] =
 	1.483525e+04,
 };
 
-double solarDataset640[] = 
+double solarDataset640[] =
 {
 	-4.439940e+13,
 	4.727269e+08,
@@ -30096,7 +30096,7 @@ double solarDataset640[] =
 	1.419677e+04,
 };
 
-double solarDataset680[] = 
+double solarDataset680[] =
 {
 	-352468042275216,
 	4.565228e+09,
@@ -31900,7 +31900,7 @@ double solarDataset680[] =
 	1.371823e+04,
 };
 
-double solarDataset720[] = 
+double solarDataset720[] =
 {
 	2.525918e+14,
 	-2.554558e+09,
@@ -33752,7 +33752,7 @@ double limbDarkeningDataset680[] =
 double limbDarkeningDataset720[] =
 { 0.389704, 1.2448, -1.69708, 2.14061, -1.51803, 0.440004 };
 
-double * limbDarkeningDatasets[] =
+double* limbDarkeningDatasets[] =
 {
 	limbDarkeningDataset320,
 	limbDarkeningDataset360,

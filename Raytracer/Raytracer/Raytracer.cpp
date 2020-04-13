@@ -22,21 +22,14 @@ bool Raytracer::trace(const Vec3f & orig, const Vec3f & dir, const std::vector<s
 }
 
 /* Cast a ray to the scene */
-Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vector<std::unique_ptr<Object>>& objects, bool & hit)
+Vec3f Raytracer::castRaySolid(const Vec3f & orig, const Vec3f & dir, const std::vector<std::unique_ptr<Object>>& objects, bool & hit)
 {
 	hit = false;
 	Vec3f hitColor = 0;
 	Object *hitObject = nullptr; // this is a pointer to the hit object
 	float t; // this is the intersection distance from the ray origin to the hit point
 	if (trace(orig, dir, objects, t, hitObject)) {
-		if (dynamic_cast<VolumetricObject*>(hitObject)) {
-			//Volumetric shape
-			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
-			float transmittence = obj->density(orig, dir, t);
-			hitColor = Vec3f(transmittence, transmittence, transmittence); //temp debug output
-		}
-		else {
-			//Regular shape
+		if (!dynamic_cast<VolumetricObject*>(hitObject)) {
 			Vec3f Phit = orig + dir * t;
 			Vec3f Nhit;
 			Vec2f tex;
@@ -44,8 +37,27 @@ Vec3f Raytracer::castRay(const Vec3f & orig, const Vec3f & dir, const std::vecto
 			float scale = 4;
 			float pattern = (fmodf(tex.x * scale, 1) > 0.5) ^ (fmodf(tex.y * scale, 1) > 0.5);
 			hitColor = std::max(0.f, Nhit.dotProduct(-dir)) * mix(hitObject->colour, hitObject->colour * 0.8, pattern);
+
+			hit = true;
 		}
-		hit = true;
+	}
+
+	return hitColor;
+}
+Vec3f Raytracer::castRayAdditive(const Vec3f& orig, const Vec3f& dir, const std::vector<std::unique_ptr<Object>>& objects, bool& hit)
+{
+	hit = false;
+	Vec3f hitColor = 0;
+	Object* hitObject = nullptr; // this is a pointer to the hit object
+	float t; // this is the intersection distance from the ray origin to the hit point
+	if (trace(orig, dir, objects, t, hitObject)) {
+		if (dynamic_cast<VolumetricObject*>(hitObject)) {
+			//Volumetric shape
+			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
+			float tempColour = obj->density(orig, dir, t) / 40; //magic number to make test set work with hosek-wilkie brightness
+			hitColor = Vec3f(tempColour, tempColour, tempColour); //temp debug output
+			hit = (hitColor.x != 0.0f); //temp
+		}
 	}
 
 	return hitColor;
@@ -68,7 +80,7 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 	// horizon--not the zenith, as it is elsewhere in pbrt.
 	Vec3f sunDir(0., std::sin(elevation), std::cos(elevation));
 
-	int nTheta = resolution, nPhi = 2 * nTheta;
+	int nTheta = height*2, nPhi = 2 * nTheta; /*SETTING HEIGHT TO BE *2 SO WE DONT GET BLACK VALUES BELOW ZENITH IN FINAL*/
 	std::vector<float> img(3 * nTheta * nPhi, 0.f);
 
 	for (int t = 0; t < nTheta; t++) {
@@ -87,13 +99,25 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 			for (int c = 0; c < num_channels; ++c) {
 				float val = arhosekskymodel_solar_radiance(
 					skymodel_state[c], theta, gamma, lambda[c]);
-				// For each of red, green, and blue, average the three
-				// values for the three wavelengths for the color.
-				// TODO: do a better spectral->RGB conversion.
 				img[3 * (t * nPhi + p) + c / 3] += val / 3.f;
 			}
 		}
 	}
+
+	/*
+	std::ifstream ofs0("image.bin", std::ios::in | std::ios::binary);
+	std::vector<float> img_test = std::vector<float>();
+	for (int x = 0; x < width; x++) {
+		for (int y = 0; y < height; y++) {
+			for (int i = 0; i < 3; i++) {
+				float thisColour;
+				ofs0.read(reinterpret_cast<char*>(&thisColour), sizeof(float));
+				img_test.push_back(thisColour);
+			}
+		}
+	}
+	ofs0.close();
+	*/
 
 	Vec3f *framebuffer = new Vec3f[width * height];
 	Vec3f *pix = framebuffer;
@@ -110,12 +134,22 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 			cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
 			dir.normalize();
 
-			bool hit = false;
-			Vec3f col = castRay(orig, dir, objects, hit);
-			if (!hit) {
-				//If we didn't hit, take the background sky colour (TODO: FIX THIS!)
-				//col = Vec3f(((img[3 * j * i] / 10) / 2) / 255, ((img[(3 * j * i) + 1] / 10) / 2) / 255, ((img[(3 * j * i) + 2] / 10) / 2) / 255);
-				col = Vec3f(0, 0, 0);
+			bool hitSolid = false;
+			bool hitAdditive = false;
+			Vec3f col = castRaySolid(orig, dir, objects, hitSolid);
+			col = col + castRayAdditive(orig, dir, objects, hitAdditive);
+			if (!hitSolid) {
+				//If we didn't hit a solid object, take the background sky colour - adds to our additive, or blank if hit none
+				col = col + Vec3f(
+					img[(3 * ((j * nPhi) + i)) + 0],
+					img[(3 * ((j * nPhi) + i)) + 1],
+					img[(3 * ((j * nPhi) + i)) + 2]);
+				/*
+				col = Vec3f(
+					img_test[(3 * ((i * height) + j)) + 0],
+					img_test[(3 * ((i * height) + j)) + 1],
+					img_test[(3 * ((i * height) + j)) + 2]);
+					*/
 			}
 			*(pix++) = col;
 		}
