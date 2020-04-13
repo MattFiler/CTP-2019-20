@@ -15,6 +15,9 @@ int main(int argc, char **argv)
 	std::fstream config_file("config.json");
 	config_file >> config;
 
+	//Global configs
+	Globals::sunDirection = Vec3f(config["sun_direction"]["x"], config["sun_direction"]["y"], config["sun_direction"]["z"]); //todo: pull this together with sky model?
+
 	//Work out camera to world matrix
 	DirectX::XMFLOAT3 rotation = DirectX::XMFLOAT3(
 		DirectX::XMConvertToRadians(config["camera_rotation"]["x"]), 
@@ -42,7 +45,10 @@ int main(int argc, char **argv)
 		(float)config["render_resolution"]["width"],
 		(float)config["render_resolution"]["height"],
 		(float)config["camera_fov"],
-		cameraToWorld);
+		cameraToWorld,
+		(float)config["sky_model"]["ground_albedo"],
+		(float)config["sky_model"]["turbidity"],
+		Radians((float)config["sky_model"]["sun_elevation"]));
 
 	//Initialise random
 	std::random_device rd;

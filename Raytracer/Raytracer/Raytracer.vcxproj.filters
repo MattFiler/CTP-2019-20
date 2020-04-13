@@ -78,6 +78,9 @@
     <ClInclude Include="nlohmann\json.hpp">
       <Filter>Header Files\nlohmann</Filter>
     </ClInclude>
+    <ClInclude Include="globals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="spectrum.cpp">
@@ -109,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="VolumetricObject.cpp">
       <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="globals.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
