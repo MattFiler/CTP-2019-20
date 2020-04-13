@@ -195,6 +195,7 @@ namespace StreetviewRipper
             string Library_LDR2HDR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_LDR2HDR + "run.bat";
             string Library_Classifier = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_Classifier + "Classify.exe";
             string Library_HDRUpscaler = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRUpscaler /*+ "hdr_upscaler.m"*/;
+            string Library_HDRUpscaler_M = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDRUpscaler + "hdr_upscaler.m";
             string Library_ToFisheye = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_IM + "tools/convert.exe";
             string Library_HDR2EXR = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_HDR2EXR /*+ "hdr2exr.py"*/;
 
@@ -338,12 +339,14 @@ namespace StreetviewRipper
             if (File.Exists(File_HDRUpscalerInputHDR)) File.Delete(File_HDRUpscalerInputHDR);
             File.Copy(File_ConvertedHDR, File_HDRUpscalerInputHDR);
             streetviewImage.Save(File_HDRUpscalerInputLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
-
-            MLApp.MLApp matlab = new MLApp.MLApp();
-            matlab.Execute(@"cd '" + Library_HDRUpscaler + "'");
-            object result = null;
-            matlab.Feval("hdr_upscaler", 0, out result);
-            matlab.Quit();
+            
+            processInfo = new ProcessStartInfo(@"D:\Program Files\bin\matlab.exe", "-wait -r \"cd '" + Library_HDRUpscaler + "'; try, run ('" + Library_HDRUpscaler_M + "'); end; quit\"");
+            processInfo.WorkingDirectory = @"D:\Program Files\bin";
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            process = Process.Start(processInfo);
+            process.WaitForExit();
+            process.Close();
 
             File.Delete(File_HDRUpscalerInputHDR);
             File.Delete(File_HDRUpscalerInputLDR);
