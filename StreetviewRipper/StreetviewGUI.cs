@@ -32,6 +32,7 @@ namespace StreetviewRipper
             InitializeComponent();
             imageQuality.SelectedIndex = selectedQuality;
             straightBias.SelectedIndex = (int)selectedBias;
+            neighbourSkip.Value = neighboursToSkip;
         }
 
         /* Start downloading */
@@ -41,7 +42,10 @@ namespace StreetviewRipper
             stopThreadedDownload.Enabled = true;
             downloadStreetview.Enabled = false;
             processImages.Enabled = false;
+            doRecursion.Enabled = false;
+            neighbourSkip.Enabled = false;
             straightBias.Enabled = false;
+            neighbourSkip.Enabled = false;
             imageQuality.Enabled = false;
             streetviewURL.Enabled = false;
 
@@ -51,6 +55,8 @@ namespace StreetviewRipper
             selectedQuality = imageQuality.SelectedIndex;
             shouldStop = false;
             selectedBias = (StraightLineBias)straightBias.SelectedIndex;
+            neighboursToSkip = (int)neighbourSkip.Value;
+            sinceLastDownload = neighboursToSkip + 1;
             downloadedIDs.Clear();
             List<string> streetviewIDs = new List<string>();
             foreach (string thisURL in streetviewURL.Lines)
@@ -74,7 +80,7 @@ namespace StreetviewRipper
                     if (id != "")
                     {
                         JArray neighbours = DownloadStreetview(id);
-                        DownloadNeighbours(neighbours);
+                        if (neighbours != null) DownloadNeighbours(neighbours);
                     }
                 }
             }
@@ -83,8 +89,12 @@ namespace StreetviewRipper
             //Downloads are done, re-enable UI
             stoppingText.Visible = false;
             downloadStreetview.Enabled = true;
+            stopThreadedDownload.Enabled = false;
             straightBias.Enabled = true;
+            neighbourSkip.Enabled = true;
             if (canEnableProcessing) processImages.Enabled = true;
+            doRecursion.Enabled = true;
+            neighbourSkip.Enabled = true;
             imageQuality.Enabled = true;
             streetviewURL.Enabled = true;
             streetviewURL.Text = "";
@@ -266,14 +276,19 @@ namespace StreetviewRipper
                 UpdateDownloadStatusText("finished!");
                 downloadCount++;
                 UpdateDownloadCountText(downloadCount);
-                return thisMeta["neighbours"].Value<JArray>();
+                if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
+                else return null;
             }
 
             //Should we continue to process, or skip this? (we skip some neighbours for processing to get a wider sample)
             if (sinceLastDownload <= neighboursToSkip)
             {
+                UpdateDownloadStatusText("finished!");
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
                 sinceLastDownload++;
-                return thisMeta["neighbours"].Value<JArray>();
+                if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
+                else return null;
             }
             sinceLastDownload = 0;
 
@@ -710,7 +725,8 @@ namespace StreetviewRipper
             downloadCount++;
             UpdateDownloadCountText(downloadCount);
             UpdateDownloadStatusText("finished!");
-            return thisMeta["neighbours"].Value<JArray>();
+            if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
+            else return null;
         }
         
         /* Produce a Hosek Wilkie sky model (TURBIDITY CAN BE 1.7-10, ALBEDO CAN BE 0-1) and return average blue value */
@@ -944,6 +960,7 @@ namespace StreetviewRipper
                 processImages.Checked = false;
                 processImages.Enabled = false;
                 straightBias.Enabled = false;
+                neighbourSkip.Enabled = false;
                 canEnableProcessing = false;
             }
         }
@@ -952,6 +969,11 @@ namespace StreetviewRipper
         private void processImages_CheckedChanged(object sender, EventArgs e)
         {
             straightBias.Enabled = processImages.Checked;
+            neighbourSkip.Enabled = (processImages.Checked && doRecursion.Checked);
+        }
+        private void doRecursion_CheckedChanged(object sender, EventArgs e)
+        {
+            neighbourSkip.Enabled = (processImages.Checked && doRecursion.Checked);
         }
 
         /* Get a file path without filename from string */
