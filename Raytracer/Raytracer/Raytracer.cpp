@@ -54,7 +54,7 @@ Vec3f Raytracer::castRayAdditive(const Vec3f& orig, const Vec3f& dir, const std:
 		if (dynamic_cast<VolumetricObject*>(hitObject)) {
 			//Volumetric shape
 			VolumetricObject* obj = static_cast<VolumetricObject*>(hitObject);
-			float tempColour = obj->density(orig, dir, t) / 40; //magic number to make test set work with hosek-wilkie brightness
+			float tempColour = obj->density(orig, dir, t) / 60; //magic number to make test set work with hosek-wilkie brightness
 			hitColor = Vec3f(tempColour, tempColour, tempColour); //temp debug output
 			hit = (hitColor.x != 0.0f); //temp
 		}
@@ -104,21 +104,6 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 		}
 	}
 
-	/*
-	std::ifstream ofs0("image.bin", std::ios::in | std::ios::binary);
-	std::vector<float> img_test = std::vector<float>();
-	for (int x = 0; x < width; x++) {
-		for (int y = 0; y < height; y++) {
-			for (int i = 0; i < 3; i++) {
-				float thisColour;
-				ofs0.read(reinterpret_cast<char*>(&thisColour), sizeof(float));
-				img_test.push_back(thisColour);
-			}
-		}
-	}
-	ofs0.close();
-	*/
-
 	Vec3f *framebuffer = new Vec3f[width * height];
 	Vec3f *pix = framebuffer;
 	float scale = tan(deg2rad(fov * 0.5));
@@ -137,20 +122,16 @@ void Raytracer::render(const std::vector<std::unique_ptr<Object>>& objects, bool
 			bool hitSolid = false;
 			bool hitAdditive = false;
 			Vec3f col = castRaySolid(orig, dir, objects, hitSolid);
-			col = col + castRayAdditive(orig, dir, objects, hitAdditive);
 			if (!hitSolid) {
-				//If we didn't hit a solid object, take the background sky colour - adds to our additive, or blank if hit none
 				col = col + Vec3f(
 					img[(3 * ((j * nPhi) + i)) + 0],
 					img[(3 * ((j * nPhi) + i)) + 1],
 					img[(3 * ((j * nPhi) + i)) + 2]);
-				/*
-				col = Vec3f(
-					img_test[(3 * ((i * height) + j)) + 0],
-					img_test[(3 * ((i * height) + j)) + 1],
-					img_test[(3 * ((i * height) + j)) + 2]);
-					*/
 			}
+			col = col + castRayAdditive(orig, dir, objects, hitAdditive);
+			if (col.x < 0) col.x = 0.0f;
+			if (col.y < 0) col.y = 0.0f;
+			if (col.z < 0) col.z = 0.0f;
 			*(pix++) = col;
 		}
 	}
