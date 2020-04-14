@@ -24,6 +24,9 @@ namespace StreetviewRipper
         StraightLineBias selectedBias = StraightLineBias.MIDDLE;
         List<string> downloadedIDs = new List<string>();
 
+        int sinceLastDownload = 0;
+        int neighboursToSkip = 100;
+
         public StreetviewGUI()
         {
             InitializeComponent();
@@ -265,6 +268,14 @@ namespace StreetviewRipper
                 UpdateDownloadCountText(downloadCount);
                 return thisMeta["neighbours"].Value<JArray>();
             }
+
+            //Should we continue to process, or skip this? (we skip some neighbours for processing to get a wider sample)
+            if (sinceLastDownload <= neighboursToSkip)
+            {
+                sinceLastDownload++;
+                return thisMeta["neighbours"].Value<JArray>();
+            }
+            sinceLastDownload = 0;
 
             //Calculate metadata
             UpdateDownloadStatusText("calculating streetview metadata...");
