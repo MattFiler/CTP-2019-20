@@ -24,7 +24,7 @@ public:
 
 	bool intersect(const Vec3f& orig, const Vec3f& dir, float& t);
 	void getSurfaceData(const Vec3f& Phit, Vec3f& Nhit, Vec2f& tex) {} //not in use atm
-	float density(const Vec3f& orig, const Vec3f& dir, float t);
+	float density(const Vec3f& orig, const Vec3f& dir, float t, bool computeToSun = true);
 
 private:
 	float densityToSun(const Vec3f& orig) {
