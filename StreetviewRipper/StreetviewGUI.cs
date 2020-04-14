@@ -340,8 +340,8 @@ namespace StreetviewRipper
             File.Copy(File_ConvertedHDR, File_HDRUpscalerInputHDR);
             streetviewImage.Save(File_HDRUpscalerInputLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
             
-            processInfo = new ProcessStartInfo(@"D:\Program Files\bin\matlab.exe", "-wait -r \"cd '" + Library_HDRUpscaler + "'; try, run ('" + Library_HDRUpscaler_M + "'); end; quit\"");
-            processInfo.WorkingDirectory = @"D:\Program Files\bin";
+            processInfo = new ProcessStartInfo(@"E:\Program Files\MATLAB\bin\matlab.exe", "-wait -r \"cd '" + Library_HDRUpscaler + "'; try, run ('" + Library_HDRUpscaler_M + "'); end; quit\"");
+            processInfo.WorkingDirectory = @"E:\Program Files\MATLAB\bin";
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             process = Process.Start(processInfo);
