@@ -2,7 +2,7 @@
 
 ### Main projects
 - **StreetviewRipper**: tool for downloading Streetview images and optionally processing them
-- **Raytracer***: project for producing renders of volumetric data structures
+- **Raytracer**: project for producing renders of volumetric data structures
 
 ### To set up
 To allow processing images in StreetviewRipper:
