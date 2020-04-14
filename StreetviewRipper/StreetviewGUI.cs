@@ -25,7 +25,7 @@ namespace StreetviewRipper
         List<string> downloadedIDs = new List<string>();
 
         int sinceLastDownload = 0;
-        int neighboursToSkip = 100;
+        int neighboursToSkip = 25;
 
         public StreetviewGUI()
         {
@@ -281,7 +281,7 @@ namespace StreetviewRipper
             }
 
             //Should we continue to process, or skip this? (we skip some neighbours for processing to get a wider sample)
-            if (sinceLastDownload <= neighboursToSkip)
+            if (sinceLastDownload == neighboursToSkip)
             {
                 UpdateDownloadStatusText("finished!");
                 downloadCount++;
@@ -290,7 +290,7 @@ namespace StreetviewRipper
                 if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
                 else return null;
             }
-            sinceLastDownload = 0;
+            sinceLastDownload = 1;
 
             //Calculate metadata
             UpdateDownloadStatusText("calculating streetview metadata...");
