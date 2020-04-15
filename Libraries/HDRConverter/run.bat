@@ -1,1 +1,2 @@
+call conda activate streetviewripper
 python hdrconverter.py

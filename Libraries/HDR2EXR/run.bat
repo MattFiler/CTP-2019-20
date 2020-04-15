@@ -1,2 +1,2 @@
-call conda activate tensorflow_cpu
+call conda activate streetviewripper
 python hdr2exr.py

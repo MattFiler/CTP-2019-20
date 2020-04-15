@@ -31,7 +31,9 @@ This repo contains all project files for my dissertation: a skybox generation to
     - `pip install --ignore-installed --upgrade tensorflow==1.14`
     - `pip install scipy==1.2.0`
     - `conda install pillow`
-- You may also need to run `conda init cmd.exe` in command prompt
+	- `conda install imageio`
+- Open command prompt and execute:
+	- `conda init cmd.exe`
     
 **To be able to build the raytracer:**
 
