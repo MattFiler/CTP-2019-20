@@ -27,11 +27,12 @@ This repo contains all project files for my dissertation: a skybox generation to
 - Open Anaconda and execute:
     - `conda create -n streetviewripper pip python=3.7`
     - `conda activate streetviewripper`
+    - `conda install numpy`
     - `conda install opencv`
-    - `pip install --ignore-installed --upgrade tensorflow==1.14`
-    - `pip install scipy==1.2.0`
     - `conda install pillow`
 	- `conda install imageio`
+    - `pip install --ignore-installed --upgrade tensorflow==1.14`
+    - `pip install scipy==1.2.0`
 - Open command prompt and execute:
 	- `conda init cmd.exe`
     
