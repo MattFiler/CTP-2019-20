@@ -485,131 +485,8 @@ namespace StreetviewRipper
             }
             skyModelHDRTrim.Save(File_SkyHDRTrim);
 
-            //Re-write the upscaled & cropped HDR image as a fisheye ready for classifying
-            UpdateDownloadStatusText("converting streetview to fisheye...");
-            File.Copy(File_TrimmedHDR, File_ToFisheyeInput, true);
-            
-            string FisheyeFolder = GetPathWithoutFilename(Library_ToFisheye);
-            FisheyeFolder = FisheyeFolder.Substring(0, FisheyeFolder.Length - 6); //Remove "tools/"
-            File.WriteAllText(FisheyeFolder + "run.bat", 
-                "\"tools/convert.exe\" -quiet infile.hdr +repage -roll +" + (hdrCropped.Width/2) + "+0 -rotate 180 temp.mpc" + Environment.NewLine +
-                "\"tools/convert.exe\" -size " + hdrCropped.Height + "x" + hdrCropped.Height + " xc: temp.mpc -virtual-pixel background -background black " +
-                "-monitor -fx \"xd=(i-" + (Math.Floor(hdrCropped.Height / 2.0) - 1) + "); yd=(j-" + (Math.Floor(hdrCropped.Height / 2.0) - 1) + "); rd=hypot(xd,yd); " +
-                "theta=atan2(yd,xd); phiang=asin(2*rd/" + hdrCropped.Height + "); xs=" + (Math.Floor(hdrCropped.Width / 2.0) - 1) + "+theta*" + Math.Round(hdrCropped.Width / (2 * Math.PI), 2) + "; " +
-                "ys=" + hdrCropped.Height + "-phiang*" + Math.Round(hdrCropped.Height / (Math.PI / 2), 2) + "; (rd>" + (Math.Floor(hdrCropped.Height / 2.0) - 1) + ") ?black:v.p{xs,ys}\" " +
-                "+monitor -rotate -90 outfile.hdr");
-
-            processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + FisheyeFolder + "run.bat\"");
-            processInfo.WorkingDirectory = FisheyeFolder;
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            File.Delete(File_ToFisheyeInput);
-            if (File.Exists(FisheyeFolder + "temp.mpc")) File.Delete(FisheyeFolder + "temp.mpc");
-            if (File.Exists(FisheyeFolder + "temp.cache")) File.Delete(FisheyeFolder + "temp.cache");
-
-            //If we didn't get a fisheye back, we probably don't have ImageMagick installed (shouldn't need to now, but just in case)
-            if (!File.Exists(File_ToFisheyeOutput))
-            {
-                MessageBox.Show("Could not distort to fisheye.\nCheck ImageMagick is installed!", "Conversion error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                shouldStop = true;
-                downloadCount++;
-                UpdateDownloadCountText(downloadCount);
-                UpdateDownloadStatusText("failed on fisheye conversion stage!");
-                return null;
-            }
-            if (File.Exists(File_FisheyeHDR)) File.Delete(File_FisheyeHDR);
-            File.Move(File_ToFisheyeOutput, File_FisheyeHDR);
-
-            //Classify the processed image
-            UpdateDownloadStatusText("classifying cloud formations...");
-            if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
-            if (File.Exists(File_ClassifierOutput)) File.Delete(File_ClassifierOutput);
-            File.Copy(File_FisheyeHDR, File_ClassifierInput, true);
-
-            processInfo = new ProcessStartInfo(Library_Classifier, "5 400 100 0 " + id + " " + id + "_classified");
-            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_Classifier);
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            if (File.Exists(File_ClassifiedHDR)) File.Delete(File_ClassifiedHDR);
-            if (File.Exists(File_ClassifierOutput)) File.Move(File_ClassifierOutput, File_ClassifiedHDR);
-            if (File.Exists(File_ClassifierInput)) File.Delete(File_ClassifierInput);
-
-            //If we didn't get anything back from the classifier, we have a larger issue (memory?)
-            if (!File.Exists(File_ClassifiedHDR))
-            {
-                MessageBox.Show("Failed to classify!", "Classifier error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                shouldStop = true;
-                downloadCount++;
-                UpdateDownloadCountText(downloadCount);
-                UpdateDownloadStatusText("failed on classifier stage!");
-                return null;
-            }
-
-            //Dewarp the classified image
-            UpdateDownloadStatusText("dewarping classified streetview image...");
-            HDRImage classifiedHDR = new HDRImage();
-            classifiedHDR.Open(File_ClassifiedHDR);
-            HDRImage classifiedHDRDewarped = DewarpFisheyeHDR(classifiedHDR);
-            classifiedHDRDewarped.Save(File_ClassifiedDewarpedHDR);
-
-            File.Copy(File_ClassifiedDewarpedHDR, File_HDR2EXRInput, true);
-
-            //Convert de-warped classified image to EXR from HDR
-            UpdateDownloadStatusText("converting classified to EXR...");
-            processInfo = new ProcessStartInfo("cmd.exe", "/c \"run.bat\"");
-            processInfo.WorkingDirectory = Library_HDR2EXR;
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            File.Delete(File_HDR2EXRInput);
-            File.Copy(File_HDR2EXROutput, GetPathWithoutFilename(Library_EXR2LDR) + "input.exr", true);
-            File.Delete(File_HDR2EXROutput);
-
-            //Convert de-warped classified image to LDR from EXR
-            UpdateDownloadStatusText("converting classified to LDR...");
-            processInfo = new ProcessStartInfo(Library_EXR2LDR, "input.exr output.png");
-            processInfo.WorkingDirectory = GetPathWithoutFilename(Library_EXR2LDR);
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            process = Process.Start(processInfo);
-            process.WaitForExit();
-            process.Close();
-
-            File.Delete(GetPathWithoutFilename(Library_EXR2LDR) + "input.exr");
-            if (File.Exists(File_ClassifiedDewarpedLDR)) File.Delete(File_ClassifiedDewarpedLDR);
-            File.Move(GetPathWithoutFilename(Library_EXR2LDR) + "output.png", File_ClassifiedDewarpedLDR);
-
-            //Resize LDR classifier, and reduce compression/resize artifacting by matching closest colours
-            UpdateDownloadStatusText("resizing classified LDR...");
-            Bitmap dewarpedClassifier = ResizeImage(Image.FromFile(File_ClassifiedDewarpedLDR), hdrCropped.Width, hdrCropped.Height);
-            dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResize);
-            UpdateDownloadStatusText("cleaning classified LDR...");
-            for (int x = 0; x < dewarpedClassifier.Width; x++)
-            {
-                for (int y = 0; y < dewarpedClassifier.Height; y++)
-                {
-                    dewarpedClassifier.SetPixel(x, y, RoundClassifierColourValue(dewarpedClassifier.GetPixel(x, y)));
-                }
-            }
-            dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResizeCorrected);
-            UpdateDownloadStatusText("adjusting classified LDR...");
-            shiftDist = (int)(dewarpedClassifier.Width / 4);
-            dewarpedClassifier = processor.ShiftImageLeft(dewarpedClassifier, shiftDist);
-            dewarpedClassifier.Save(File_ClassifiedDewarpedLDRResizeAdjusted);
-
-            //Extra classifier step: try and guess stratocumulus clouds based on red/blue division
-            UpdateDownloadStatusText("performing additional classifier...");
+            //Try and guess stratocumulus clouds based on red/blue division
+            UpdateDownloadStatusText("calculating cloud mask...");
             Bitmap classifierOverlay = new Bitmap(hdrCropped.Width, hdrCropped.Height);
             avgBlue = 0.0f; float avgRed = 0.0f; float avgGreen = 0.0f; float avgBright = 0.0f; float avgRBDiv = 0.0f;
             int divMod = 0;
@@ -658,45 +535,41 @@ namespace StreetviewRipper
             classifierOverlay.Save(File_ClassifiedExtended);
 
             //Apply the extra classification ontop of the original classifier output
-            UpdateDownloadStatusText("applying extra classification...");
-            Bitmap finalClassifier = new Bitmap(classifierOverlay.Width, classifierOverlay.Height);
+            UpdateDownloadStatusText("saving cloud mask bin...");
             List<byte> binMapForUs = new List<byte>();
             BinaryWriter outputBinMap = new BinaryWriter(File.OpenWrite(File_CloudMapBinary));
             outputBinMap.BaseStream.SetLength(0);
-            outputBinMap.Write(finalClassifier.Width);
-            outputBinMap.Write(finalClassifier.Height);
-            for (int x = 0; x < finalClassifier.Width; x++)
+            outputBinMap.Write(classifierOverlay.Width);
+            outputBinMap.Write(classifierOverlay.Height);
+            for (int x = 0; x < classifierOverlay.Width; x++)
             {
-                for (int y = 0; y < finalClassifier.Height; y++)
+                for (int y = 0; y < classifierOverlay.Height; y++)
                 {
                     Color thisColour = classifierOverlay.GetPixel(x, y);
-                    if (thisColour.R == 0 && thisColour.G == 0 && thisColour.B == 0) 
+                    if (thisColour.R == 0 && thisColour.G == 0 && thisColour.B == 0)
                     {
-                        finalClassifier.SetPixel(x, y, dewarpedClassifier.GetPixel(x, y));
                         outputBinMap.Write((byte)0);
                         binMapForUs.Add((byte)0);
                     }
                     else
                     {
-                        finalClassifier.SetPixel(x, y, thisColour);
                         outputBinMap.Write((byte)1);
                         binMapForUs.Add((byte)1);
                     }
                 }
             }
             outputBinMap.Close();
-            finalClassifier.Save(File_ClassifiedExtendedMix);
 
             //Perform the inscattering equation on the de-fisheyed LDR
             UpdateDownloadStatusText("calculating streetview cloud data...");
-            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, finalClassifier, skyModelHDRTrim); 
+            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, classifierOverlay, skyModelHDRTrim); 
             InscatteringResult inscatterResult = inscatteringCalc.RunInscatteringFormula();
 
             //Output debug results from inscattering
             inscatterResult.CloudDepthLocationDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.png");
             inscatterResult.CloudInscatteringColourDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_colour_debug.png");
             File.WriteAllLines(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.txt", inscatterResult.CloudDepthValueDebug);
-            if (!(finalClassifier.Width == inscatterResult.CloudDepthLocationDebug.Width && finalClassifier.Height == inscatterResult.CloudDepthLocationDebug.Height))
+            if (!(classifierOverlay.Width == inscatterResult.CloudDepthLocationDebug.Width && classifierOverlay.Height == inscatterResult.CloudDepthLocationDebug.Height))
             {
                 //Don't think this should ever happen
                 MessageBox.Show("Failed to calculate inscattering!", "Image size error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -720,6 +593,56 @@ namespace StreetviewRipper
                 outputDepthBin.Write(thisVal);
             }
             outputDepthBin.Close();
+
+            //Cut out the clouds from all our data, based on our cloud mask
+            Directory.CreateDirectory(Properties.Resources.Output_Images + "PulledClouds/");
+            List <BoundingBox> checkedAreas = new List<BoundingBox>();
+            int cloudCount = 0;
+            for (int x = 0; x < classifierOverlay.Width; x++)
+            {
+                for (int y = 0; y < classifierOverlay.Height; y++)
+                {
+                    //If this pixel isn't black, it's a cloud mask
+                    Color thisPixel = classifierOverlay.GetPixel(x, y);
+                    if (!(thisPixel.R == 0 && thisPixel.G == 0 && thisPixel.B == 0))
+                    {
+                        //Double check this pixel isn't within a cloud bound we've already exported
+                        bool shouldCheck = true;
+                        foreach (BoundingBox thisArea in checkedAreas)
+                        {
+                            if (thisArea.Contains(new Point(x, y)))
+                            {
+                                shouldCheck = false;
+                                break;
+                            }
+                        }
+                        if (!shouldCheck) continue;
+
+                        //Work out the bounds of the cloud mask this pixel is within
+                        List<Point> linkedContents = ThisRegion(classifierOverlay, x, y);
+                        Point boundsTopLeft = GetMin(linkedContents);
+                        Point boundsBottomRight = GetMax(linkedContents);
+                        checkedAreas.Add(new BoundingBox(boundsTopLeft, boundsBottomRight));
+
+                        //Pull the mask's bounds out from the original images
+                        Point maskDims = new Point(boundsBottomRight.X - boundsTopLeft.X, boundsBottomRight.Y - boundsTopLeft.Y);
+                        if (maskDims.X == 0 || maskDims.Y == 0) continue;
+                        if (maskDims.X <= 40 || maskDims.Y <= 40) continue; //Images below this size are typically crap noise
+                        PullRegionLDR(classifierOverlay, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".CLOUD_MASK.png", ImageFormat.Png);
+                        PullRegionLDR(streetviewImageTrim, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".STREETVIEW_LDR.png", ImageFormat.Png);
+                        PullRegionHDR(hdrCropped, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".STREETVIEW_HDR.hdr");
+                        PullRegionHDR(skyModelHDRTrim, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".SKY_MODEL.hdr");
+                        List<byte> depthVals = new List<byte>();
+                        depthVals.AddRange(BitConverter.GetBytes(classifierOverlay.Width));
+                        depthVals.AddRange(BitConverter.GetBytes(classifierOverlay.Height)); 
+                        depthVals.AddRange(PullRegionDEPTHBIN(binMapForUs, boundsTopLeft, maskDims, new Point(classifierOverlay.Width, classifierOverlay.Height)));
+                        File.WriteAllBytes(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".DEPTH.bin", depthVals.ToArray());
+                        PullRegionLDR(inscatterResult.CloudInscatteringColourDebug, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".INSCATTER_COLOUR.png", ImageFormat.Png);
+
+                        cloudCount++;
+                    }
+                }
+            }
 
             //Done!
             downloadCount++;
@@ -815,6 +738,127 @@ namespace StreetviewRipper
                 }
             }
             return result_image;
+        }
+
+        static Bitmap PullRegionLDR(Bitmap originalImage, Point topLeft, Point widthAndHeight)
+        {
+            Bitmap toReturn = new Bitmap(widthAndHeight.X, widthAndHeight.Y);
+            for (int x = 0; x < widthAndHeight.X; x++)
+            {
+                for (int y = 0; y < widthAndHeight.Y; y++)
+                {
+                    toReturn.SetPixel(x, y, originalImage.GetPixel(topLeft.X + x, topLeft.Y + y));
+                }
+            }
+            return toReturn;
+        }
+        static HDRImage PullRegionHDR(HDRImage originalImage, Point topLeft, Point widthAndHeight)
+        {
+            HDRImage toReturn = new HDRImage();
+            toReturn.SetResolution(widthAndHeight.X, widthAndHeight.Y);
+            for (int x = 0; x < widthAndHeight.X; x++)
+            {
+                for (int y = 0; y < widthAndHeight.Y; y++)
+                {
+                    toReturn.SetPixel(x, y, originalImage.GetPixel(topLeft.X + x, topLeft.Y + y));
+                }
+            }
+            return toReturn;
+        }
+        static List<byte> PullRegionDEPTHBIN(List<byte> originalImage, Point topLeft, Point widthAndHeight, Point imageDims)
+        {
+            List<byte> toReturn = new List<byte>();
+            for (int x = 0; x < widthAndHeight.X; x++)
+            {
+                for (int y = 0; y < widthAndHeight.Y; y++)
+                {
+                    toReturn.Add(originalImage[((topLeft.Y + y) * imageDims.X) + (topLeft.X + x)]);
+                }
+            }
+            return toReturn;
+        }
+
+        /* thanks in part: https://stackoverflow.com/a/14897412 */
+        static List<Point> ThisRegion(Bitmap bitmap, int x, int y)
+        {
+            BitmapData data = bitmap.LockBits(
+                new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            int[] bits = new int[data.Stride / 4 * data.Height];
+            Marshal.Copy(data.Scan0, bits, 0, bits.Length);
+
+            LinkedList<Point> check = new LinkedList<Point>();
+            int floodTo = Color.Black.ToArgb();
+            int floodFrom = bits[x + y * data.Stride / 4];
+            bits[x + y * data.Stride / 4] = floodTo;
+
+            List<Point> toReturn = new List<Point>();
+            if (floodFrom != floodTo)
+            {
+                check.AddLast(new Point(x, y));
+                toReturn.Add(new Point(x, y));
+                while (check.Count > 0)
+                {
+                    Point cur = check.First.Value;
+                    check.RemoveFirst();
+
+                    foreach (Point off in new Point[] {
+                new Point(0, -1), new Point(0, 1),
+                new Point(-1, 0), new Point(1, 0)})
+                    {
+                        Point next = new Point(cur.X + off.X, cur.Y + off.Y);
+                        if (next.X >= 0 && next.Y >= 0 &&
+                            next.X < data.Width &&
+                            next.Y < data.Height)
+                        {
+                            if (bits[next.X + next.Y * data.Stride / 4] == floodFrom)
+                            {
+                                check.AddLast(next);
+                                if (!toReturn.Contains(next)) toReturn.Add(next);
+                                bits[next.X + next.Y * data.Stride / 4] = floodTo;
+                            }
+                        }
+                    }
+                }
+            }
+
+            bitmap.UnlockBits(data);
+            return toReturn;
+        }
+
+        static Point GetMin(List<Point> points)
+        {
+            Point topLeft = new Point(int.MaxValue, int.MaxValue);
+            foreach (Point thisPoint in points)
+            {
+                if (topLeft.X > thisPoint.X)
+                {
+                    topLeft.X = thisPoint.X;
+                }
+                if (topLeft.Y > thisPoint.Y)
+                {
+                    topLeft.Y = thisPoint.Y;
+                }
+            }
+            if (topLeft.X == int.MaxValue || topLeft.Y == int.MaxValue) return new Point(0, 0);
+            return topLeft;
+        }
+        static Point GetMax(List<Point> points)
+        {
+            Point bottomRight = new Point(-int.MaxValue, -int.MaxValue);
+            foreach (Point thisPoint in points)
+            {
+                if (bottomRight.X < thisPoint.X)
+                {
+                    bottomRight.X = thisPoint.X;
+                }
+                if (bottomRight.Y < thisPoint.Y)
+                {
+                    bottomRight.Y = thisPoint.Y;
+                }
+            }
+            if (bottomRight.X == -int.MaxValue || bottomRight.Y == -int.MaxValue) return new Point(0, 0);
+            return bottomRight;
         }
 
         /* Fill a region of colour in a bitmap (thanks: https://stackoverflow.com/a/14897412) */

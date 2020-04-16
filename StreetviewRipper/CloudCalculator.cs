@@ -22,6 +22,21 @@ namespace StreetviewRipper
         public Bitmap CloudInscatteringColourDebug;
     }
 
+    class BoundingBox
+    {
+        public BoundingBox(Point _tl, Point _br)
+        {
+            TopLeft = _tl;
+            BottomRight = _br;
+        }
+        public Point TopLeft;
+        public Point BottomRight;
+        public bool Contains(Point _point)
+        {
+            return ((_point.X >= TopLeft.X && _point.X <= BottomRight.X) && (_point.Y >= TopLeft.Y && _point.Y <= BottomRight.Y));
+        }
+    }
+
     class CloudCalculator
     {
         private HDRImage originalSkyImage;
