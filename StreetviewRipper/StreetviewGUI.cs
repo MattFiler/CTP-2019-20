@@ -620,7 +620,7 @@ namespace StreetviewRipper
                         checkedAreas.Add(new BoundingBox(boundsTopLeft, boundsBottomRight));
                         if (!regionResult.shouldoutput) continue; //If something took too long, we don't save it out, but keep track of it, so we don't do it again
 
-                        //Pull the mask's bounds out from the original images
+                        //Pull the mask's bounds out from the original images (WRITING METADATA FOR NOW, AS I THINK CLOUD DEPTH BIN IS WRITTEN WRONG)
                         Point maskDims = new Point(boundsBottomRight.X - boundsTopLeft.X, boundsBottomRight.Y - boundsTopLeft.Y);
                         if (maskDims.X == 0 || maskDims.Y == 0) continue;
                         if (maskDims.X <= 40 || maskDims.Y <= 40) continue; //Images below this size are typically crap noise
@@ -629,10 +629,13 @@ namespace StreetviewRipper
                         PullRegionHDR(hdrCropped, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".STREETVIEW_HDR.hdr");
                         PullRegionHDR(skyModelHDRTrim, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".SKY_MODEL.hdr");
                         List<byte> depthVals = new List<byte>();
-                        depthVals.AddRange(BitConverter.GetBytes(classifierOverlay.Width));
-                        depthVals.AddRange(BitConverter.GetBytes(classifierOverlay.Height)); 
+                        depthVals.AddRange(BitConverter.GetBytes(maskDims.X));
+                        depthVals.AddRange(BitConverter.GetBytes(maskDims.Y)); 
                         depthVals.AddRange(PullRegionDEPTHBIN(binMapForUs, boundsTopLeft, maskDims, new Point(classifierOverlay.Width, classifierOverlay.Height)));
                         File.WriteAllBytes(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".DEPTH.bin", depthVals.ToArray());
+                        BinaryWriter writer = new BinaryWriter(File.OpenWrite(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".METADATA.bin"));
+                        writer.Write(maskDims.X); writer.Write(maskDims.Y); writer.Write(boundsTopLeft.X); writer.Write(boundsTopLeft.Y);
+                        writer.Close();
                         PullRegionLDR(inscatterResult.CloudInscatteringColourDebug, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".INSCATTER_COLOUR.png", ImageFormat.Png);
                         PullRegionLDR(inscatterResult.CloudDepthLocationDebug, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".DEPTH_LOCATIONS.png", ImageFormat.Png);
 
