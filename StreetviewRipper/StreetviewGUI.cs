@@ -166,25 +166,13 @@ namespace StreetviewRipper
 
             //First up, here are all the files we'll be creating/dealing with
             string File_InitialLDR = Properties.Resources.Output_Images + id + ".jpg";
-            string File_ShiftedLDR = Properties.Resources.Output_Images + id + "_shifted.jpg";
-            string File_ShiftedLDRTrim = Properties.Resources.Output_Images + id + "_shifted_trim.jpg";
-            string File_DownscaledLDR = Properties.Resources.Output_Images + id + "_downscaled.jpg";
+            string File_ShiftedLDRTrim = Properties.Resources.Output_Images + id + "_trim.jpg";
             string File_Metadata = Properties.Resources.Output_Images + id + ".json";
             string File_SkyHDR = Properties.Resources.Output_Images + id + "_sky.exr";
             string File_SkyHDRTrim = Properties.Resources.Output_Images + id + "_sky_trim.hdr";
-            string File_SkyLDR = Properties.Resources.Output_Images + id + "_sky.png";
-            string File_SkyExtracted = Properties.Resources.Output_Images + id + "_removedsky.png";
             string File_ConvertedHDR = Properties.Resources.Output_Images + id + ".hdr";
-            string File_TrimmedHDR = Properties.Resources.Output_Images + id + "_upscaled_trim.hdr";
-            string File_FisheyeHDR = Properties.Resources.Output_Images + id + "_fisheye.hdr";
-            string File_ClassifiedHDR = Properties.Resources.Output_Images + id + "_fisheye_classified.hdr";
-            string File_ClassifiedDewarpedHDR = Properties.Resources.Output_Images + id + "_classified_1_dewarped.hdr";
-            string File_ClassifiedDewarpedLDR = Properties.Resources.Output_Images + id + "_classified_1_dewarped.png";
-            string File_ClassifiedDewarpedLDRResize = Properties.Resources.Output_Images + id + "_classified_2_resize.png";
-            string File_ClassifiedDewarpedLDRResizeCorrected = Properties.Resources.Output_Images + id + "_classified_3_corrected.png";
-            string File_ClassifiedDewarpedLDRResizeAdjusted = Properties.Resources.Output_Images + id + "_classified_4_adjusted.png";
-            string File_ClassifiedExtended = Properties.Resources.Output_Images + id + "_classified_5_extended.png";
-            string File_ClassifiedExtendedMix = Properties.Resources.Output_Images + id + "_classified_6_mixed.png";
+            string File_TrimmedHDR = Properties.Resources.Output_Images + id + "_trim.hdr";
+            string File_ClassifiedExtended = Properties.Resources.Output_Images + id + "_cloudmask.png";
 
             string File_CloudMapBinary = Properties.Resources.Output_Images + id + "_cloudmap.bin";
             string File_DepthValueBinary = Properties.Resources.Output_Images + id + "_depth.bin";
@@ -199,8 +187,6 @@ namespace StreetviewRipper
             string File_HDR2EXROutput = Properties.Resources.Library_HDR2EXR + "output.exr";
             string File_ToFisheyeInput = Properties.Resources.Library_IM + "infile.hdr";
             string File_ToFisheyeOutput = Properties.Resources.Library_IM + "outfile.hdr";
-            string File_ClassifierInput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + ".hdr";
-            string File_ClassifierOutput = Properties.Resources.Library_Classifier + "Input_Output_Files/" + id + "_classified.hdr";
 
             //And here are all the library executables we'll be using
             string Library_PBRT = AppDomain.CurrentDomain.BaseDirectory + Properties.Resources.Library_PBRT + "imgtool.exe";
@@ -317,7 +303,6 @@ namespace StreetviewRipper
             UpdateDownloadStatusText("adjusting streetview image LDR...");
             int shiftDist = (int)sunPos.x - (streetviewImage.Width / 4);
             streetviewImage = processor.ShiftImageLeft(streetviewImage, shiftDist);
-            streetviewImage.Save(File_ShiftedLDR, System.Drawing.Imaging.ImageFormat.Jpeg);
 
             //Trim the ground from the adjusted image
             UpdateDownloadStatusText("cropping streetview image LDR...");
@@ -404,7 +389,7 @@ namespace StreetviewRipper
                 }
             }
             hdrCropped.Save(File_TrimmedHDR);
-
+            
             //Work out our average blue value to match with Hosek Wilkie
             UpdateDownloadStatusText("calculating average HDR blue...");
             float avgBlue = 0.0f;
@@ -469,6 +454,11 @@ namespace StreetviewRipper
             {
                 File.Copy(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_10_0.5.exr", File_SkyHDR, true);
             }
+            File.Delete(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_2_0.5.exr");
+            File.Delete(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_4_0.5.exr");
+            File.Delete(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_6_0.5.exr");
+            File.Delete(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_8_0.5.exr");
+            File.Delete(File_SkyHDR.Substring(0, File_SkyHDR.Length - 4) + "_10_0.5.exr");
 
             //Trim sky model to match sky image height
             UpdateDownloadStatusText("cropping sky model...");
@@ -531,7 +521,7 @@ namespace StreetviewRipper
                     }
                 }
             }
-            //FloodFill(classifierOverlay, classifierOverlay.Width / 4, (int)sunPos.y, Color.Black);
+            FloodFill(classifierOverlay, classifierOverlay.Width / 4, (int)sunPos.y, Color.Black);
             classifierOverlay.Save(File_ClassifiedExtended);
 
             //Apply the extra classification ontop of the original classifier output
@@ -561,7 +551,7 @@ namespace StreetviewRipper
             outputBinMap.Close();
 
             //Perform the inscattering equation on the de-fisheyed LDR
-            UpdateDownloadStatusText("calculating streetview cloud data...");
+            UpdateDownloadStatusText("calculating inscattering and depth...");
             CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, classifierOverlay, skyModelHDRTrim); 
             InscatteringResult inscatterResult = inscatteringCalc.RunInscatteringFormula();
 
@@ -595,6 +585,7 @@ namespace StreetviewRipper
             outputDepthBin.Close();
 
             //Cut out the clouds from all our data, based on our cloud mask
+            UpdateDownloadStatusText("cutting out clouds...");
             Directory.CreateDirectory(Properties.Resources.Output_Images + "PulledClouds/");
             List <BoundingBox> checkedAreas = new List<BoundingBox>();
             int cloudCount = 0;
@@ -619,10 +610,12 @@ namespace StreetviewRipper
                         if (!shouldCheck) continue;
 
                         //Work out the bounds of the cloud mask this pixel is within
-                        List<Point> linkedContents = ThisRegion(classifierOverlay, x, y);
+                        FloodResult regionResult = ThisRegion(classifierOverlay, x, y);
+                        List<Point> linkedContents = regionResult.pointlist;
                         Point boundsTopLeft = GetMin(linkedContents);
                         Point boundsBottomRight = GetMax(linkedContents);
                         checkedAreas.Add(new BoundingBox(boundsTopLeft, boundsBottomRight));
+                        if (!regionResult.shouldoutput) continue; //If something took too long, we don't save it out, but keep track of it, so we don't do it again
 
                         //Pull the mask's bounds out from the original images
                         Point maskDims = new Point(boundsBottomRight.X - boundsTopLeft.X, boundsBottomRight.Y - boundsTopLeft.Y);
@@ -638,11 +631,16 @@ namespace StreetviewRipper
                         depthVals.AddRange(PullRegionDEPTHBIN(binMapForUs, boundsTopLeft, maskDims, new Point(classifierOverlay.Width, classifierOverlay.Height)));
                         File.WriteAllBytes(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".DEPTH.bin", depthVals.ToArray());
                         PullRegionLDR(inscatterResult.CloudInscatteringColourDebug, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".INSCATTER_COLOUR.png", ImageFormat.Png);
+                        PullRegionLDR(inscatterResult.CloudDepthLocationDebug, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".DEPTH_LOCATIONS.png", ImageFormat.Png);
 
                         cloudCount++;
                     }
                 }
             }
+
+            //Add cutout count to the json file
+            localMeta["cutout_clouds"] = cloudCount;
+            File.WriteAllText(File_Metadata, localMeta.ToString(Formatting.Indented));
 
             //Done!
             downloadCount++;
@@ -779,7 +777,7 @@ namespace StreetviewRipper
         }
 
         /* thanks in part: https://stackoverflow.com/a/14897412 */
-        static List<Point> ThisRegion(Bitmap bitmap, int x, int y)
+        static FloodResult ThisRegion(Bitmap bitmap, int x, int y)
         {
             BitmapData data = bitmap.LockBits(
                 new Rectangle(0, 0, bitmap.Width, bitmap.Height),
@@ -792,19 +790,28 @@ namespace StreetviewRipper
             int floodFrom = bits[x + y * data.Stride / 4];
             bits[x + y * data.Stride / 4] = floodTo;
 
-            List<Point> toReturn = new List<Point>();
+            FloodResult toReturn = new FloodResult();
             if (floodFrom != floodTo)
             {
                 check.AddLast(new Point(x, y));
-                toReturn.Add(new Point(x, y));
+                toReturn.pointlist.Add(new Point(x, y));
+
+                Stopwatch st = new Stopwatch();
+                st.Start();
                 while (check.Count > 0)
                 {
+                    if (st.Elapsed.Seconds >= 1) //Don't pull anything that's taking too long - going for quantity here!
+                    {
+                        toReturn.shouldoutput = false;
+                        break;
+                    }
+
                     Point cur = check.First.Value;
                     check.RemoveFirst();
 
                     foreach (Point off in new Point[] {
-                new Point(0, -1), new Point(0, 1),
-                new Point(-1, 0), new Point(1, 0)})
+                    new Point(0, -1), new Point(0, 1),
+                    new Point(-1, 0), new Point(1, 0)})
                     {
                         Point next = new Point(cur.X + off.X, cur.Y + off.Y);
                         if (next.X >= 0 && next.Y >= 0 &&
@@ -814,12 +821,13 @@ namespace StreetviewRipper
                             if (bits[next.X + next.Y * data.Stride / 4] == floodFrom)
                             {
                                 check.AddLast(next);
-                                if (!toReturn.Contains(next)) toReturn.Add(next);
+                                if (!toReturn.pointlist.Contains(next)) toReturn.pointlist.Add(next);
                                 bits[next.X + next.Y * data.Stride / 4] = floodTo;
                             }
                         }
                     }
                 }
+                st.Stop();
             }
 
             bitmap.UnlockBits(data);
