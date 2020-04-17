@@ -207,6 +207,16 @@ namespace StreetviewRipper
             int tileWidth = thisMeta["tile_size"][0].Value<int>();
             int tileHeight = thisMeta["tile_size"][1].Value<int>();
 
+            //Should we continue to process, or skip this? (we skip some neighbours for processing to get a wider sample)
+            if (sinceLastDownload < neighboursToSkip)
+            {
+                UpdateDownloadStatusText("skipped!");
+                sinceLastDownload++;
+                if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
+                else return null;
+            }
+            sinceLastDownload = 1;
+
             //Load every tile
             int xOffset = 0;
             int yOffset = 0;
@@ -265,18 +275,6 @@ namespace StreetviewRipper
                 if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
                 else return null;
             }
-
-            //Should we continue to process, or skip this? (we skip some neighbours for processing to get a wider sample)
-            if (sinceLastDownload == neighboursToSkip)
-            {
-                UpdateDownloadStatusText("finished!");
-                downloadCount++;
-                UpdateDownloadCountText(downloadCount);
-                sinceLastDownload++;
-                if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
-                else return null;
-            }
-            sinceLastDownload = 1;
 
             //Calculate metadata
             UpdateDownloadStatusText("calculating streetview metadata...");
