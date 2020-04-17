@@ -22,6 +22,27 @@ namespace StreetviewRipper
         public Bitmap CloudInscatteringColourDebug;
     }
 
+    class FloodResult
+    {
+        public List<Point> pointlist = new List<Point>();
+        public bool shouldoutput = true;
+    }
+
+    class BoundingBox
+    {
+        public BoundingBox(Point _tl, Point _br)
+        {
+            TopLeft = _tl;
+            BottomRight = _br;
+        }
+        public Point TopLeft;
+        public Point BottomRight;
+        public bool Contains(Point _point)
+        {
+            return ((_point.X >= TopLeft.X && _point.X <= BottomRight.X) && (_point.Y >= TopLeft.Y && _point.Y <= BottomRight.Y));
+        }
+    }
+
     class CloudCalculator
     {
         private HDRImage originalSkyImage;
@@ -178,6 +199,11 @@ namespace StreetviewRipper
         {
             Color classifiedColour = classifiedSkyImage.GetPixel((int)point.x, (int)point.y);
 
+            //New is just white and black - as no longer using Pinar's output
+            if (classifiedColour.R == 255 && classifiedColour.G == 255 && classifiedColour.B == 255) return 0.1222340 + 0.0000000844671; //STRATOCUMULUS
+            return 0.0f; //CLEAR_SKY
+
+            /*
             //NULL
             if (classifiedColour == Color.Black) return 0.0; 
             //STRATOCUMULUS
@@ -197,6 +223,7 @@ namespace StreetviewRipper
             }
             //CLEAR_SKY
             else return 0.0;
+            */
         }
     }
 }

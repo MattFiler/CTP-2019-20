@@ -1,8 +1,10 @@
 import numpy as np
 import imageio
 
+imageio.plugins.freeimage.download()
+
 def readHDR(file):
-    im = imageio.imread(file)
+    im = imageio.imread(file, format="hdr")
     return im
 
 def writeHDR(arr, outfilename):

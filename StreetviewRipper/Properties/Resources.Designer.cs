@@ -19,7 +19,7 @@ namespace StreetviewRipper.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -87,7 +87,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/Classify/.
+        ///   Looks up a localized string similar to ../../Libraries/Classify/.
         /// </summary>
         internal static string Library_Classifier {
             get {
@@ -96,7 +96,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/EXR2HDR/.
+        ///   Looks up a localized string similar to ../../Libraries/EXR2HDR/.
         /// </summary>
         internal static string Library_EXR2HDR {
             get {
@@ -105,7 +105,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/EXR2LDR/.
+        ///   Looks up a localized string similar to ../../Libraries/EXR2LDR/.
         /// </summary>
         internal static string Library_EXR2LDR {
             get {
@@ -114,7 +114,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/HDR2EXR/.
+        ///   Looks up a localized string similar to ../../Libraries/HDR2EXR/.
         /// </summary>
         internal static string Library_HDR2EXR {
             get {
@@ -123,7 +123,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/HDR2Float/.
+        ///   Looks up a localized string similar to ../../Libraries/HDR2Float/.
         /// </summary>
         internal static string Library_HDR2Float {
             get {
@@ -132,7 +132,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/HDRConverter/.
+        ///   Looks up a localized string similar to ../../Libraries/HDRConverter/.
         /// </summary>
         internal static string Library_HDRConverter {
             get {
@@ -141,7 +141,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/LDR2HDR_Upscaler/.
+        ///   Looks up a localized string similar to ../../Libraries/LDR2HDR_Upscaler/.
         /// </summary>
         internal static string Library_HDRUpscaler {
             get {
@@ -150,7 +150,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/ImageMagick/.
+        ///   Looks up a localized string similar to ../../Libraries/ImageMagick/.
         /// </summary>
         internal static string Library_IM {
             get {
@@ -159,7 +159,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/LDR2HDR/.
+        ///   Looks up a localized string similar to ../../Libraries/LDR2HDR/.
         /// </summary>
         internal static string Library_LDR2HDR {
             get {
@@ -168,7 +168,7 @@ namespace StreetviewRipper.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Libraries/PBRT/.
+        ///   Looks up a localized string similar to ../../Libraries/PBRT/.
         /// </summary>
         internal static string Library_PBRT {
             get {

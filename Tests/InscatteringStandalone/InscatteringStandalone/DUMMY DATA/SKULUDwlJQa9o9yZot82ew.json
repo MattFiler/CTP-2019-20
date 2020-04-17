@@ -1,0 +1,68 @@
+{
+  "location": [
+    "M5",
+    "England"
+  ],
+  "coordinates": [
+    51.281665322409,
+    -2.9077794957884
+  ],
+  "date": [
+    6,
+    2019
+  ],
+  "resolution": [
+    6656,
+    3328
+  ],
+  "history": [
+    {
+      "id": "W6TZnwVeKcMw2kFCu69EDQ",
+      "date": [
+        2017,
+        7
+      ]
+    },
+    {
+      "id": "gHTbg-xfLBmCMNdaa3KhdA",
+      "date": [
+        2012,
+        6
+      ]
+    },
+    {
+      "id": "JR-SBcj9sHTnvDOISj3Dng",
+      "date": [
+        2011,
+        8
+      ]
+    },
+    {
+      "id": "P7jaaIP0W-Wm8EN5d0ZmnQ",
+      "date": [
+        2008,
+        11
+      ]
+    },
+    {
+      "id": "1tc8ErjwyfuzqRKdfxeY3A",
+      "date": [
+        2016,
+        7
+      ]
+    },
+    {
+      "id": "AzzT4qxYtF7P8gb9akAtYg",
+      "date": [
+        2009,
+        7
+      ]
+    }
+  ],
+  "creator": "Google",
+  "ground_y": 1485,
+  "sun": [
+    5194,
+    1236
+  ]
+}
