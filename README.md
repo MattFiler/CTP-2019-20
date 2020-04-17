@@ -7,13 +7,14 @@ This repo contains all project files for my dissertation: a skybox generation to
 ### Main projects (by folder name)
 - **StreetviewRipper**: tool for downloading Streetview images and optionally processing them
 - **Raytracer**: project for producing renders of volumetric data structures
-- **WebAPI**: the PHP Streetview API used for StreetviewRipper ([hosted here](http://streetview.mattfiler.co.uk))
-- **DeepLearning**: deep learning code for learning and reproducing the cloud imagery
+- **WebAPI**: the PHP Streetview API used for StreetviewRipper
+- **DeepLearning**: unfinished deep learning tests
 
 ### Other folders
+- **Builds**: built binaries for both the StreetviewRipper and Raytracer projects
 - **Demo**: materials from the progress demo (poster/video)
 - **Libraries**: all libraries required by StreetviewRipper and Raytracer projects
-- **Misc Tests**: test projects, typically for refining processing steps
+- **Tests**: test projects, typically for refining processing steps
 
 
 ## Set up
@@ -26,10 +27,14 @@ This repo contains all project files for my dissertation: a skybox generation to
 - Open Anaconda and execute:
     - `conda create -n streetviewripper pip python=3.7`
     - `conda activate streetviewripper`
+    - `conda install numpy`
     - `conda install opencv`
+    - `conda install pillow`
+	- `conda install imageio`
     - `pip install --ignore-installed --upgrade tensorflow==1.14`
     - `pip install scipy==1.2.0`
-    - `conda install pillow`
+- Open command prompt and execute:
+	- `conda init cmd.exe`
     
 **To be able to build the raytracer:**
 
@@ -38,3 +43,9 @@ This repo contains all project files for my dissertation: a skybox generation to
 - Open command prompt inside vcpkg build folder and execute:
     - `vcpkg install openvdb:x64-windows`
     - `vcpkg integrate install`
+
+
+## Useful links
+
+- [Hosted Streetview Web API](http://streetview.mattfiler.co.uk)
+- [Load Streetview by ID](http://streetview.mattfiler.co.uk/loadpano.php)

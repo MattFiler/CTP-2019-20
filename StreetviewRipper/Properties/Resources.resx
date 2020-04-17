@@ -122,34 +122,34 @@
     <value>..\Resources\render.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
   <data name="Library_Classifier" xml:space="preserve">
-    <value>Libraries/Classify/</value>
+    <value>../../Libraries/Classify/</value>
   </data>
   <data name="Library_EXR2HDR" xml:space="preserve">
-    <value>Libraries/EXR2HDR/</value>
+    <value>../../Libraries/EXR2HDR/</value>
   </data>
   <data name="Library_EXR2LDR" xml:space="preserve">
-    <value>Libraries/EXR2LDR/</value>
+    <value>../../Libraries/EXR2LDR/</value>
   </data>
   <data name="Library_HDR2EXR" xml:space="preserve">
-    <value>Libraries/HDR2EXR/</value>
+    <value>../../Libraries/HDR2EXR/</value>
   </data>
   <data name="Library_HDR2Float" xml:space="preserve">
-    <value>Libraries/HDR2Float/</value>
+    <value>../../Libraries/HDR2Float/</value>
   </data>
   <data name="Library_HDRConverter" xml:space="preserve">
-    <value>Libraries/HDRConverter/</value>
+    <value>../../Libraries/HDRConverter/</value>
   </data>
   <data name="Library_HDRUpscaler" xml:space="preserve">
-    <value>Libraries/LDR2HDR_Upscaler/</value>
+    <value>../../Libraries/LDR2HDR_Upscaler/</value>
   </data>
   <data name="Library_IM" xml:space="preserve">
-    <value>Libraries/ImageMagick/</value>
+    <value>../../Libraries/ImageMagick/</value>
   </data>
   <data name="Library_LDR2HDR" xml:space="preserve">
-    <value>Libraries/LDR2HDR/</value>
+    <value>../../Libraries/LDR2HDR/</value>
   </data>
   <data name="Library_PBRT" xml:space="preserve">
-    <value>Libraries/PBRT/</value>
+    <value>../../Libraries/PBRT/</value>
   </data>
   <data name="Output_Histogram" xml:space="preserve">
     <value>Output/Histograms/</value>

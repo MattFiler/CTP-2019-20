@@ -23,6 +23,6 @@
 		"ground_albedo": 0.5,
 		"turbidity": 3.0,
 		"sun_elevation": 10
-	}
+	},
 	"temp_vdb": "D:\\wdas_cloud\\wdas_cloud_sixteenth.vdb"
 }
