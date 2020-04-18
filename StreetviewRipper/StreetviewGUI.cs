@@ -26,6 +26,7 @@ namespace StreetviewRipper
 
         int sinceLastDownload = 0;
         int neighboursToSkip = 25;
+        bool shouldCutOutClouds = true;
 
         public StreetviewGUI()
         {
@@ -45,7 +46,7 @@ namespace StreetviewRipper
             doRecursion.Enabled = false;
             neighbourSkip.Enabled = false;
             straightBias.Enabled = false;
-            neighbourSkip.Enabled = false;
+            cutCloudsOut.Enabled = false;
             imageQuality.Enabled = false;
             streetviewURL.Enabled = false;
 
@@ -57,6 +58,7 @@ namespace StreetviewRipper
             selectedBias = (StraightLineBias)straightBias.SelectedIndex;
             neighboursToSkip = (int)neighbourSkip.Value;
             sinceLastDownload = neighboursToSkip + 1;
+            shouldCutOutClouds = cutCloudsOut.Checked;
             downloadedIDs.Clear();
             List<string> streetviewIDs = new List<string>();
             foreach (string thisURL in streetviewURL.Lines)
@@ -91,10 +93,10 @@ namespace StreetviewRipper
             downloadStreetview.Enabled = true;
             stopThreadedDownload.Enabled = false;
             straightBias.Enabled = true;
-            neighbourSkip.Enabled = true;
-            if (canEnableProcessing) processImages.Enabled = true;
+            processImages.Enabled = true;
             doRecursion.Enabled = true;
             neighbourSkip.Enabled = true;
+            cutCloudsOut.Enabled = true;
             imageQuality.Enabled = true;
             streetviewURL.Enabled = true;
             streetviewURL.Text = "";
@@ -582,6 +584,15 @@ namespace StreetviewRipper
             }
             outputDepthBin.Close();
 
+            if (!shouldCutOutClouds)
+            {
+                UpdateDownloadStatusText("finished!");
+                downloadCount++;
+                UpdateDownloadCountText(downloadCount);
+                if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
+                else return null;
+            }
+
             //Cut out the clouds from all our data, based on our cloud mask
             UpdateDownloadStatusText("cutting out clouds...");
             Directory.CreateDirectory(Properties.Resources.Output_Images + "PulledClouds/");
@@ -638,6 +649,10 @@ namespace StreetviewRipper
                     }
                 }
             }
+
+            //Evaluate the cut-out clouds
+            UpdateDownloadStatusText("evaluating clouds...");
+            CloudEvaluation.Evaluate();
 
             //Add cutout count to the json file
             localMeta["cutout_clouds"] = cloudCount;
@@ -1005,6 +1020,7 @@ namespace StreetviewRipper
         {
             Control.CheckForIllegalCrossThreadCalls = false; //We always do this safely.
 
+            /*
             if (!Directory.Exists(Properties.Resources.Library_PBRT) ||
                 !Directory.Exists(Properties.Resources.Library_LDR2HDR) ||
                 !Directory.Exists(Properties.Resources.Library_EXR2LDR) ||
@@ -1014,8 +1030,10 @@ namespace StreetviewRipper
                 processImages.Enabled = false;
                 straightBias.Enabled = false;
                 neighbourSkip.Enabled = false;
+                cutCloudsOut.Enabled = false;
                 canEnableProcessing = false;
             }
+            */
         }
 
         /* Change available options on check changed */
@@ -1023,6 +1041,7 @@ namespace StreetviewRipper
         {
             straightBias.Enabled = processImages.Checked;
             neighbourSkip.Enabled = (processImages.Checked && doRecursion.Checked);
+            cutCloudsOut.Enabled = false;
         }
         private void doRecursion_CheckedChanged(object sender, EventArgs e)
         {

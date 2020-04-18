@@ -42,12 +42,13 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.stoppingText = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.doRecursion = new System.Windows.Forms.CheckBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.neighbourSkip = new System.Windows.Forms.NumericUpDown();
             this.straightBias = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.neighbourSkip = new System.Windows.Forms.NumericUpDown();
-            this.label5 = new System.Windows.Forms.Label();
-            this.doRecursion = new System.Windows.Forms.CheckBox();
+            this.cutCloudsOut = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -189,8 +190,22 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Download options";
             // 
+            // doRecursion
+            // 
+            this.doRecursion.AutoSize = true;
+            this.doRecursion.Checked = true;
+            this.doRecursion.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.doRecursion.Location = new System.Drawing.Point(9, 67);
+            this.doRecursion.Name = "doRecursion";
+            this.doRecursion.Size = new System.Drawing.Size(123, 17);
+            this.doRecursion.TabIndex = 19;
+            this.doRecursion.Text = "Recurse Neighbours";
+            this.doRecursion.UseVisualStyleBackColor = true;
+            this.doRecursion.CheckedChanged += new System.EventHandler(this.doRecursion_CheckedChanged);
+            // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.cutCloudsOut);
             this.groupBox3.Controls.Add(this.label5);
             this.groupBox3.Controls.Add(this.neighbourSkip);
             this.groupBox3.Controls.Add(this.straightBias);
@@ -201,6 +216,27 @@
             this.groupBox3.TabIndex = 21;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Processing options";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(6, 47);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(83, 13);
+            this.label5.TabIndex = 16;
+            this.label5.Text = "Neighbour Skip:";
+            // 
+            // neighbourSkip
+            // 
+            this.neighbourSkip.Location = new System.Drawing.Point(95, 45);
+            this.neighbourSkip.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.neighbourSkip.Name = "neighbourSkip";
+            this.neighbourSkip.Size = new System.Drawing.Size(159, 20);
+            this.neighbourSkip.TabIndex = 15;
             // 
             // straightBias
             // 
@@ -224,39 +260,17 @@
             this.label4.TabIndex = 14;
             this.label4.Text = "Ground Bias:";
             // 
-            // neighbourSkip
+            // cutCloudsOut
             // 
-            this.neighbourSkip.Location = new System.Drawing.Point(95, 46);
-            this.neighbourSkip.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.neighbourSkip.Name = "neighbourSkip";
-            this.neighbourSkip.Size = new System.Drawing.Size(159, 20);
-            this.neighbourSkip.TabIndex = 15;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(6, 48);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(83, 13);
-            this.label5.TabIndex = 16;
-            this.label5.Text = "Neighbour Skip:";
-            // 
-            // doRecursion
-            // 
-            this.doRecursion.AutoSize = true;
-            this.doRecursion.Checked = true;
-            this.doRecursion.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.doRecursion.Location = new System.Drawing.Point(9, 67);
-            this.doRecursion.Name = "doRecursion";
-            this.doRecursion.Size = new System.Drawing.Size(123, 17);
-            this.doRecursion.TabIndex = 19;
-            this.doRecursion.Text = "Recurse Neighbours";
-            this.doRecursion.UseVisualStyleBackColor = true;
-            this.doRecursion.CheckedChanged += new System.EventHandler(this.doRecursion_CheckedChanged);
+            this.cutCloudsOut.AutoSize = true;
+            this.cutCloudsOut.Checked = true;
+            this.cutCloudsOut.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cutCloudsOut.Location = new System.Drawing.Point(9, 69);
+            this.cutCloudsOut.Name = "cutCloudsOut";
+            this.cutCloudsOut.Size = new System.Drawing.Size(97, 17);
+            this.cutCloudsOut.TabIndex = 20;
+            this.cutCloudsOut.Text = "Cut Out Clouds";
+            this.cutCloudsOut.UseVisualStyleBackColor = true;
             // 
             // StreetviewGUI
             // 
@@ -308,6 +322,7 @@
         private System.Windows.Forms.ComboBox straightBias;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.CheckBox doRecursion;
+        private System.Windows.Forms.CheckBox cutCloudsOut;
     }
 }
 
