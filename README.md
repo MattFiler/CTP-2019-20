@@ -79,9 +79,9 @@ If "cut out clouds" is enabled when processing, the tool will use the generated 
 
 To train the deep learning with StreetviewRipper's output, you must first normalise the dimensions of the images you've gathered. To do this, build the "NormaliseAllImageSizes" program in the "Tests" folder, and place it in "Builds/StreetviewRipper/Output/Images/PulledClouds/BestMatch/". Run this program and it will automatically go through all the best cut out clouds and create copies that all have matching resolutions.
 
-Once this has finished processing, you can then go into the "DeepLearning" folder and run "create_npy_files.bat". This will automatically turn all resized best clouds you just generated into two .npy files, which can be used to train the "DeepDoodle" network.
+Once this has finished processing, edit the "gpu.theanorc" file within the "DeepLearning" folder. Change the `compiler_bindir` value to match your Visual Studio compiler directory, and the `include_path`/`library_path` to match your cuDNN/CUDA directories. Also edit "datagen.py" and change the `IMAGE_W`/`IMAGE_H` to match the width and height of your resized cloud images (respectively), and change `NUM_IMAGES` to match the number of images in your dataset (this will be half the number of images in the "NormalisedSizes" folder).
 
-To use DeepDoodle you must first edit the "gpu.theanorc" file within its folder. Change the `compiler_bindir` value to match your Visual Studio compiler directory, and the `include_path`/`library_path` to match your cuDNN/CUDA directories. Run "train.bat" to train the network with your newly produced dataset.
+You can now run "run.bat" - this will convert your newly resized best cloud images from StreetviewRipper into a format that can be used for training, and then initialise training, using the DeepDoodle network.
 
 
 ## Additional notes

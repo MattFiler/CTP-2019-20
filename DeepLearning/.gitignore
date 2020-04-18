@@ -1,0 +1,6 @@
+x_data.npy
+y_data.npy
+.idea/*
+DeepDoodle/*
+__pycache__/*
+dutil.pyc

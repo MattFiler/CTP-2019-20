@@ -1,3 +1,0 @@
-call conda activate ctp201920_deeplearning
-python create_npy_files.py
-pause
