@@ -4,3 +4,6 @@ y_data.npy
 DeepDoodle/*
 __pycache__/*
 dutil.pyc
+Scores.png
+model.png
+Model.h5
