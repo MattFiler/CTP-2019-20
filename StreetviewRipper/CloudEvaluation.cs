@@ -69,15 +69,16 @@ namespace StreetviewRipper
 
         static private void MoveAllFiles(string panoID, string cloudID, string newFolderName)
         {
+            string baseDir = Properties.Resources.Output_Images + "PulledClouds/";
             string thisPrefix = panoID + "_CLOUD_" + cloudID;
-            File.Move(thisPrefix + ".STREETVIEW_LDR.png", newFolderName + "/" + thisPrefix + ".STREETVIEW_LDR.png");
-            File.Move(thisPrefix + ".STREETVIEW_HDR.hdr", newFolderName + "/" + thisPrefix + ".STREETVIEW_HDR.hdr");
-            File.Move(thisPrefix + ".SKY_MODEL.hdr", newFolderName + "/" + thisPrefix + ".SKY_MODEL.hdr");
-            File.Move(thisPrefix + ".METADATA.bin", newFolderName + "/" + thisPrefix + ".METADATA.bin");
-            File.Move(thisPrefix + ".INSCATTER_COLOUR.png", newFolderName + "/" + thisPrefix + ".INSCATTER_COLOUR.png");
-            File.Move(thisPrefix + ".DEPTH_LOCATIONS.png", newFolderName + "/" + thisPrefix + ".DEPTH_LOCATIONS.png");
-            File.Move(thisPrefix + ".DEPTH.bin", newFolderName + "/" + thisPrefix + ".DEPTH.bin");
-            File.Move(thisPrefix + ".CLOUD_MASK.png", newFolderName + "/" + thisPrefix + ".CLOUD_MASK.png");
+            File.Move(baseDir + thisPrefix + ".STREETVIEW_LDR.png", newFolderName + "/" + thisPrefix + ".STREETVIEW_LDR.png");
+            File.Move(baseDir + thisPrefix + ".STREETVIEW_HDR.hdr", newFolderName + "/" + thisPrefix + ".STREETVIEW_HDR.hdr");
+            File.Move(baseDir + thisPrefix + ".SKY_MODEL.hdr", newFolderName + "/" + thisPrefix + ".SKY_MODEL.hdr");
+            File.Move(baseDir + thisPrefix + ".METADATA.bin", newFolderName + "/" + thisPrefix + ".METADATA.bin");
+            File.Move(baseDir + thisPrefix + ".INSCATTER_COLOUR.png", newFolderName + "/" + thisPrefix + ".INSCATTER_COLOUR.png");
+            File.Move(baseDir + thisPrefix + ".DEPTH_LOCATIONS.png", newFolderName + "/" + thisPrefix + ".DEPTH_LOCATIONS.png");
+            File.Move(baseDir + thisPrefix + ".DEPTH.bin", newFolderName + "/" + thisPrefix + ".DEPTH.bin");
+            File.Move(baseDir + thisPrefix + ".CLOUD_MASK.png", newFolderName + "/" + thisPrefix + ".CLOUD_MASK.png");
         }
     }
 }

@@ -1041,7 +1041,7 @@ namespace StreetviewRipper
         {
             straightBias.Enabled = processImages.Checked;
             neighbourSkip.Enabled = (processImages.Checked && doRecursion.Checked);
-            cutCloudsOut.Enabled = false;
+            cutCloudsOut.Enabled = processImages.Checked;
         }
         private void doRecursion_CheckedChanged(object sender, EventArgs e)
         {
