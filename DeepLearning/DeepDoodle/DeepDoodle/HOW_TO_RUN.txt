@@ -1,0 +1,17 @@
+Requirements:
+  * Windows 10 Operating System
+  * Compatible Nvidia GPU
+    - Requires at least Compute Capability 3.0 or above.
+    - See https://en.wikipedia.org/wiki/CUDA#GPUs_supported to make sure your GPU is supported.
+
+Installation Steps:
+  1. Make sure your Nvidia drivers are up-to-date.  If not, then upgrade to the latest one.
+    - You will NEED to reboot after installing any drivers.
+  2. Install CUDA 9.1 (https://developer.nvidia.com/cuda-91-download-archive)
+  3. Download cuDNN 9.1 (v7.0.5) (https://developer.nvidia.com/rdp/cudnn-archive)
+    - You will need to make an account and fill out a survey before you can download.
+    - Unzip the file and navigate into the 'cuda' folder.
+    - Copy the 3 folders there (bin, include, lib) and paste them in
+      'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.1' where you installed CUDA.
+  4. Finally, you can run 'DeepDoodle.exe'. No install required; it runs standalone.
+  5. Controls & instructions will be printed when you start the app.
