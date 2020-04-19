@@ -40,19 +40,20 @@ rgb_array = np.zeros((input_h, input_w, 3), dtype=np.uint8)
 image_result = np.zeros((input_h, input_w, 3), dtype=np.uint8)
 
 #Keras
-print "Loading Keras..."
+print("Loading Keras...")
 import os
 os.environ['THEANORC'] = "./" + device + ".theanorc"
 os.environ['KERAS_BACKEND'] = "theano"
 import theano
-print "Theano Version: " + theano.__version__
+print("Theano Version: " + theano.__version__)
 from keras.models import Sequential, load_model
 from keras import backend as K
 K.set_image_data_format('channels_first')
 
 #Load the model
-print "Loading Model..."
+print("Loading Model...")
 model = load_model(model_fname)
+print("Loaded model!")
 
 #Open a window
 pygame.init()

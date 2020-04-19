@@ -2,6 +2,8 @@
 
 This repo contains all project files for my dissertation: a skybox generation tool for games.
 
+<img align="right" src="https://i.imgur.com/QIbvKNN.png" width="40%">
+
 
 ## Contents
 
@@ -57,6 +59,7 @@ This repo contains all project files for my dissertation: a skybox generation to
     - `conda install theano`
     - `conda install keras`
     - `conda install pydot`
+	- `pip install pygame`
 - Download and install CUDA 9.1
 - Download and install cuDNN 9.1 (v7.0.5)
 	
@@ -73,13 +76,15 @@ If image processing and recursion is enabled, you can set the number of neighbou
 
 To stop execution, press the "stop" button. The tool will stop execution once operations on the current image have completed.
 
+<img align="right" src="https://i.imgur.com/wpR9gek.png" width="40%">
+
 If "cut out clouds" is enabled when processing, the tool will use the generated cloud mask to automatically cut out clouds from the processed images, and filter the results by what it thinks are best/ok/worst. Worst and ok images typically contain trees or branches - the tool will do its best to isolate clouds into the "best" category. Enable this option if you are going to use the dataset for training. If you wish to retroactively cut out clouds, utilise the "CloudPuller" program in the "Tests" folder.
 
 ## Using the StreetviewRipper output to train
 
 Edit the "gpu.theanorc" file within the "DeepLearning" folder. Change the `compiler_bindir` value to match your Visual Studio compiler directory, and the `include_path`/`library_path` to match your cuDNN/CUDA directories. Also edit "datagen.py" and change `NUM_IMAGES` to match the number of images in your dataset (this will be an eigth of the files in your "Builds/StreetviewRipper/Output/Images/PulledClouds/BestMatch" folder).
 
-You can now run "run.bat", this will convert your best cloud images from StreetviewRipper into a format that can be used for training, and then initialise training using the DeepDoodle network.
+You can now run "run.bat", this will convert your best cloud images from StreetviewRipper into a format that can be used for training, and then initialise training using the DeepDoodle network. After training is complete, you can run "doodler.bat" to interact with the results.
 
 
 ## Additional notes
