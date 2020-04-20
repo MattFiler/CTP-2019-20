@@ -36,16 +36,23 @@ namespace DeepLearningLanding
                 MessageBox.Show("Software paths are not configured!", "Configuration incomplete.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
+            if (!Directory.Exists(trainingDataFolder))
+            {
+                MessageBox.Show("Please generate training data first (enable pull clouds)!", "No training data.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             string[] files = Directory.GetFiles(trainingDataFolder, "*.STREETVIEW_LDR.png", SearchOption.TopDirectoryOnly);
+            if (files.Length == 0)
+            {
+                MessageBox.Show("Please generate training data first (enable pull clouds)!", "No training data.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             string datagenPY = DeepLearningLanding.Properties.Resources.datagen.ToString();
             datagenPY = datagenPY.Replace("%%IMG_COUNT%%", files.Length.ToString());
             File.WriteAllText(deepLearningFolder + "datagen.py", datagenPY);
 
             ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + deepLearningFolder + "run.bat\"");
             processInfo.WorkingDirectory = deepLearningFolder;
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
             Process process = Process.Start(processInfo);
             process.WaitForExit();
             process.Close();
