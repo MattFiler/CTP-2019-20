@@ -77,10 +77,6 @@ If image processing and recursion is enabled, you can set the number of neighbou
 
 To stop execution, press the "stop" button. The tool will stop execution once operations on the current image have completed.
 
-<img align="right" src="https://i.imgur.com/wpR9gek.png" width="40%">
-
-If "cut out clouds" is enabled when processing, the tool will use the generated cloud mask to automatically cut out clouds from the processed images, and filter the results by what it thinks are best/ok/worst. Worst and ok images typically contain trees or branches - the tool will do its best to isolate clouds into the "best" category. Enable this option if you are going to use the dataset for training. If you wish to retroactively cut out clouds, utilise the "CloudPuller" program in the "Tests" folder.
-
 ## Using DeepDoodle
 
 DeepDoodle is included with the project for deep learning. A tool is available within "Builds/DeepLearning" which can configure your DeepDoodle environment and manage training/launching the doodler program. When you first launch the tool, enter your Visual Studio VC bin directory and CUDA version directory, then press save.
