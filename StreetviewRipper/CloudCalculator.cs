@@ -28,12 +28,14 @@ namespace StreetviewRipper
         public bool shouldoutput = true;
     }
 
-    class BoundingBox
+    class ValidCloudSquare
     {
-        public BoundingBox(Point _tl, Point _br)
+        public ValidCloudSquare(Point _tl, Point _br, Bitmap _m, bool _b)
         {
             TopLeft = _tl;
             BottomRight = _br;
+            StreetviewImg = _m;
+            ShouldKeep = _b;
         }
         public Point TopLeft;
         public Point BottomRight;
@@ -41,6 +43,8 @@ namespace StreetviewRipper
         {
             return ((_point.X >= TopLeft.X && _point.X <= BottomRight.X) && (_point.Y >= TopLeft.Y && _point.Y <= BottomRight.Y));
         }
+        public Bitmap StreetviewImg;
+        public bool ShouldKeep = false;
     }
 
     class CloudCalculator

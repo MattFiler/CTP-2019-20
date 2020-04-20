@@ -48,7 +48,6 @@
             this.neighbourSkip = new System.Windows.Forms.NumericUpDown();
             this.straightBias = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.cutCloudsOut = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -205,7 +204,6 @@
             // 
             // groupBox3
             // 
-            this.groupBox3.Controls.Add(this.cutCloudsOut);
             this.groupBox3.Controls.Add(this.label5);
             this.groupBox3.Controls.Add(this.neighbourSkip);
             this.groupBox3.Controls.Add(this.straightBias);
@@ -260,18 +258,6 @@
             this.label4.TabIndex = 14;
             this.label4.Text = "Ground Bias:";
             // 
-            // cutCloudsOut
-            // 
-            this.cutCloudsOut.AutoSize = true;
-            this.cutCloudsOut.Checked = true;
-            this.cutCloudsOut.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cutCloudsOut.Location = new System.Drawing.Point(9, 69);
-            this.cutCloudsOut.Name = "cutCloudsOut";
-            this.cutCloudsOut.Size = new System.Drawing.Size(97, 17);
-            this.cutCloudsOut.TabIndex = 20;
-            this.cutCloudsOut.Text = "Cut Out Clouds";
-            this.cutCloudsOut.UseVisualStyleBackColor = true;
-            // 
             // StreetviewGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -322,7 +308,6 @@
         private System.Windows.Forms.ComboBox straightBias;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.CheckBox doRecursion;
-        private System.Windows.Forms.CheckBox cutCloudsOut;
     }
 }
 

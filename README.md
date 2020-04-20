@@ -83,7 +83,7 @@ If "cut out clouds" is enabled when processing, the tool will use the generated 
 
 ## Using DeepDoodle
 
-DeepDoodle is included with the project for deep learning. A tool is available within "Builds/DeepLearning" which can configure your DeepDoodle environment and manage training/launching the doodler program. When you first launch the tool, enter your Visual Studio VC directory and CUDA version directory, then press save.
+DeepDoodle is included with the project for deep learning. A tool is available within "Builds/DeepLearning" which can configure your DeepDoodle environment and manage training/launching the doodler program. When you first launch the tool, enter your Visual Studio VC bin directory and CUDA version directory, then press save.
 
 If you have collected a cloud dataset using StreetviewRipper, you can now press "Start Training". This will launch a command prompt window showing you progress - it will take some time to complete based on the number of images you have collected.
 
