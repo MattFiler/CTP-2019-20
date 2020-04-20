@@ -61,6 +61,36 @@ namespace DeepLearningLanding.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to import os, random, sys
+        ///import numpy as np
+        ///import cv2
+        ///from dutil import *
+        ///
+        ///NUM_IMAGES = 1000
+        ///SAMPLES_PER_IMG = 10
+        ///DOTS_PER_IMG = 60
+        ///IMAGE_W = 144
+        ///IMAGE_H = 192
+        ///IMAGE_DIR = &apos;../Builds/StreetviewRipper/Output/Images/PulledClouds/BestMatch/&apos;
+        ///NUM_SAMPLES = NUM_IMAGES * 2 * SAMPLES_PER_IMG
+        ///NUM_CHANNELS = 3
+        ///
+        ///def center_resize(img):
+        ///    assert(IMAGE_W == IMAGE_H)
+        ///    w, h = img.shape[0], img.shape[1]
+        ///    if w &gt; h:
+        ///        x = (w-h)/2
+        ///        img = img[x:x+h,:]
+        ///    elif h &gt; w:
+        ///        img = img[ [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string datagen {
+            get {
+                return ResourceManager.GetString("datagen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to [global]
         ///floatX=float32
         ///device=cuda

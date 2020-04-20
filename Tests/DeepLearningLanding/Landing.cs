@@ -15,12 +15,14 @@ namespace DeepLearningLanding
     public partial class Landing : Form
     {
         string deepLearningFolder;
+        string trainingDataFolder;
         string SW_visualStudioVC;
         string SW_cudaRoot;
         public Landing()
         {
             InitializeComponent();
             deepLearningFolder = AppDomain.CurrentDomain.BaseDirectory + "../../DeepLearning/";
+            trainingDataFolder = AppDomain.CurrentDomain.BaseDirectory + "../StreetviewRipper/Output/Images/PulledClouds/BestMatch/";
             LoadConfig();
             vcdir.Text = SW_visualStudioVC;
             cudadir.Text = SW_cudaRoot;
@@ -34,6 +36,12 @@ namespace DeepLearningLanding
                 MessageBox.Show("Software paths are not configured!", "Configuration incomplete.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+
+            string[] files = Directory.GetFiles(trainingDataFolder, "*.STREETVIEW_LDR.png", SearchOption.TopDirectoryOnly);
+            string datagenPY = DeepLearningLanding.Properties.Resources.datagen.ToString();
+            datagenPY = datagenPY.Replace("%%IMG_COUNT%%", files.Length.ToString());
+            File.WriteAllText(deepLearningFolder + "datagen.py", datagenPY);
+
             ProcessStartInfo processInfo = new ProcessStartInfo("cmd.exe", "/c \"" + deepLearningFolder + "run.bat\"");
             processInfo.WorkingDirectory = deepLearningFolder;
             processInfo.CreateNoWindow = true;

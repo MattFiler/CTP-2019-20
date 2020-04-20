@@ -77,6 +77,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <EmbeddedResource Include="Resources\gpu.theanorc" />
+    <EmbeddedResource Include="Resources\datagen.py" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
