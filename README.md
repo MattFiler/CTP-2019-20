@@ -11,7 +11,7 @@ This repo contains all project files for my dissertation: a skybox generation to
 - **StreetviewRipper**: tool for downloading Streetview images and optionally processing them
 - **Raytracer**: project for producing renders of volumetric data structures
 - **WebAPI**: the PHP Streetview API used for StreetviewRipper
-- **DeepLearning**: deep learning projects and various tests/scripts
+- **DeepLearning**: deep learning project utilising DeepDoodle
 
 ### Other folders
 - **Builds**: built binaries for both the StreetviewRipper and Raytracer projects
@@ -28,12 +28,12 @@ This repo contains all project files for my dissertation: a skybox generation to
 - Add Anaconda to PATH
 - Download and install MATLAB
 - Open Anaconda and execute:
-    - `conda create -n streetviewripper pip python=3.7`
+    - `conda create -y -n streetviewripper pip python=3.7`
     - `conda activate streetviewripper`
-    - `conda install numpy`
-    - `conda install opencv`
-    - `conda install pillow`
-	- `conda install imageio`
+    - `conda install -y numpy`
+    - `conda install -y opencv`
+    - `conda install -y pillow`
+	- `conda install -y imageio`
     - `pip install --ignore-installed --upgrade tensorflow==1.14`
     - `pip install scipy==1.2.0`
 - Open command prompt and execute:
@@ -51,14 +51,14 @@ This repo contains all project files for my dissertation: a skybox generation to
 
 - Download and install Anaconda (Python 3.7)
 - Open Anaconda and execute:
-    - `conda create -n ctp201920_deeplearning pip python=3.7`
+    - `conda create -y -n ctp201920_deeplearning pip python=3.7`
     - `conda activate ctp201920_deeplearning`
-    - `conda install numpy`
-    - `conda install matplotlib`
-    - `conda install opencv`
-    - `conda install theano`
-    - `conda install keras`
-    - `conda install pydot`
+    - `conda install -y numpy`
+    - `conda install -y matplotlib`
+    - `conda install -y opencv`
+    - `conda install -y theano`
+    - `conda install -y keras`
+    - `conda install -y pydot`
 	- `pip install pygame`
 - Download and install CUDA 9.1
 - Download and install cuDNN 9.1 (v7.0.5)
@@ -90,6 +90,8 @@ You can now run "run.bat", this will convert your best cloud images from Streetv
 ## Additional notes
 
 The C# MATLAB API can sometimes crash after a series of calls - for this reason, the branch "matlab-local-fix" was created, which automatically opens MATLAB and runs the script within the program rather than through the API. This is useful for generating a large dataset of processed images. You will need to adjust the MATLAB path in code and recompile StreetviewRipper to utilise this fix, found on the "matlab-local-fix" branch. Check that the branch is not behind master before using it (may have fallen behind, merge it to update).
+
+A pre-trained DeepDoodle model is available in the "DeepLearning/Pre-trained" folder. To use it, copy it into the root "DeepLearning" folder, and run "doodle.py".
 
 
 ## Useful links

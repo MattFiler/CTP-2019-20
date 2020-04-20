@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from dutil import *
 
-NUM_IMAGES = 5000
+NUM_IMAGES = 1000
 SAMPLES_PER_IMG = 10
 DOTS_PER_IMG = 60
 IMAGE_W = 144
