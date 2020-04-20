@@ -1,0 +1,11 @@
+[global]
+floatX=float32
+device=cuda
+
+[nvcc]
+compiler_bindir=%%VC_DIR%%
+
+[dnn]
+enabled=True
+include_path=%%CUDA_DIR%%\include
+library_path=%%CUDA_DIR%%\lib\x64
