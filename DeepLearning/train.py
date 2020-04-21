@@ -2,11 +2,11 @@ import sys, random
 import numpy as np
 from matplotlib import pyplot as plt
 from dutil import *
+import struct
 
-NUM_EPOCHS = 50
+NUM_EPOCHS = 1 #50
 BATCH_SIZE = 20
 VALID_RATIO = 25
-lr = 0.0008
 
 def plotScores(scores, test_scores, fname, on_top=True):
 	plt.clf()
@@ -69,38 +69,17 @@ from keras import backend as K
 K.set_image_data_format('channels_first')
 
 if False:
-	print("Loading Model...")
-	model = load_model('Model.h5')
-	model.optimizer.lr.set_value(lr)
+    print("Loading Model...")
+    model = load_model('Model.h5')
+    model.optimizer.lr.set_value(lr)
 else:
-	print("Building Model...")
-	model = Sequential()
-
-	model.add(Conv2D(48, (5, 5), padding='same', input_shape=x_train.shape[1:]))
-	model.add(Activation("relu"))
-	model.add(MaxPooling2D(pool_size=(2,2)))
-	model.add(Conv2D(96, (5, 5), padding='same'))
-	model.add(Activation("relu"))
-	model.add(MaxPooling2D(pool_size=(2,2)))
-	model.add(Conv2D(192, (5, 5), padding='same'))
-	model.add(Activation("relu"))
-	model.add(MaxPooling2D(pool_size=(2,2)))
-	model.add(Conv2D(192, (5, 5), padding='same'))
-	model.add(Activation("relu"))
-	model.add(UpSampling2D(size=(2,2)))
-	model.add(Conv2D(192, (5, 5), padding='same'))
-	model.add(Activation("relu"))
-	model.add(UpSampling2D(size=(2,2)))
-	model.add(Conv2D(96, (5, 5), padding='same'))
-	model.add(Activation("relu"))
-	model.add(UpSampling2D(size=(2,2)))
-	model.add(Conv2D(48, (5, 5), padding='same'))
-	model.add(Activation("relu"))
-	model.add(Conv2D(3, (1, 1), padding='same'))
-	model.add(Activation("sigmoid"))
-
-	model.compile(optimizer=Adam(lr=lr), loss='mse')
-	plot_model(model, to_file='model.png', show_shapes=True)
+    print("Building Model...")
+    out = open("params.bin", "wb")
+    for x in range(3):
+        out.write(struct.pack("i", int(x_train.shape[1:][x])))
+    out.close()
+    model = build_model(x_train.shape[1:])
+    plot_model(model, to_file='model.png', show_shapes=True)
 
 ###################################
 #  Train
@@ -120,7 +99,8 @@ for i in range(NUM_EPOCHS):
 	test_rmse.append(math.sqrt(mse))
 	print("Test RMSE: " + str(test_rmse[-1]))
 
-	model.save('Model.h5')
+	model.save_weights('Model.h5')
+	#model.save('Model.h5')
 	print("Saved")
 
 	plotScores(train_rmse, test_rmse, 'Scores.png', True)

@@ -12,23 +12,7 @@ IMAGE_DIR = '../Builds/StreetviewRipper/Output/Images/'
 NUM_SAMPLES = NUM_IMAGES * 2 * SAMPLES_PER_IMG
 NUM_CHANNELS = 3
 
-def center_resize(img):
-    assert(IMAGE_W == IMAGE_H)
-    w, h = img.shape[0], img.shape[1]
-    if w > h:
-        x = (w-h)/2
-        img = img[x:x+h,:]
-    elif h > w:
-        img = img[:,0:w]
-    return cv2.resize(img, (IMAGE_W, IMAGE_H), interpolation = cv2.INTER_LINEAR)
-
-def yb_resize(img):
-    return cv2.resize(img, (IMAGE_W, IMAGE_H), interpolation = cv2.INTER_LINEAR)
-	
-def rand_dots(img, sample_ix):
-    sample_ratio = float(sample_ix) / SAMPLES_PER_IMG
-    return auto_canny(img, sample_ratio)
-
+print("Compiling...")
 x_data = np.empty((NUM_SAMPLES, NUM_CHANNELS, IMAGE_H, IMAGE_W), dtype=np.uint8)
 y_data = np.empty((NUM_SAMPLES, 3, IMAGE_H, IMAGE_W), dtype=np.uint8)
 ix = 0
@@ -44,14 +28,10 @@ for root, subdirs, files in os.walk(IMAGE_DIR):
         if len(img.shape) != 3 or img.shape[2] != 3:
             assert(False)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = yb_resize(img)
+        img = cv2.resize(img, (IMAGE_W, IMAGE_H), interpolation = cv2.INTER_LINEAR)
         for i in range(SAMPLES_PER_IMG):
             y_data[ix] = np.transpose(img, (2, 0, 1))
-            x_data[ix] = rand_dots(img, i)
-            if ix < SAMPLES_PER_IMG*16:
-                outimg = x_data[ix][0]
-                #cv2.imwrite('cargb' + str(ix) + '.png', outimg)
-                #print(path)
+            x_data[ix] = auto_canny(img, (float(i) / SAMPLES_PER_IMG))
             ix += 1
             y_data[ix] = np.flip(y_data[ix - 1], axis=2)
             x_data[ix] = np.flip(x_data[ix - 1], axis=2)
@@ -64,9 +44,7 @@ for root, subdirs, files in os.walk(IMAGE_DIR):
         im += 1
         if im == NUM_IMAGES:
             break
-        assert(ix <= NUM_SAMPLES)
 
-assert(ix == NUM_SAMPLES)
 print("\nSaving...")
 np.save('x_data.npy', x_data)
 np.save('y_data.npy', y_data)

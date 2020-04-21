@@ -49,19 +49,21 @@ This repo contains all project files for my dissertation: a skybox generation to
 	
 **To be able to use DeepDoodle:**
 
-- Download and install Anaconda (Python 3.7)
+- Download and install Anaconda (Python 2.7)
 - Open Anaconda and execute:
-    - `conda create -y -n ctp201920_deeplearning pip python=3.7`
+    - `conda create -y -n ctp201920_deeplearning pip python=2.7`
     - `conda activate ctp201920_deeplearning`
     - `conda install -y numpy`
     - `conda install -y matplotlib`
-    - `conda install -y opencv`
     - `conda install -y theano`
-    - `conda install -y keras`
     - `conda install -y pydot`
-	- `pip install pygame`
-- Download and install CUDA 9.1
-- Download and install cuDNN 9.1 (v7.0.5)
+    - `pip install opencv-python`
+    - `pip install keras`
+    - `pip install enum`
+- Open command prompt and execute:
+	- `conda init cmd.exe`
+- Download and install CUDA 9.0
+- Download and install cuDNN 9.0 (v7.4.1)
 - An install of Visual Studio with build tools
 	
 	

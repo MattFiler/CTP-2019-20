@@ -10,3 +10,4 @@ Model.h5
 !Pre-trained/Model.h5
 gpu.theanorc
 datagen.py
+params.bin
