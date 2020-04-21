@@ -48,7 +48,7 @@ namespace NormaliseAllImageSizes
             {
                 Console.WriteLine("Processing: " + Path.GetFileName(file));
                 Bitmap cloudMaskV1 = (Bitmap)Image.FromFile(file);
-                Bitmap streetviewImage = (Bitmap)Image.FromFile(file.Substring(0, file.Length - 14) + ".jpg");
+                Bitmap streetviewImage = (Bitmap)Image.FromFile(file.Substring(0, file.Length - 14) + "_trim.jpg");
 
                 string streetviewID = Path.GetFileName(file).Substring(0, Path.GetFileName(file).Length - 14);
 
@@ -150,8 +150,10 @@ namespace NormaliseAllImageSizes
                         }
                     }
                 }
-                streetviewImage.Save("SECOND_FIX/" + streetviewID + ".jpg");
-                cloudMaskV2.Save("SECOND_FIX/" + streetviewID + ".png");
+                streetviewImage.Save("SECOND_FIX/" + streetviewID + ".SKY_LDR.jpg");
+                cloudMaskV2.Save("SECOND_FIX/" + streetviewID + ".CLOUD_MASK.png");
+                File.Copy(AppDomain.CurrentDomain.BaseDirectory + "/" + streetviewID + "_sky_trim.hdr", "SECOND_FIX/" + streetviewID + ".SKY_MODEL.hdr", true);
+                File.Copy(AppDomain.CurrentDomain.BaseDirectory + "/" + streetviewID + "_trim.hdr", "SECOND_FIX/" + streetviewID + ".SKY_HDR.hdr", true);
             }
         }
 
