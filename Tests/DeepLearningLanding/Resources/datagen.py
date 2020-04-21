@@ -8,7 +8,7 @@ SAMPLES_PER_IMG = 10
 DOTS_PER_IMG = 60
 IMAGE_W = 144
 IMAGE_H = 192
-IMAGE_DIR = '../Builds/StreetviewRipper/Output/Images/PulledClouds/BestMatch/'
+IMAGE_DIR = '../Builds/StreetviewRipper/Output/Images/'
 NUM_SAMPLES = NUM_IMAGES * 2 * SAMPLES_PER_IMG
 NUM_CHANNELS = 3
 
@@ -23,8 +23,6 @@ def center_resize(img):
     return cv2.resize(img, (IMAGE_W, IMAGE_H), interpolation = cv2.INTER_LINEAR)
 
 def yb_resize(img):
-    #assert(img.shape[1] == 151)
-    #assert(img.shape[0] == 197)
     return cv2.resize(img, (IMAGE_W, IMAGE_H), interpolation = cv2.INTER_LINEAR)
 	
 def rand_dots(img, sample_ix):
@@ -38,14 +36,12 @@ im = 0
 for root, subdirs, files in os.walk(IMAGE_DIR):
     for file in files:
         path = root + "\\" + file
-        if not path[len(path)-18:len(path)] == "STREETVIEW_LDR.png": #ignoring masks for now
+        if not path[len(path)-12:len(path)] == ".SKY_LDR.jpg": #ignoring masks for now
             continue
         img = cv2.imread(path)
         if img is None:
             assert(False)
         if len(img.shape) != 3 or img.shape[2] != 3:
-            assert(False)
-        if img.shape[0] < IMAGE_H or img.shape[1] < IMAGE_W:
             assert(False)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = yb_resize(img)
