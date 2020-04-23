@@ -15,10 +15,8 @@ def add_pos(arr):
 #User constants
 device = "gpu"
 model_fname = 'Model.h5'
-background_color = (210, 210, 210)
 input_w = 144
 input_h = 192
-image_scale = 3
 
 #Global variables
 prev_mouse_pos = None
@@ -27,8 +25,7 @@ needs_update = True
 cur_color_ix = 1
 cur_gen = np.zeros((3, input_h, input_w), dtype=np.uint8)
 cur_drawing = cv2.imread("user_drawing.png")
-cur_drawing = np.transpose(cur_drawing, (2, 1, 0))
-cur_drawing = np.reshape(cur_drawing[0], (1, input_h, input_w))
+cur_drawing = np.reshape(cur_drawing[:, :, 0], (1, input_h, input_w))
 
 #Keras
 print("Loading Keras...")
@@ -53,5 +50,3 @@ cur_gen = (pred * 255.0).astype(np.uint8)
 
 #Output prediction
 cv2.imwrite("prediction.png", np.transpose(cur_gen, (2, 1, 0)))
-from google.colab import files
-files.download('prediction.png') 

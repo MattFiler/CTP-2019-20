@@ -36,12 +36,16 @@ cur_gen = np.zeros((3, input_h, input_w), dtype=np.uint8)
 rgb_array = np.zeros((input_w, input_h, 3), dtype=np.uint8)
 image_result = np.zeros((input_h, input_w, 3), dtype=np.uint8)
 
+#Enable this to load a pre-made drawing as a base
+#cur_drawing = cv2.imread("user_drawing.png")
+#cur_drawing = cv2.resize(cur_drawing, (input_w, input_h), interpolation = cv2.INTER_LINEAR)
+#cur_drawing = np.reshape(cur_drawing[:, :, 0], (1, input_h, input_w))
+
 #Open a window
 pygame.init()
 screen = pygame.display.set_mode((window_width, window_height))
 doodle_surface_mini = pygame.Surface((input_w, input_h))
 doodle_surface = screen.subsurface((doodle_x, doodle_y, drawing_w, drawing_h))
-pygame.display.set_caption('Deep Doodle - By <CodeParade>')
 
 def update_mouse(mouse_pos):
 	global cur_color_ix
@@ -104,7 +108,7 @@ while running:
 	if needs_update:
 		fdrawing = np.expand_dims(cur_drawing.astype(np.float32) / 255.0, axis=0)
 		rgb_array = sparse_to_rgb(cur_drawing)
-		cv2.imwrite("user_drawing.png", rgb_array)
+		cv2.imwrite("user_drawing.png", np.transpose(rgb_array, (1, 0, 2)))
 		needs_update = False
 	
 	#Draw to the screen

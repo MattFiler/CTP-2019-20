@@ -61,7 +61,6 @@ doodle_surface_mini = pygame.Surface((input_w, input_h))
 doodle_surface = screen.subsurface((doodle_x, doodle_y, drawing_w, drawing_h))
 gen_surface_mini = pygame.Surface((input_w, input_h))
 gen_surface = screen.subsurface((generated_x, generated_y, drawing_w, drawing_h))
-pygame.display.set_caption('Deep Doodle - By <CodeParade>')
 
 def update_mouse(mouse_pos):
 	global cur_color_ix
