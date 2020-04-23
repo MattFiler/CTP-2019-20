@@ -89,14 +89,12 @@ Alternatively to save training yourself, a pre-trained model is available in the
 
 With your training complete (or pre-trained model copied) you can now press "Launch Doodler" to interact with the network in realtime.
 
-Unfortunately it is common for DLL errors to occur when launching the "doodler" application even with the correct environment setup, and so for that reason an online hosted version is available using [Google Colab](https://colab.research.google.com/drive/14z7ubtetZLTGWncskRJEqVytSfD-_xfG). To use this online version, go into the "DeepLearning" folder and launch the "local_doodle_creator.bat" file - draw a map for the network to process. This drawing will output to "user_drawing.png", take this file, upload it to the Google Colab server using the provided upload code, and then run the doodler code. This code will auto download the result as a png file.
+Unfortunately it is common for DLL errors to occur when launching the "doodler" application even with the correct environment setup, and so for that reason an online hosted version is available using [Google Colab](https://colab.research.google.com/drive/14z7ubtetZLTGWncskRJEqVytSfD-_xfG#scrollTo=Xpf8BvcZViuq&forceEdit=true&sandboxMode=true). To use this online version, go into the "DeepLearning" folder and launch the "local_doodle_creator.bat" file - draw a map for the network to process. This drawing will output to "user_drawing.png", take this file, upload it to the [Google Colab server](https://colab.research.google.com/drive/14z7ubtetZLTGWncskRJEqVytSfD-_xfG#scrollTo=Xpf8BvcZViuq&forceEdit=true&sandboxMode=true) using the provided upload code block, and then run the doodler code block. This will auto download the result as a png file.
 
 
 ## Additional notes
 
 The C# MATLAB API can sometimes crash after a series of calls - for this reason, the branch "matlab-local-fix" was created, which automatically opens MATLAB and runs the script within the program rather than through the API. This is useful for generating a large dataset of processed images. You will need to adjust the MATLAB path in code and recompile StreetviewRipper to utilise this fix, found on the "matlab-local-fix" branch. Check that the branch is not behind master before using it (may have fallen behind, merge it to update).
-
-Please do not edit the code on Google Colab! Edit access is enabled to be able to upload files.
 
 
 ## Useful links
