@@ -16,6 +16,7 @@ def plotScores(scores, test_scores, fname, on_top=True):
 	plt.plot(scores)
 	plt.plot(test_scores)
 	plt.xlabel('Epoch')
+	plt.ylabel('RMSE')
 	loc = ('upper right' if on_top else 'lower right')
 	plt.legend(['Train', 'Test'], loc=loc)
 	plt.draw()
@@ -27,9 +28,6 @@ x_train = np.load('x_data.npy').astype(np.float32) / 255.0
 y_train = np.load('y_data.npy').astype(np.float32) / 255.0
 num_samples = x_train.shape[0]
 print("Loaded " + str(num_samples) + " Samples.")
-
-print("Attaching more channels...")
-x_train = add_pos(x_train)
 
 #Split data
 split_ix = int(num_samples/VALID_RATIO)
@@ -44,6 +42,7 @@ rng_state = np.random.get_state()
 np.random.shuffle(x_train)
 np.random.set_state(rng_state)
 np.random.shuffle(y_train)
+
 x_train_mini = x_train[:int(len(x_train)/VALID_RATIO)]
 y_train_mini = y_train[:int(len(y_train)/VALID_RATIO)]
 

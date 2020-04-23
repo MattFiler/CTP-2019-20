@@ -22,7 +22,7 @@ namespace DeepLearningLanding
         {
             InitializeComponent();
             deepLearningFolder = AppDomain.CurrentDomain.BaseDirectory + "../../DeepLearning/";
-            trainingDataFolder = AppDomain.CurrentDomain.BaseDirectory + "../StreetviewRipper/Output/Images/PulledClouds/BestMatch/";
+            trainingDataFolder = AppDomain.CurrentDomain.BaseDirectory + "../StreetviewRipper/Output/Images/";
             LoadConfig();
             vcdir.Text = SW_visualStudioVC;
             cudadir.Text = SW_cudaRoot;
@@ -41,7 +41,7 @@ namespace DeepLearningLanding
                 MessageBox.Show("Please generate training data first (enable pull clouds)!", "No training data.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            string[] files = Directory.GetFiles(trainingDataFolder, "*.STREETVIEW_LDR.png", SearchOption.TopDirectoryOnly);
+            string[] files = Directory.GetFiles(trainingDataFolder, "*.SKY_LDR.jpg", SearchOption.TopDirectoryOnly);
             if (files.Length == 0)
             {
                 MessageBox.Show("Please generate training data first (enable pull clouds)!", "No training data.", MessageBoxButtons.OK, MessageBoxIcon.Error);

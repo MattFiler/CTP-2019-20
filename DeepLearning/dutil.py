@@ -10,18 +10,3 @@ def add_pos(arr):
 	result[:,s[1] + 0,:,:] = x
 	result[:,s[1] + 1,:,:] = np.transpose(y)
 	return result
-
-def auto_canny(image, sigma=0.0):
-	gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-	grayed = np.where(gray < 20, 255, 0)
-
-	lower = sigma*128 + 128
-	upper = 255
-	edged = cv2.Canny(image, lower, upper)
-
-	return np.maximum(edged, grayed)
-
-def save_image(x, fname):
-	img = np.transpose(x * 255, (1, 2, 0))
-	img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_RGB2BGR)
-	cv2.imwrite(fname, img)

@@ -20,13 +20,11 @@ namespace StreetviewRipper
         int downloadCount = 0;
         int selectedQuality = 4;
         bool shouldStop = false;
-        bool canEnableProcessing = true;
         StraightLineBias selectedBias = StraightLineBias.MIDDLE;
         List<string> downloadedIDs = new List<string>();
 
         int sinceLastDownload = 0;
         int neighboursToSkip = 25;
-        bool shouldCutOutClouds = true;
 
         public StreetviewGUI()
         {
@@ -46,7 +44,6 @@ namespace StreetviewRipper
             doRecursion.Enabled = false;
             neighbourSkip.Enabled = false;
             straightBias.Enabled = false;
-            cutCloudsOut.Enabled = false;
             imageQuality.Enabled = false;
             streetviewURL.Enabled = false;
 
@@ -58,7 +55,6 @@ namespace StreetviewRipper
             selectedBias = (StraightLineBias)straightBias.SelectedIndex;
             neighboursToSkip = (int)neighbourSkip.Value;
             sinceLastDownload = neighboursToSkip + 1;
-            shouldCutOutClouds = cutCloudsOut.Checked;
             downloadedIDs.Clear();
             List<string> streetviewIDs = new List<string>();
             foreach (string thisURL in streetviewURL.Lines)
@@ -75,8 +71,8 @@ namespace StreetviewRipper
         }
         private void StartDownloading(List<string> ids)
         {
-            try
-            {
+            //try
+            //{
                 foreach (string id in ids)
                 {
                     if (id != "")
@@ -85,8 +81,8 @@ namespace StreetviewRipper
                         if (neighbours != null) DownloadNeighbours(neighbours);
                     }
                 }
-            }
-            catch { }
+            //}
+            //catch { }
 
             //Downloads are done, re-enable UI
             stoppingText.Visible = false;
@@ -96,7 +92,6 @@ namespace StreetviewRipper
             processImages.Enabled = true;
             doRecursion.Enabled = true;
             neighbourSkip.Enabled = true;
-            cutCloudsOut.Enabled = true;
             imageQuality.Enabled = true;
             streetviewURL.Enabled = true;
             streetviewURL.Text = "";
@@ -315,8 +310,8 @@ namespace StreetviewRipper
                     streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
                 }
             }
-            streetviewImageTrim.Save(File_ShiftedLDRTrim);
-
+            streetviewImageTrim.Save(File_ShiftedLDRTrim, System.Drawing.Imaging.ImageFormat.Jpeg);
+            
             //Convert to HDR image
             UpdateDownloadStatusText("converting streetview to HDR...");
             streetviewImage.Save(File_LDR2HDRInput, System.Drawing.Imaging.ImageFormat.Jpeg);
@@ -383,7 +378,7 @@ namespace StreetviewRipper
             //Re-write the HDR image without the ground
             UpdateDownloadStatusText("cropping streetview HDR...");
             HDRImage hdrCropped = new HDRImage();
-            hdrCropped.SetResolution(thisMeta["compiled_sizes"][selectedQuality][0].Value<int>(), groundY);
+            hdrCropped.SetResolution(streetviewImageTrim.Width, streetviewImageTrim.Height);
             for (int x = 0; x < hdrCropped.Width; x++)
             {
                 for (int y = 0; y < hdrCropped.Height; y++)
@@ -480,12 +475,12 @@ namespace StreetviewRipper
 
             //Try and guess stratocumulus clouds based on red/blue division
             UpdateDownloadStatusText("calculating cloud mask...");
-            Bitmap classifierOverlay = new Bitmap(hdrCropped.Width, hdrCropped.Height);
+            Bitmap cloudMaskV1 = new Bitmap(streetviewImageTrim.Width, streetviewImageTrim.Height);
             avgBlue = 0.0f; float avgRed = 0.0f; float avgGreen = 0.0f; float avgBright = 0.0f; float avgRBDiv = 0.0f;
             int divMod = 0;
-            for (int x = 0; x < classifierOverlay.Width; x++)
+            for (int x = 0; x < cloudMaskV1.Width; x++)
             {
-                for (int y = 0; y < classifierOverlay.Height; y++)
+                for (int y = 0; y < cloudMaskV1.Height; y++)
                 {
                     Color thisSkyPixel = streetviewImage.GetPixel(x, y);
                     avgBlue += thisSkyPixel.B;
@@ -497,14 +492,14 @@ namespace StreetviewRipper
                     divMod++;
                 }
             }
-            avgBlue /= (float)(classifierOverlay.Width * classifierOverlay.Height);
-            avgRed /= (float)(classifierOverlay.Width * classifierOverlay.Height);
-            avgGreen /= (float)(classifierOverlay.Width * classifierOverlay.Height);
-            avgBright /= (float)(classifierOverlay.Width * classifierOverlay.Height);
+            avgBlue /= (float)(cloudMaskV1.Width * cloudMaskV1.Height);
+            avgRed /= (float)(cloudMaskV1.Width * cloudMaskV1.Height);
+            avgGreen /= (float)(cloudMaskV1.Width * cloudMaskV1.Height);
+            avgBright /= (float)(cloudMaskV1.Width * cloudMaskV1.Height);
             avgRBDiv /= (float)(divMod);
-            for (int x = 0; x < classifierOverlay.Width; x++)
+            for (int x = 0; x < cloudMaskV1.Width; x++)
             {
-                for (int y = 0; y < classifierOverlay.Height; y++)
+                for (int y = 0; y < cloudMaskV1.Height; y++)
                 {
                     Color thisSkyPixel = streetviewImage.GetPixel(x, y);
                     float redBlueDiv = 0.0f;
@@ -516,29 +511,131 @@ namespace StreetviewRipper
 
                     if (check2 || (check1 && !check3))
                     {
-                        classifierOverlay.SetPixel(x, y, Color.White);
+                        cloudMaskV1.SetPixel(x, y, Color.White);
                     }
                     else
                     {
-                        classifierOverlay.SetPixel(x, y, Color.Black);
+                        cloudMaskV1.SetPixel(x, y, Color.Black);
                     }
                 }
             }
-            FloodFill(classifierOverlay, classifierOverlay.Width / 4, (int)sunPos.y, Color.Black);
-            classifierOverlay.Save(File_ClassifiedExtended);
+            FloodFill(cloudMaskV1, cloudMaskV1.Width / 4, (int)sunPos.y, Color.Black);
 
+            //Cut out the clouds from all our data, based on our cloud mask
+            UpdateDownloadStatusText("checking cloud mask...");
+            List<ValidCloudSquare> validCloudRegions = new List<ValidCloudSquare>();
+            for (int x = 0; x < cloudMaskV1.Width; x++)
+            {
+                for (int y = 0; y < cloudMaskV1.Height; y++)
+                {
+                    //If this pixel isn't black, it's a cloud mask
+                    Color thisPixel = cloudMaskV1.GetPixel(x, y);
+                    if (!(thisPixel.R == 0 && thisPixel.G == 0 && thisPixel.B == 0))
+                    {
+                        //Double check this pixel isn't within a cloud bound we've already done
+                        bool shouldCheck = true;
+                        foreach (ValidCloudSquare thisArea in validCloudRegions)
+                        {
+                            if (thisArea.Contains(new Point(x, y)))
+                            {
+                                shouldCheck = false;
+                                break;
+                            }
+                        }
+                        if (!shouldCheck) continue;
+
+                        //Work out the bounds of the cloud mask this pixel is within
+                        FloodResult regionResult = ThisRegion(cloudMaskV1, x, y);
+                        List<Point> linkedContents = regionResult.pointlist;
+                        Point boundsTopLeft = GetMin(linkedContents);
+                        Point boundsBottomRight = GetMax(linkedContents);
+                        
+                        //Work out the mask dimensions, and pull the section from our Streeview image
+                        Point maskDims = new Point(boundsBottomRight.X - boundsTopLeft.X, boundsBottomRight.Y - boundsTopLeft.Y);
+                        if (maskDims.X == 0 || maskDims.Y == 0) regionResult.shouldoutput = false;
+                        if (maskDims.X <= 40 || maskDims.Y <= 40) regionResult.shouldoutput = false;
+                        validCloudRegions.Add(
+                            new ValidCloudSquare(
+                                boundsTopLeft, 
+                                boundsBottomRight, 
+                                (regionResult.shouldoutput) ? PullRegionLDR(streetviewImage, boundsTopLeft, maskDims) : null, 
+                                regionResult.shouldoutput
+                            )
+                        );
+                    }
+                }
+            }
+
+            //Evaluate the cut-out clouds
+            UpdateDownloadStatusText("double-checking cloud mask...");
+            foreach (ValidCloudSquare thisRegion in validCloudRegions)
+            {
+                if (!thisRegion.ShouldKeep) continue;
+
+                Point imgDims = new Point(0, 0);
+                float lowestBrightness = int.MaxValue;
+                float avgBrightness = 0.0f;
+                avgRed = 0.0f;
+                avgGreen = 0.0f;
+                avgBlue = 0.0f;
+
+                for (int x = 0; x < thisRegion.StreetviewImg.Width; x++)
+                {
+                    for (int y = 0; y < thisRegion.StreetviewImg.Height; y++)
+                    {
+                        Color thisPixel = thisRegion.StreetviewImg.GetPixel(x, y);
+                        if (thisPixel.GetBrightness() < lowestBrightness) lowestBrightness = thisPixel.GetBrightness();
+                        avgBrightness += thisPixel.GetBrightness();
+                        avgRed += thisPixel.R;
+                        avgGreen += thisPixel.G;
+                        avgBlue += thisPixel.B;
+                    }
+                }
+                imgDims.X = thisRegion.StreetviewImg.Width; imgDims.Y = thisRegion.StreetviewImg.Height;
+                avgBrightness /= (thisRegion.StreetviewImg.Width * thisRegion.StreetviewImg.Height);
+                avgRed /= (thisRegion.StreetviewImg.Width * thisRegion.StreetviewImg.Height);
+                avgGreen /= (thisRegion.StreetviewImg.Width * thisRegion.StreetviewImg.Height);
+                avgBlue /= (thisRegion.StreetviewImg.Width * thisRegion.StreetviewImg.Height);
+
+                thisRegion.ShouldKeep = (avgBrightness > 0.5 && /*pixelsWithZeroBr < ((imgDims.X * imgDims.Y) / 6) &&*/ lowestBrightness > 0.2 && ((avgBlue >= avgGreen) && (avgBlue >= avgRed)));
+            }
+            
+            //Using the clouds we've determined are good enough, keep these bits of the mask and remove the others
+            UpdateDownloadStatusText("refining cloud mask...");
+            Bitmap cloudMaskV2 = new Bitmap(cloudMaskV1.Width, cloudMaskV1.Height);
+            for (int x = 0; x < cloudMaskV2.Width; x++)
+            {
+                for (int y = 0; y < cloudMaskV2.Height; y++)
+                {
+                    cloudMaskV2.SetPixel(x, y, Color.Black);
+                }
+            }
+            foreach (ValidCloudSquare thisRegion in validCloudRegions)
+            {
+                if (!thisRegion.ShouldKeep) continue;
+                
+                for (int x = 0; x < thisRegion.StreetviewImg.Width; x++)
+                {
+                    for (int y = 0; y < thisRegion.StreetviewImg.Height; y++)
+                    {
+                        cloudMaskV2.SetPixel(thisRegion.TopLeft.X + x, thisRegion.TopLeft.Y + y, cloudMaskV1.GetPixel(thisRegion.TopLeft.X + x, thisRegion.TopLeft.Y + y));
+                    }
+                }
+            }
+            cloudMaskV2.Save(File_ClassifiedExtended, System.Drawing.Imaging.ImageFormat.Png);
+            
             //Apply the extra classification ontop of the original classifier output
             UpdateDownloadStatusText("saving cloud mask bin...");
             List<byte> binMapForUs = new List<byte>();
             BinaryWriter outputBinMap = new BinaryWriter(File.OpenWrite(File_CloudMapBinary));
             outputBinMap.BaseStream.SetLength(0);
-            outputBinMap.Write(classifierOverlay.Width);
-            outputBinMap.Write(classifierOverlay.Height);
-            for (int x = 0; x < classifierOverlay.Width; x++)
+            outputBinMap.Write(cloudMaskV2.Width);
+            outputBinMap.Write(cloudMaskV2.Height);
+            for (int x = 0; x < cloudMaskV2.Width; x++)
             {
-                for (int y = 0; y < classifierOverlay.Height; y++)
+                for (int y = 0; y < cloudMaskV2.Height; y++)
                 {
-                    Color thisColour = classifierOverlay.GetPixel(x, y);
+                    Color thisColour = cloudMaskV2.GetPixel(x, y);
                     if (thisColour.R == 0 && thisColour.G == 0 && thisColour.B == 0)
                     {
                         outputBinMap.Write((byte)0);
@@ -555,14 +652,14 @@ namespace StreetviewRipper
 
             //Perform the inscattering equation on the de-fisheyed LDR
             UpdateDownloadStatusText("calculating inscattering and depth...");
-            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, classifierOverlay, skyModelHDRTrim); 
+            CloudCalculator inscatteringCalc = new CloudCalculator(hdrCropped, cloudMaskV2, skyModelHDRTrim); 
             InscatteringResult inscatterResult = inscatteringCalc.RunInscatteringFormula();
 
             //Output debug results from inscattering
-            inscatterResult.CloudDepthLocationDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.png");
-            inscatterResult.CloudInscatteringColourDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_colour_debug.png");
+            inscatterResult.CloudDepthLocationDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.png", System.Drawing.Imaging.ImageFormat.Png);
+            inscatterResult.CloudInscatteringColourDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_colour_debug.png", System.Drawing.Imaging.ImageFormat.Png);
             File.WriteAllLines(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.txt", inscatterResult.CloudDepthValueDebug);
-            if (!(classifierOverlay.Width == inscatterResult.CloudDepthLocationDebug.Width && classifierOverlay.Height == inscatterResult.CloudDepthLocationDebug.Height))
+            if (!(cloudMaskV2.Width == inscatterResult.CloudDepthLocationDebug.Width && cloudMaskV2.Height == inscatterResult.CloudDepthLocationDebug.Height))
             {
                 //Don't think this should ever happen
                 MessageBox.Show("Failed to calculate inscattering!", "Image size error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -586,80 +683,6 @@ namespace StreetviewRipper
                 outputDepthBin.Write(thisVal);
             }
             outputDepthBin.Close();
-
-            if (!shouldCutOutClouds)
-            {
-                UpdateDownloadStatusText("finished!");
-                downloadCount++;
-                UpdateDownloadCountText(downloadCount);
-                if (doRecursion.Checked) return thisMeta["neighbours"].Value<JArray>();
-                else return null;
-            }
-
-            //Cut out the clouds from all our data, based on our cloud mask
-            UpdateDownloadStatusText("cutting out clouds...");
-            Directory.CreateDirectory(Properties.Resources.Output_Images + "PulledClouds/");
-            List <BoundingBox> checkedAreas = new List<BoundingBox>();
-            int cloudCount = 0;
-            for (int x = 0; x < classifierOverlay.Width; x++)
-            {
-                for (int y = 0; y < classifierOverlay.Height; y++)
-                {
-                    //If this pixel isn't black, it's a cloud mask
-                    Color thisPixel = classifierOverlay.GetPixel(x, y);
-                    if (!(thisPixel.R == 0 && thisPixel.G == 0 && thisPixel.B == 0))
-                    {
-                        //Double check this pixel isn't within a cloud bound we've already exported
-                        bool shouldCheck = true;
-                        foreach (BoundingBox thisArea in checkedAreas)
-                        {
-                            if (thisArea.Contains(new Point(x, y)))
-                            {
-                                shouldCheck = false;
-                                break;
-                            }
-                        }
-                        if (!shouldCheck) continue;
-
-                        //Work out the bounds of the cloud mask this pixel is within
-                        FloodResult regionResult = ThisRegion(classifierOverlay, x, y);
-                        List<Point> linkedContents = regionResult.pointlist;
-                        Point boundsTopLeft = GetMin(linkedContents);
-                        Point boundsBottomRight = GetMax(linkedContents);
-                        checkedAreas.Add(new BoundingBox(boundsTopLeft, boundsBottomRight));
-                        if (!regionResult.shouldoutput) continue; //If something took too long, we don't save it out, but keep track of it, so we don't do it again
-
-                        //Pull the mask's bounds out from the original images (WRITING METADATA FOR NOW, AS I THINK CLOUD DEPTH BIN IS WRITTEN WRONG)
-                        Point maskDims = new Point(boundsBottomRight.X - boundsTopLeft.X, boundsBottomRight.Y - boundsTopLeft.Y);
-                        if (maskDims.X == 0 || maskDims.Y == 0) continue;
-                        if (maskDims.X <= 40 || maskDims.Y <= 40) continue; //Images below this size are typically crap noise
-                        PullRegionLDR(classifierOverlay, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".CLOUD_MASK.png", ImageFormat.Png);
-                        PullRegionLDR(streetviewImageTrim, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".STREETVIEW_LDR.png", ImageFormat.Png);
-                        PullRegionHDR(hdrCropped, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".STREETVIEW_HDR.hdr");
-                        PullRegionHDR(skyModelHDRTrim, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".SKY_MODEL.hdr");
-                        List<byte> depthVals = new List<byte>();
-                        depthVals.AddRange(BitConverter.GetBytes(maskDims.X));
-                        depthVals.AddRange(BitConverter.GetBytes(maskDims.Y)); 
-                        depthVals.AddRange(PullRegionDEPTHBIN(binMapForUs, boundsTopLeft, maskDims, new Point(classifierOverlay.Width, classifierOverlay.Height)));
-                        File.WriteAllBytes(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".DEPTH.bin", depthVals.ToArray());
-                        BinaryWriter writer = new BinaryWriter(File.OpenWrite(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".METADATA.bin"));
-                        writer.Write(maskDims.X); writer.Write(maskDims.Y); writer.Write(boundsTopLeft.X); writer.Write(boundsTopLeft.Y);
-                        writer.Close();
-                        PullRegionLDR(inscatterResult.CloudInscatteringColourDebug, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".INSCATTER_COLOUR.png", ImageFormat.Png);
-                        PullRegionLDR(inscatterResult.CloudDepthLocationDebug, boundsTopLeft, maskDims).Save(Properties.Resources.Output_Images + "PulledClouds/" + id + "_CLOUD_" + cloudCount + ".DEPTH_LOCATIONS.png", ImageFormat.Png);
-
-                        cloudCount++;
-                    }
-                }
-            }
-
-            //Evaluate the cut-out clouds
-            UpdateDownloadStatusText("evaluating clouds...");
-            CloudEvaluation.Evaluate();
-
-            //Add cutout count to the json file
-            localMeta["cutout_clouds"] = cloudCount;
-            File.WriteAllText(File_Metadata, localMeta.ToString(Formatting.Indented));
 
             //Done!
             downloadCount++;
@@ -1034,7 +1057,6 @@ namespace StreetviewRipper
                 straightBias.Enabled = false;
                 neighbourSkip.Enabled = false;
                 cutCloudsOut.Enabled = false;
-                canEnableProcessing = false;
             }
             */
         }
@@ -1044,7 +1066,6 @@ namespace StreetviewRipper
         {
             straightBias.Enabled = processImages.Checked;
             neighbourSkip.Enabled = (processImages.Checked && doRecursion.Checked);
-            cutCloudsOut.Enabled = processImages.Checked;
         }
         private void doRecursion_CheckedChanged(object sender, EventArgs e)
         {

@@ -64,7 +64,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CloudCalculator.cs" />
-    <Compile Include="CloudEvaluation.cs" />
     <Compile Include="StreetviewGUI.cs">
       <SubType>Form</SubType>
     </Compile>
