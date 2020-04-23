@@ -15,9 +15,10 @@ This repo contains all project files for my dissertation: a skybox generation to
 
 ### Other folders
 - **Builds**: binaries for the StreetviewRipper and Raytracer projects, plus a tool for deep learning
-- **Demo**: materials from the progress demo (poster/video)
+- **Demo**: materials from the first progress demo (poster/video)
 - **Libraries**: all libraries required by StreetviewRipper and Raytracer projects
 - **Tests**: test and other projects, typically for refining processing steps
+- **Reports**: PDF and DOCX versions of all reports for the project
 
 
 ## Set up
