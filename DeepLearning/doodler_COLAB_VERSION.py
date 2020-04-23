@@ -52,6 +52,6 @@ pred = model.predict(add_pos(fdrawing), batch_size=1)[0]
 cur_gen = (pred * 255.0).astype(np.uint8)
 
 #Output prediction
-cv2.imwrite("test.png", np.transpose(cur_gen, (2, 1, 0)))
+cv2.imwrite("prediction.png", np.transpose(cur_gen, (2, 1, 0)))
 from google.colab import files
-files.download('test.png') 
+files.download('prediction.png') 
