@@ -41,7 +41,7 @@ namespace DeepLearningLanding
                 MessageBox.Show("Please generate training data first (enable pull clouds)!", "No training data.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            string[] files = Directory.GetFiles(trainingDataFolder, "*.SKY_LDR.jpg", SearchOption.TopDirectoryOnly);
+            string[] files = Directory.GetFiles(trainingDataFolder, "*_trim.jpg", SearchOption.TopDirectoryOnly);
             if (files.Length == 0)
             {
                 MessageBox.Show("Please generate training data first (enable pull clouds)!", "No training data.", MessageBoxButtons.OK, MessageBoxIcon.Error);
