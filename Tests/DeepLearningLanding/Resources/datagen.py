@@ -20,15 +20,19 @@ ix = 0
 for root, subdirs, files in os.walk(IMAGE_DIR):
     for file in files:
         path = root + "\\" + file
-        if not path[len(path)-12:len(path)] == ".SKY_LDR.jpg":
+        if not path[len(path)-9:len(path)] == "_trim.jpg":
             continue
 
         img = cv2.imread(path)
-        img_mask = cv2.imread(path[0:len(path)-12] + ".CLOUD_MASK.png")
+        img_mask = cv2.imread(path[0:len(path)-9] + "_cloudmask.png")
 
         if img is None:
             assert(False)
+        if img_mask is None:
+            assert(False)
         if len(img.shape) != 3 or img.shape[2] != 3:
+            assert(False)
+        if len(img_mask.shape) != 3 or img_mask.shape[2] != 3:
             assert(False)
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
