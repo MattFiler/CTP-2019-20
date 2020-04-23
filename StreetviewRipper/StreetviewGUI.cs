@@ -309,7 +309,7 @@ namespace StreetviewRipper
                     streetviewImageTrim.SetPixel(x, y, streetviewImage.GetPixel(x, y));
                 }
             }
-            streetviewImageTrim.Save(File_ShiftedLDRTrim);
+            streetviewImageTrim.Save(File_ShiftedLDRTrim, System.Drawing.Imaging.ImageFormat.Jpeg);
             
             //Convert to HDR image
             UpdateDownloadStatusText("converting streetview to HDR...");
@@ -619,7 +619,7 @@ namespace StreetviewRipper
                     }
                 }
             }
-            cloudMaskV2.Save(File_ClassifiedExtended);
+            cloudMaskV2.Save(File_ClassifiedExtended, System.Drawing.Imaging.ImageFormat.Png);
             
             //Apply the extra classification ontop of the original classifier output
             UpdateDownloadStatusText("saving cloud mask bin...");
@@ -653,8 +653,8 @@ namespace StreetviewRipper
             InscatteringResult inscatterResult = inscatteringCalc.RunInscatteringFormula();
 
             //Output debug results from inscattering
-            inscatterResult.CloudDepthLocationDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.png");
-            inscatterResult.CloudInscatteringColourDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_colour_debug.png");
+            inscatterResult.CloudDepthLocationDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.png", System.Drawing.Imaging.ImageFormat.Png);
+            inscatterResult.CloudInscatteringColourDebug.Save(Properties.Resources.Output_Images + id + "_inscatter_colour_debug.png", System.Drawing.Imaging.ImageFormat.Png);
             File.WriteAllLines(Properties.Resources.Output_Images + id + "_inscatter_depth_debug.txt", inscatterResult.CloudDepthValueDebug);
             if (!(cloudMaskV2.Width == inscatterResult.CloudDepthLocationDebug.Width && cloudMaskV2.Height == inscatterResult.CloudDepthLocationDebug.Height))
             {
