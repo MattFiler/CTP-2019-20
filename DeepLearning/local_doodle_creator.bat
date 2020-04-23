@@ -1,0 +1,3 @@
+call conda activate ctp201920_deeplearning
+python local_doodle_creator.py
+pause

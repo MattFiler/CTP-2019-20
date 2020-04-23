@@ -7,6 +7,8 @@ dutil.pyc
 Scores.png
 model.png
 Model.h5
-!Pre-trained/Model.h5
+user_drawing.png
+
+#These files are re-made by DeepLearningLanding, so don't push them
+datagen.py 
 gpu.theanorc
-datagen.py

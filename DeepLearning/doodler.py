@@ -36,7 +36,7 @@ cur_color_ix = 1
 cur_drawing = None
 clear_drawing()
 cur_gen = np.zeros((3, input_h, input_w), dtype=np.uint8)
-rgb_array = np.zeros((input_h, input_w, 3), dtype=np.uint8)
+rgb_array = np.zeros((input_w, input_h, 3), dtype=np.uint8)
 image_result = np.zeros((input_h, input_w, 3), dtype=np.uint8)
 
 #Keras
@@ -53,7 +53,6 @@ K.set_image_data_format('channels_first')
 #Load the model
 print("Loading Model...")
 model = load_model(model_fname)
-print("Loaded model!")
 
 #Open a window
 pygame.init()
@@ -62,7 +61,6 @@ doodle_surface_mini = pygame.Surface((input_w, input_h))
 doodle_surface = screen.subsurface((doodle_x, doodle_y, drawing_w, drawing_h))
 gen_surface_mini = pygame.Surface((input_w, input_h))
 gen_surface = screen.subsurface((generated_x, generated_y, drawing_w, drawing_h))
-pygame.display.set_caption('Deep Doodle - By <CodeParade>')
 
 def update_mouse(mouse_pos):
 	global cur_color_ix
@@ -74,14 +72,14 @@ def update_mouse(mouse_pos):
 		y = (mouse_pos[1] - doodle_y) / image_scale
 	if x >= 0 and y >= 0 and x < input_w and y < input_h:
 		needs_update = True
-		cur_drawing[0, y, x] = 255
+		cur_drawing[0, int(y), int(x)] = 255
 
 def update_mouse_line(mouse_pos):
 	global prev_mouse_pos
 	if prev_mouse_pos is None:
 		prev_mouse_pos = mouse_pos
 	if cur_color_ix == 1:
-		for i in xrange(mouse_interps):
+		for i in range(mouse_interps):
 			a = float(i) / mouse_interps
 			ix = int((1.0 - a)*mouse_pos[0] + a*prev_mouse_pos[0])
 			iy = int((1.0 - a)*mouse_pos[1] + a*prev_mouse_pos[1])
