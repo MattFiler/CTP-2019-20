@@ -96,6 +96,8 @@ Unfortunately it is common for DLL errors to occur when launching the "doodler" 
 
 The C# MATLAB API can sometimes crash after a series of calls - for this reason, the branch "matlab-local-fix" was created, which automatically opens MATLAB and runs the script within the program rather than through the API. This is useful for generating a large dataset of processed images. You will need to adjust the MATLAB path in code and recompile StreetviewRipper to utilise this fix, found on the "matlab-local-fix" branch. Check that the branch is not behind master before using it (may have fallen behind, merge it to update).
 
+If the Google Colab project fails to load the model, you will need to upload "Model.h5" from the "DeepLearning/Pre-trained" folder, using the first upload code block. This is not a bug, but simply a session feature with Google Colab!
+
 
 ## Useful links
 
