@@ -16,6 +16,7 @@ def plotScores(scores, test_scores, fname, on_top=True):
 	plt.plot(scores)
 	plt.plot(test_scores)
 	plt.xlabel('Epoch')
+	plt.ylabel('RMSE')
 	loc = ('upper right' if on_top else 'lower right')
 	plt.legend(['Train', 'Test'], loc=loc)
 	plt.draw()
